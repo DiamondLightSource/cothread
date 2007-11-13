@@ -1,8 +1,6 @@
 #!/usr/bin/env python2.4
 
-# import threads
-# from threads import *
-from auto_loop import *
+from cothread.cothread import *
 from time import time as time_time
 
 def time():

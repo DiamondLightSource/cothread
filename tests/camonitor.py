@@ -1,10 +1,8 @@
 #!/usr/bin/env python2.4
 # Simple example of camonitor tool using greenlets etcetera.
 
-#from auto_loop import *
-#import threads
-from cothread import *
-import catools
+from cothread.cothread import *
+from cothread import catools
 import sys
 
 

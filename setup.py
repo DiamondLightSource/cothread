@@ -1,8 +1,10 @@
+#!/usr/bin/env python
+
 from distutils.core import setup, Extension
 
 
 call_readline = Extension('cothread.call_readline',
-    sources = ['call_readline.c'],
+    sources = ['src/call_readline.c'],
     libraries = ["readline", "ncurses"])
 
 setup (
@@ -12,5 +14,4 @@ setup (
     author = 'Michael Abbott',
     author_email = 'Michael.Abbott@diamond.ac.uk',
     packages = ['cothread'],
-    package_dir = {'cothread': '.'},
     ext_modules = [call_readline])

@@ -7,13 +7,17 @@ import ctypes
 import select
 import sys
 import os
+
+# The order of these two is rather important: we are effectively patching
+# readline to use our own hook.
 import readline
+import call_readline
 
 
 __all__ = []
 
 
-readline_lib = ctypes.cdll.LoadLibrary(os.path.abspath(readline.__file__))
+readline_lib = ctypes.cdll.LoadLibrary(os.path.abspath(call_readline.__file__))
 
 # Don't really know which of these is right!
 hook_function = ctypes.CFUNCTYPE(None)

@@ -1,13 +1,12 @@
 #!/usr/bin/env python2.4
 # Simple example of camonitor tool using greenlets etcetera.
 
-from auto_loop import *
-#import threads
-import catools
 import sys
 
 from numpy import *
-from catools import *
+
+from cothread.cothread import *
+from cothread.catools import *
 
 
 BPMS = ['SR%02dC-DI-EBPM-%02d' % (c+1, n+1)

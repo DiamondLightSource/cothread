@@ -1,9 +1,8 @@
 #!/usr/bin/env python2.4
 # Simple example of caget tool using greenlets etcetera.
 
-from auto_loop import *
-#import threads
-from catools import *
+from cothread.catools import *
+
 import sys
 from numpy import *
 import optparse
