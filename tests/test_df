@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for f in $(seq 0 2); do
+    for d in $(seq 0 6); do
+        echo ./caget.py -n3 -d$d -f$f $1
+        ./caget.py -n3 -d$d -f$f $1
+        echo
+    done
+done
