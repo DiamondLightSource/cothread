@@ -1,6 +1,6 @@
 '''Simple readline hook to allow the scheduler to run while we're waiting
-for input from the interpreter command line.
-'''
+for input from the interpreter command line.  Also includes optional support
+for the Qt event loop.'''
 
 import cothread
 import ctypes
@@ -33,11 +33,17 @@ call_readline_InputHookP = pointer(hook_function.in_dll(
 @hook_function
 def readline_hook(stdin):
     try:
+        iwtd, owtd, ewtd = [], [], []
         while True:
-            # Let the scheduler run.
-            delay = cothread.PollScheduler()
+            # Let the scheduler run.  We tell it which sockets are ready, and
+            # it returns with a new list of sockets to watch.  We add our own
+            # stdin socket to the set.
+            iwtd, owtd, ewtd, timeout = \
+                cothread.PollScheduler(iwtd, owtd, ewtd)
+            iwtd.append(stdin)
             # Wait until either stdin or the scheduler are ready.
-            if select.select([stdin], [], [], delay)[0]:
+            iwtd, owtd, ewtd = select.select(iwtd, owtd, ewtd, timeout)
+            if stdin in iwtd:
                 break
     except KeyboardInterrupt:
         return True
@@ -60,9 +66,7 @@ def readline_hook(stdin):
 call_readline_InputHookP[0] = readline_hook
 
 
-def iqt(maxtime = 10):
-    '''Installs Qt event handling hook.'''
-
+def poll_iqt(poll_interval):
     import qt
     if qt.qApp.startingUp():
         # If the Qt application hasn't been created yet then build it now.
@@ -70,5 +74,13 @@ def iqt(maxtime = 10):
         global _qapp
         _qapp = qt.QApplication(sys.argv)
 
-    cothread.InstallHook(lambda: qt.qApp.processEvents(maxtime))
-    
+    while True:
+        qt.qApp.processEvents(poll_interval)
+        cothread.Sleep(poll_interval / 1000.)
+        
+
+def iqt(poll_interval = 10):
+    '''Installs Qt event handling hook.  The polling interval is in
+    milliseconds.'''
+
+    cothread.Spawn(poll_iqt, poll_interval)

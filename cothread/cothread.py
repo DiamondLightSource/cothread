@@ -36,6 +36,7 @@ import time
 import greenlet
 import bisect
 import traceback
+import select
 
 from utility import *
 
@@ -49,7 +50,6 @@ __all__ = [
     'Event',            # Event for waiting and signalling
     'EventQueue',       # Queue of objects with event handling
     'Quit',             # Immediate process quit
-#    'ScheduleLoop',     # Master scheduling loop
     'WaitForAll',
     'WaitForQuit',
     'Quit',
@@ -96,11 +96,15 @@ class _TimerQueue(object):
         return result
 
     def cancel(self, value):
-        '''Removes the given value from the queue.  Raises a ValueError if
-        the value isn't actually queued.'''
-        index = self.__values.index(value)
-        del self.__values[index]
-        del self.__timeouts[index]
+        '''Removes the given value from the queue, or is a no-op if the item
+        isn't actually queued.'''
+        try:
+            index = self.__values.index(value)
+        except ValueError:
+            pass
+        else:
+            del self.__values[index]
+            del self.__timeouts[index]
         
     def __len__(self):
         '''Returns the number of entries on the queue.'''
@@ -112,30 +116,43 @@ class _Scheduler(object):
 
     __WAKEUP_NORMAL = 0
     __WAKEUP_TIMEOUT = 1
+    __WAKEUP_INTERRUPT = 2
 
     @classmethod
     def create(cls, poll_interval):
         '''Creates the scheduler in its own coroutine and starts it running.
         We switch to the scheduler long enough for it to complete
         initialisation.'''
-        scheduler_task = greenlet.greenlet(cls.__scheduler_loop)
+        scheduler_task = greenlet.greenlet(cls.__scheduler)
         return scheduler_task.switch(greenlet.getcurrent(), poll_interval)
 
     @classmethod
-    def __scheduler_loop(cls, caller, poll_interval):
+    def __scheduler(cls, caller, poll_interval):
         '''The top level scheduler loop.  Starts by creating the scheduler,
         and then manages dispatching from the top level.'''
 
         # First create the scheduler and pass it back to our caller.  The
         # next time we get control it's time to run the scheduling loop.
-        scheduler = cls()
-        caller.switch(scheduler)
+        self = cls()
+        caller.switch(self)
 
-        # Note: if the schedule loop raises an exception then the scheduler
-        # is going to just die.  This may not be what is wanted...!
-        #    Actually, it depends on who's running things outside.  If we're
-        # running standalone, then we should die right away.
-        scheduler.__schedule_loop(poll_interval)
+        # If the schedule loop raises an exception then propogate the
+        # exception up to the main thread before restarting the scheduler.
+        # This has mostly the right effects: a standalone program will
+        # terminate, and an interactive program will receive back control,
+        # and the scheduler should carry on operating.
+        while True:
+            try:
+                self.__schedule_loop(poll_interval)
+            except:
+                # Now transfer control to the main task in a controlled way.
+                # Cancel any occurrences of the main task on any queues to
+                # avoid strange multiple reentry issues.
+                if caller in self.__ready_queue:
+                    del self.__ready_queue[self.__ready_queue.index(caller)]
+                self.__timer_queue.cancel(caller)
+                self.__allow_suspend = True
+                caller.switch(self.__WAKEUP_INTERRUPT)
 
         
     def __init__(self):
@@ -146,8 +163,6 @@ class _Scheduler(object):
         # Scheduler greenlet: this will be switched to whenever any other
         # task decides to sleep.
         self.__greenlet = greenlet.getcurrent()
-        # List of scheduling hooks.  These are called on every tick.
-        self.__hooks = []
         # Don't allow hook routines to suspend: this is rather like an
         # interrupt context, and can cause mayhem.  We start up with this
         # true so that the main thread creating us can suspend to here.
@@ -164,22 +179,9 @@ class _Scheduler(object):
         run.'''
 
         while True:
-            # Dispatch all waiting processes
+            # Dispatch all waiting tasks
             self.__tick()
             
-            # Invoke all the hooks.  Any hook that raises an exception will
-            # immediately be deleted: we implement this by rebuilding the
-            # hook list each time it's called.
-            hooks = []
-            for hook in self.__hooks:
-                try:
-                    hook()
-                    hooks.append(hook)
-                except:
-                    print 'Scheduler hook raised exception'
-                    traceback.print_exc()
-            self.__hooks = hooks
-
             # Now see how long we have to wait for the next tick
             if self.__ready_queue:
                 # There are ready tasks: don't wait
@@ -194,40 +196,47 @@ class _Scheduler(object):
                 # Nothing to do: just poll
                 delay = poll_interval
 
-            if self.__poll_callback is None:
-                if delay > 0:
-                    time.sleep(delay)
-            else:
-                # If the scheduler loop was invoked from outside then return
-                # control back to the caller.  
-                callback = self.__poll_callback
-                self.__poll_callback = None
-                self.__allow_suspend = True
-                callback.switch(delay)
+            # Finally suspend until something is ready.
+            iwtd, owtd, ewtd = self.__select([], [], [], delay)
 
                 
-    def poll_scheduler(self):
+    def __select(self, iwtd, owtd, ewtd, timeout):
+        '''Suspends the scheduler until the appropriate ready condition is
+        reached.  Returns lists of ready sockets.'''
+        if self.__poll_callback is None:
+            # If we're not being polled from outside, run our own select.
+            return select.select(iwtd, owtd, ewtd, timeout)
+        else:
+            # If the scheduler loop was invoked from outside then return
+            # control back to the caller.  
+            callback = self.__poll_callback
+            self.__poll_callback = None
+            self.__allow_suspend = True
+            return callback.switch(iwtd, owtd, ewtd, timeout)
+
+
+    def poll_scheduler(self, iwtd, owtd, ewtd):
         '''This is called when the scheduler needs to be controlled from
         outside.  It will perform a full round of scheduling before returing
-        control with the caller with an indication of how long to wait for
-        the next required poll.'''
-        
+        control to the caller.
+            Four values are returned, being precisely the values required for
+        a call to select().  A sensible default outer scheduler loop would be
+
+            iwtd, owtd, ewtd = [], [], []
+            while True:
+                iwtd, owtd, ewtd = select(*poll_scheduler(iwtd, owtd, ewtd))
+        '''
         # Set up the poll callback hook so we get control back
         assert self.__poll_callback is None
         assert self.__allow_suspend
-        self.__poll_callback = greenlet.getcurrent()
         # Switching to the scheduler will return control to us when the next
         # round is complete.
         #    Note that the first time this is called we may get an incomplete
         # schedule, as we may be resuming inside the dispatch loop: in effect
         # the first call to this routine interrupts the original scheduler.
-        return self.__greenlet.switch()
+        self.__poll_callback = greenlet.getcurrent()
+        return self.__greenlet.switch(iwtd, owtd, ewtd)
         
-
-    def install_hook(self, hook):
-        '''Installs a hook to be called on every schedule tick.'''
-        self.__hooks.append(hook)
-
 
     def __tick(self):
         '''This must be called regularly to ensure that all waiting tasks are
@@ -268,60 +277,55 @@ class _Scheduler(object):
         self.__ready_queue.append(task)
 
 
-    def sleep_until(self, until=None):
-        '''Cause the calling task to sleep until the given time, or until the
-        next available scheduling slot if until is not specified.  If the
-        timeout has already expired no action is taken.'''
+    def wait_until(self, until, suspend_queue = None):
+        '''The calling task is suspended.  If a deadline is given then the
+        task will definitely be woken up when the dealine is reached if not
+        before.  If a suspend_queue is given then the task is added to it
+        (and it is the caller's responsibility to ensure the task is woken
+        up, with a call to wakeup()).
+        '''
         task = greenlet.getcurrent()
-        assert self.__allow_suspend, 'Callback cannot suspend'
+        
+        assert self.__allow_suspend, 'Hook routines are not allowed to suspend'
         assert task is not self.__greenlet, 'Scheduler cannot suspend'
         assert self.__greenlet, 'Scheduler seems to have vanished!'
+        assert until is not None or suspend_queue is not None
 
+        # Either a timeout or a suspension queue (or maybe both) should have
+        # been specified.  
+        if suspend_queue is not None:
+            suspend_queue.append(task)
         if until:
             self.__timer_queue.put(task, until)
-        else:
-            # An until of None means wake up right away, ie a yield.
-            self.__ready_queue.append(task)
-            
-        # Suspend this task by switching back to the scheduling greenlet.
-        timeout = self.__greenlet.switch() == self.__WAKEUP_TIMEOUT
-        return timeout
 
-        
-    def suspend_until(self, suspend_queue, until=None):
-        '''The calling task is suspended.  If a target time is given then it
-        is also added to the timeout queue.  A suspended task should be
-        resumed with wakeup() to ensure that the timeout is cancelled.
-            True is returned iff the timer expired.'''
-        task = greenlet.getcurrent()
-        assert self.__allow_suspend
-        assert task is not self.__greenlet, 'Scheduler cannot suspend'
-        assert self.__greenlet, 'Scheduler seems to have vanished!'
-        
-        if until:
-            self.__timer_queue.put(task, until)
-        suspend_queue.append(task)
-        
-        timeout = self.__greenlet.switch() == self.__WAKEUP_TIMEOUT
-        if timeout:
-            # If the task resumed because of a timeout then remove it from
-            # the suspend queue.
+        # At this point we've no idea which sockets are ready...  Switch back
+        # to the scheduler with what we've got.
+        result = self.__greenlet.switch([], [], [])
+
+        # There are three possible wakeup reasons: normal wakeup
+        if result != self.__WAKEUP_NORMAL and suspend_queue is not None:
+            # If the task didn't resume normally then remove it from the
+            # suspend queue.  If it did then presumably the task that woken
+            # us has already done this.
             del suspend_queue[suspend_queue.index(task)]
-        return timeout
-        
-        
+        if result == self.__WAKEUP_INTERRUPT:
+            # Re-raise the interrupt that the scheduler caught for us.
+            raise
+        else:
+            return result == self.__WAKEUP_TIMEOUT
+
+            
     def wakeup(self, wakeups):
         '''Wakes up all the given tasks and removes any which are on the
         timer queue.'''
         self.__ready_queue.extend(wakeups)
         for task in wakeups:
-            try:
-                self.__timer_queue.cancel(task)
-            except ValueError:
-                # Hmph.  Wasting our time here.  This is mildly irritating:
-                # it would be nice to have a more efficient way of doing
-                # cancellable timers.
-                pass
+            # It's a little irritating: we have to cancel timers even if
+            # there aren't any!
+            #    Note that we have to cancel the timers here rather than on
+            # wakeup, as otherwise the newly woken task might see the timer
+            # wakeup first, which would be quite unfortunate...
+            self.__timer_queue.cancel(task)
 
 
 # There is only the one scheduler, which we create right away.  A dedicated
@@ -376,7 +380,7 @@ class EventBase(object):
         '''Suspends the calling task until _Wakeup() is called.'''
         # The scheduler tells us whether we were resumed on a timeout or on a
         # normal schedule event.
-        if _scheduler.suspend_until(self.__waiters, Deadline(timeout)):
+        if _scheduler.wait_until(Deadline(timeout), self.__waiters):
             raise Timedout('Timed out waiting for event')
 
     def _Wakeup(self, wake_all = True):
@@ -615,18 +619,21 @@ class Timer(EventBase):
 
 # Publish the global functions of the master scheduler.
 
-SleepUntil    = _scheduler.sleep_until
-InstallHook   = _scheduler.install_hook
 PollScheduler = _scheduler.poll_scheduler
 
 
+def SleepUntil(deadline):
+    '''Sleep until the specified deadline.'''
+    _scheduler.wait_until(deadline)
+
 def Sleep(timeout):
     '''Sleep until the specified timeout has expired.'''
-    _scheduler.sleep_until(time.time() + timeout)
+    _scheduler.wait_until(time.time() + timeout)
 
 def Yield():
     '''Yield control to another task.  Equivalent to a zero sleep.'''
-    _scheduler.sleep_until(None)
+    # Implement this as a timeout which expires instantly.
+    _scheduler.wait_until(0)
 
 
 _QuitEvent = Event(auto_reset = False)

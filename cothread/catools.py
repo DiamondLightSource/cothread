@@ -323,7 +323,7 @@ class Subscription(object):
                 # We try and be robust about exceptions in handlers, but to
                 # prevent a perpetual storm of exceptions, we close the
                 # subscription after reporting the problem.
-                print 'Subscription %s callback raised exception' % self
+                print 'Subscription %s callback raised exception' % self.name
                 traceback.print_exc()
                 self.close()
 
@@ -691,7 +691,11 @@ def _catools_atexit():
 ca_context_create(0)
 
 
-cothread.InstallHook(lambda: ca_pend_event(1e-9))
+@cothread.Spawn
+def _PollChannelAccess():
+    while True:
+        ca_pend_event(1e-9)
+        cothread.Sleep(1e-2)
 
 
 # The value of the exception handler below is rather doubtful...
