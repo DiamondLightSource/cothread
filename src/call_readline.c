@@ -4,7 +4,11 @@
 #include <errno.h>
 #include <sys/time.h>
 
-int PyOS_Readline_Interrupted = 0;
+
+/* Special input hook: passed the input file and returns non zero if input
+ * was interrupted. */
+int (*call_readline_InputHook)(int) = NULL;
+
 
 #if defined(HAVE_SETLOCALE)
 /* GNU readline() mistakenly sets the LC_CTYPE locale.
@@ -55,7 +59,6 @@ static char * readline_until_enter_or_signal(char *prompt, int *signal)
 
     while (completed_input_string == not_done_reading) {
         int has_input = 0;
-        PyOS_Readline_Interrupted = 0;
 
         while (!has_input)
         {   
@@ -64,8 +67,9 @@ static char * readline_until_enter_or_signal(char *prompt, int *signal)
             /* select resets selectset if no input was available */
             has_input = select(fileno(rl_instream) + 1, &selectset,
                        NULL, NULL, &timeout);
-            if(PyOS_InputHook) PyOS_InputHook();
-            if(PyOS_Readline_Interrupted) {
+            if (call_readline_InputHook  &&
+                call_readline_InputHook(fileno(rl_instream)))
+            {
                 has_input = -1;
                 PyErr_SetInterrupt();
                 break;
@@ -75,7 +79,7 @@ static char * readline_until_enter_or_signal(char *prompt, int *signal)
         if(has_input > 0) {
             rl_callback_read_char();
         }
-        else if (errno == EINTR || PyOS_Readline_Interrupted) {
+        else if (errno == EINTR || has_input < 0) {
             int s;
 #ifdef WITH_THREAD
             PyEval_RestoreThread(_PyOS_ReadlineTState);

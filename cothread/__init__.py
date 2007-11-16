@@ -14,3 +14,7 @@ modules:
 
 import cothread
 import input_hook
+
+from cothread import *
+
+__all__ = cothread.__all__

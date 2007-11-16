@@ -51,6 +51,8 @@ __all__ = [
     'Quit',             # Immediate process quit
 #    'ScheduleLoop',     # Master scheduling loop
     'WaitForAll',
+    'WaitForQuit',
+    'Quit',
     'AbsTimeout',
     'Timedout',
 ]
@@ -58,17 +60,14 @@ __all__ = [
 
 
 
-class QuitScheduler(Exception):
-    '''Exception raised on quit request.  This should propagate through the
-    scheduler to abort all activity.'''
-
-
 class _TimerQueue(object):
     '''A timer queue: objects are held on the queue in timeout sequence
     '''
 
     # The queue is implemented using the bisect function to insert objects
-    # into the queue without having to resort the list.
+    # into the queue without having to resort the list.  This is cheap and
+    # cheerful to implement and runs fast enough, but makes cancellable
+    # timers a bit more tedious.
     
     def __init__(self):
         # Keep the priorities separate from the values so that we don't have
@@ -108,7 +107,7 @@ class _TimerQueue(object):
         return len(self.__timeouts)
 
 
-class Scheduler(object):
+class _Scheduler(object):
     '''Coroutine activity scheduler.'''
 
     __WAKEUP_NORMAL = 0
@@ -230,12 +229,6 @@ class Scheduler(object):
         self.__hooks.append(hook)
 
 
-    def quit(self):
-        '''Causes the scheduler to quit and no further processing will occur.
-        This routine does not return.'''
-        raise QuitScheduler
-        
-        
     def __tick(self):
         '''This must be called regularly to ensure that all waiting tasks are
         processed.  It processes all tasks that are ready to run and then runs
@@ -279,8 +272,11 @@ class Scheduler(object):
         '''Cause the calling task to sleep until the given time, or until the
         next available scheduling slot if until is not specified.  If the
         timeout has already expired no action is taken.'''
-        assert self.__allow_suspend
         task = greenlet.getcurrent()
+        assert self.__allow_suspend, 'Callback cannot suspend'
+        assert task is not self.__greenlet, 'Scheduler cannot suspend'
+        assert self.__greenlet, 'Scheduler seems to have vanished!'
+
         if until:
             self.__timer_queue.put(task, until)
         else:
@@ -288,31 +284,30 @@ class Scheduler(object):
             self.__ready_queue.append(task)
             
         # Suspend this task by switching back to the scheduling greenlet.
-        assert task is not self.__greenlet, 'Main task cannot suspend'
-        assert self.__greenlet, 'Scheduler seems to have vanished!'
-        return self.__greenlet.switch() == self.__WAKEUP_TIMEOUT
+        timeout = self.__greenlet.switch() == self.__WAKEUP_TIMEOUT
+        return timeout
 
         
     def suspend_until(self, suspend_queue, until=None):
         '''The calling task is suspended.  If a target time is given then it
         is also added to the timeout queue.  A suspended task should be
         resumed with wakeup() to ensure that the timeout is cancelled.
-
-        True is returned iff the timer expired.'''
-        assert self.__allow_suspend
+            True is returned iff the timer expired.'''
         task = greenlet.getcurrent()
+        assert self.__allow_suspend
+        assert task is not self.__greenlet, 'Scheduler cannot suspend'
+        assert self.__greenlet, 'Scheduler seems to have vanished!'
+        
         if until:
             self.__timer_queue.put(task, until)
         suspend_queue.append(task)
         
-        assert task is not self.__greenlet, 'Main task cannot suspend'
-        assert self.__greenlet, 'Scheduler seems to have vanished!'
-        wakeup = self.__greenlet.switch()
-        if wakeup == self.__WAKEUP_TIMEOUT:
+        timeout = self.__greenlet.switch() == self.__WAKEUP_TIMEOUT
+        if timeout:
             # If the task resumed because of a timeout then remove it from
             # the suspend queue.
             del suspend_queue[suspend_queue.index(task)]
-        return wakeup == self.__WAKEUP_TIMEOUT
+        return timeout
         
         
     def wakeup(self, wakeups):
@@ -323,17 +318,21 @@ class Scheduler(object):
             try:
                 self.__timer_queue.cancel(task)
             except ValueError:
-                # Hmph.  Wasting our time here.  This is mildly irritating
+                # Hmph.  Wasting our time here.  This is mildly irritating:
+                # it would be nice to have a more efficient way of doing
+                # cancellable timers.
                 pass
 
 
-                
+# There is only the one scheduler, which we create right away.  A dedicated
+# scheduler task is created: this allows the main task to suspend, but does
+# mean that the scheduler is not the parent of all the tasks it's managing.
+_scheduler = _Scheduler.create(1e-2)
 
 
-# The default scheduler and default scheduling routines run in the top level
-# thread.  Other thread specific schedulers can be built as required.
-_scheduler = Scheduler.create(1e-2)
-
+class QuitScheduler(Exception):
+    '''Exception raised on quit request.  This should propagate through the
+    scheduler to abort all activity.'''
 
 
 class Timedout(Exception):
@@ -370,24 +369,26 @@ class EventBase(object):
     '''The base class for implementing events and signals.'''
 
     def __init__(self):
-        # List of tasks currently waiting
+        # List of tasks currently waiting to be woken up.
         self.__waiters = []
 
-    def _WaitUntil(self, timeout=None, exception=True):
+    def _WaitUntil(self, timeout=None):
         '''Suspends the calling task until _Wakeup() is called.'''
         # The scheduler tells us whether we were resumed on a timeout or on a
         # normal schedule event.
         if _scheduler.suspend_until(self.__waiters, Deadline(timeout)):
-            if exception:
-                raise Timedout('Timed out waiting for event')
+            raise Timedout('Timed out waiting for event')
 
     def _Wakeup(self, wake_all = True):
         '''Wakes one or all waiting tasks.'''
         if self.__waiters:
             if wake_all:
+                # Wake up everybody who was waiting.
                 wakeup = self.__waiters
                 self.__waiters = []
             else:
+                # Wake up the task at the head of the queue: everybody else
+                # will have to wait their turn.
                 wakeup = self.__waiters[:1]
                 del self.__waiters[:1]
             _scheduler.wakeup(wakeup)
@@ -395,7 +396,8 @@ class EventBase(object):
         
 
 class Spawn(EventBase):
-    '''This instance is used to wrap cooperative threads.'''
+    '''This class is used to wrap cooperative threads: every task (except
+    for main) managed by the scheduler should be an instance of this class.'''
 
     finished = property(fget = lambda self: self.__finished)
     
@@ -416,6 +418,7 @@ class Spawn(EventBase):
         self.__kargs = kargs
         self.__result = ()
         self.__raise_on_wait = keyword_argument(kargs, 'raise_on_wait')
+        # Hand control over to the run method in the scheduler.
         _scheduler.spawn(self.__run)
 
     def __run(self, _):
@@ -424,7 +427,7 @@ class Spawn(EventBase):
             self.__result = (True,
                 self.__function(*self.__args, **self.__kargs))
         except:
-            # Oops: the coroutine terminated with an exception.  
+            # Oops: the task terminated with an exception.  
             if self.__raise_on_wait:
                 # The creator of the task is willing to catch this exception,
                 # so hang onto it now until Wait() is called.
@@ -446,6 +449,9 @@ class Spawn(EventBase):
         if not self.__result:
             self._WaitUntil(timeout)
         ok, result = self.__result
+        # Delete the result before returning to avoid cycles: in particular,
+        # if the result is an exception the associated traceback needs to be
+        # dropped now.
         del self.__result
         if ok:
             return result
@@ -455,9 +461,6 @@ class Spawn(EventBase):
             # There's a real reference count looping problem here -- can't
             # make the task go away when it's finished with...
             raise result[0], result[1], result[2]
-
-#     def __del__(self):
-#         print 'deleting Spawn', self.__function.__name__
 
 
     
@@ -487,7 +490,6 @@ class Event(EventBase):
         '''The caller will block until the event becomes true, or until the
         timeout occurs if a timeout is specified.  A Timeout exception is
         raised if a timeout occurs.'''
-#        print 'creating Event'
         if not self.__value:
             self._WaitUntil(timeout)
 
@@ -518,9 +520,6 @@ class Event(EventBase):
     def Reset(self):
         '''Resets the event (and erases the value).'''
         self.__value = ()
-
-#     def __del__(self):
-#         print 'deleting Event'
 
 
 class EventQueue(EventBase):
@@ -605,14 +604,18 @@ class AsyncEventQueue(EventBase):
         pass
 
 class Timer(EventBase):
-    def __init__(self, timeout, callback):
+    def __init__(self, timeout, callback, retrigger = False):
+        '''Triggers a callback to be made after the specified timeout.  If
+        retriggering is selected then the ti
+            Timers are called from the dedicated timer thread, which means
+        that blocking in one timer will cause all other timers to block. 
+        '''
         pass
             
 
 # Publish the global functions of the master scheduler.
 
 SleepUntil    = _scheduler.sleep_until
-Quit          = _scheduler.quit
 InstallHook   = _scheduler.install_hook
 PollScheduler = _scheduler.poll_scheduler
 
@@ -626,8 +629,25 @@ def Yield():
     _scheduler.sleep_until(None)
 
 
-def WaitForQuit():
-    pass
+_QuitEvent = Event(auto_reset = False)
+
+def Quit():
+    '''Signals the quit event.  Once signalled it stays signalled.'''
+    _QuitEvent.Signal()
+    
+def WaitForQuit(catch_interrupt = True):
+    '''Waits for the quit event to be signalled.'''
+    if catch_interrupt:
+        try:
+            _QuitEvent.Wait()
+        except KeyboardInterrupt:
+            # As a courtesy we quietly catch and discard the keyboard
+            # interrupt.  Unfortunately we don't have full control over where
+            # this is going to be caught, but if we get it we can exit
+            # quietly.
+            pass
+    else:
+        _QuitEvent.Wait()
 
 
 

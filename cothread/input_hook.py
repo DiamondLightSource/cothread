@@ -7,6 +7,9 @@ import ctypes
 import select
 import sys
 import os
+import traceback
+
+from ctypes import *
 
 # The order of these two is rather important: we are effectively patching
 # readline to use our own hook.
@@ -14,36 +17,47 @@ import readline
 import call_readline
 
 
-__all__ = []
+__all__ = ['iqt']
 
 
-readline_lib = ctypes.cdll.LoadLibrary(os.path.abspath(call_readline.__file__))
+call_readline_lib = cdll.LoadLibrary(os.path.abspath(call_readline.__file__))
 
 # Don't really know which of these is right!
-hook_function = ctypes.CFUNCTYPE(None)
-#hook_function = ctypes.PYFUNCTYPE(None)
+hook_function = CFUNCTYPE(c_int, c_int)
+#hook_function = PYFUNCTYPE(c_int, c_int)
 
-
-PyOS_InputHook = ctypes.pointer(hook_function.in_dll(
-    ctypes.pythonapi, 'PyOS_InputHook'))
-
-PyOS_Readline_Interrupted = ctypes.pointer(ctypes.c_int.in_dll(
-    readline_lib, 'PyOS_Readline_Interrupted'))
+call_readline_InputHookP = pointer(hook_function.in_dll(
+    call_readline_lib, 'call_readline_InputHook'))
 
 
 @hook_function
-def my_hook():
+def readline_hook(stdin):
     try:
         while True:
             # Let the scheduler run.
             delay = cothread.PollScheduler()
             # Wait until either stdin or the scheduler are ready.
-            if select.select([sys.stdin], [], [], delay)[0]:
+            if select.select([stdin], [], [], delay)[0]:
                 break
     except KeyboardInterrupt:
-        PyOS_Readline_Interrupted[0] = 1
+        return True
+    except:
+        # If any other kind of exception gets here then we have a real
+        # problem.  The return value will be undefined, and the scheduler
+        # will be broken.  Best to record that we're now dead, create the
+        # traceback, and disable the hook.
+        print 'Exception raised by scheduler: scheduler abandoned'
+        traceback.print_exc()
 
-PyOS_InputHook[0] = my_hook
+        # Now disable any further hooking by resetting the hook.  We have to
+        # set it to zero, so this requires a certain amount of fakery so the
+        # type system will play properly.
+        cast(call_readline_InputHookP, POINTER(c_int))[0] = 0
+        return False
+    else:
+        return False
+
+call_readline_InputHookP[0] = readline_hook
 
 
 def iqt(maxtime = 10):

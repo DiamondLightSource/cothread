@@ -16,6 +16,7 @@ them.'''
 
 import sys
 import atexit
+import traceback
 
 import cothread
 from cadef import *
@@ -53,8 +54,8 @@ __all__ = [
 
 class ca_nothing(Exception):
     '''This value is returned as a success indicator from caput, as a failure
-    indicator from caget, and may be raised to report a data error on caget or
-    caput with wait.'''
+    indicator from caget, and may be raised as an exception to report a data
+    error on caget or caput with wait.'''
     
     def __init__(self, name, errorcode = ECA_NORMAL):
         '''Initialise with PV name and associated errorcode.'''
@@ -201,31 +202,18 @@ class ChannelCache(object):
 #   camonitor
 
 
-# By default all subscription events are queued onto this queue which is
-# dispatched by the callback dispatcher in its own thread.
-_callback_queue = cothread.EventQueue()
-
-@cothread.Spawn
-def _callback_dispatcher():
-    '''The default event handler expects a callback, a value and a context on
-    the queue and simply fires the callback.  This runs as a continous
-    background process to dispatch subscription events.'''
-    
-    while True:
-        callback, value, context = _callback_queue.Wait()
-        callback(value, context)
-
-
-
 class Subscription(object):
     '''A Subscription object wraps a single channel access subscription, and
-    notifies all updates through an event queue.'''
+    notifies all updates through an event queue.  The on_event(value) method
+    will be called (during channel access callback) on each update, and can
+    be overridden if required to customise behaviour.
+        For most uses the default behaviour of calling a callback will be
+    sufficient.'''
     
     # Subscription state values:
-    __OPENING = 0   # Subscription not complete yet
-    __OPEN = 1      # Normally active
-    __CLOSED = 2    # Closed but not yet deleted
-
+    __OPENING = 0       # Subscription not complete yet
+    __OPEN    = 1       # Normally active
+    __CLOSED  = 2       # Closed but not yet deleted
     
     @event_handler
     def __on_event(args):
@@ -242,23 +230,19 @@ class Subscription(object):
         else:
             # Something is wrong: let the subscriber know
             value = ca_nothing(self.channel.name, args.status)
-        self.__queue.Signal((self.__callback, value, self.__context))
-
+        self.on_event(value)
         
     def _on_connect(self, connected):
         '''This is called each time the connection state of the underlying
         channel changes.  Note that this is also called asynchronously.'''
         if not connected:
             # Channel has become disconnected: tell the subscriber.
-            value = ca_nothing(self.channel.name, ECA_DISCONN)
-            self.__queue.Signal((self.__callback, value, self.__context))
+            self.on_event(ca_nothing(self.channel.name, ECA_DISCONN))
 
-        
     def __del__(self):
         '''On object deletion ensure that the associated subscription is
         closed.'''
         self.close()
-
         
     def close(self):
         '''Closes the subscription and releases any associated resources.'''
@@ -269,10 +253,7 @@ class Subscription(object):
             del self.channel
         self.__state = self.__CLOSED
 
-
-    def __init__(self, name,
-            callback, context = None,
-            queue = _callback_queue,
+    def __init__(self, name, callback, 
             events = DBE_VALUE,
             datatype = None, format = FORMAT_RAW, count = 0):
         '''Subscription initialisation: callback and context are used to
@@ -280,14 +261,13 @@ class Subscription(object):
         update are notified;  datatype, format and count define the format
         of returned data.'''
 
-        # We let the subscription keep the channel alive
         self.name = name
+        self.callback = callback
+
+        # We connect to the channel so that we can be kept informed of
+        # connection updates.
         self.channel = _channel_cache[name]
         self.channel._add_subscription(self)
-
-        self.__queue = queue
-        self.__callback = callback
-        self.__context = context
 
         # Spawn the actual task of creating the subscription into the
         # background, as we may have to wait for the channel to become
@@ -295,7 +275,6 @@ class Subscription(object):
         self.__state = self.__OPENING
         cothread.Spawn(self.__create_subscription,
             events, datatype, format, count)
-
             
     def __create_subscription(self, events, datatype, format, count):
         '''Creates the channel subscription with the specified parameters:
@@ -323,10 +302,47 @@ class Subscription(object):
             self._as_parameter_ = event_id.value
             self.__state = self.__OPEN
 
+            
+    # Default event handling.  This is designed to be overridden as
+    # appropriate.
+            
+    # By default all subscription events are queued onto this queue which is
+    # dispatched by the callback dispatcher in its own thread.
+    _callback_queue = cothread.EventQueue()
 
-def camonitor(pvs, *args, **kargs):
+    @classmethod
+    def _callback_dispatcher(cls):
+        '''The default event handler expects a callback and a value on
+        the queue and simply fires the callback.  This runs as a continous
+        background process to dispatch subscription events.'''
+        while True:
+            self, value = cls._callback_queue.Wait()
+            try:
+                self.callback(value)
+            except:
+                # We try and be robust about exceptions in handlers, but to
+                # prevent a perpetual storm of exceptions, we close the
+                # subscription after reporting the problem.
+                print 'Subscription %s callback raised exception' % self
+                traceback.print_exc()
+                self.close()
+
+    def on_event(self, value):
+        '''This is the default on event handler, and is called fairly directly
+        from channel access on an event update.  This handler can be
+        overridden as required: note however that this is called in a
+        callback context, and so no scheduler blocking can occur.
+
+        The default action is to queue the event onto the callback queue.'''
+        self._callback_queue.Signal((self, value))
+
+
+# Ensure the callback dispatcher is running.
+cothread.Spawn(Subscription._callback_dispatcher)
+
+
+def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
-        context = None, queue = _callback_queue,
         events = DBE_VALUE,
         datatype = None, format = FORMAT_RAW, count = 0)
 
@@ -337,25 +353,26 @@ def camonitor(pvs, *args, **kargs):
     Subscriptions will remain active until the close() method is called on
     the returned subscription object.
 
-    By default (if the queue parameter is not specified) updates are 
-    reported through calls to the given callback function, called thus:
+    The precise way in which the callback routine is called on updates
+    depends on whether pvs is a single name or a list of names.  If it is
+    single name then it is called as
 
-        callback(value, context)
+        callback(value)
 
-    where value is either an update on the selected pv or an error value.
-    Every value has .name and .ok fields; for more detail see the
+    for each update.  If pvs is a list of names then each update is
+    reported as
+    
+        callback(value, index)
+
+    where index is the position in the original array of pvs of the name
+    generating this update.
+
+    Every value has .name and .ok fields: if the channel has disconnected
+    then .ok will be False, otherwise the value is an augmented
+    representation of the updated value; for more detail on values see the
     documentation for caget.
 
     The parameters modify the behaviour as follows:
-
-    context
-        This is passed to the callback function by default.  If an array of
-        PVs is passed to camonitor() this will be set to the array index of
-        each PV.
-
-    queue
-        This can be specified to alter the handling of updates.  All updates
-        will be posted to the queue as a 3-tuple (callback, value, context).
 
     events
         This identifies the type of update which will be notified.  A
@@ -365,21 +382,18 @@ def camonitor(pvs, *args, **kargs):
         DBE_LOG         Notify archive value changes
         DBE_ALARM       Notify alarm state changes
             
-
     datatype
     format
     count
         These all specify the format in which data is returned.  See the
-        documentation for caget for details.
-    '''
+        documentation for caget for details.'''
     if isinstance(pvs, str):
-        return Subscription(pvs, *args, **kargs)
+        return Subscription(pvs, callback, **kargs)
     else:
         return [
-            Subscription(pv, context = n, *args, **kargs)
+            Subscription(pv, lambda v: callback(v, n), **kargs)
             for n, pv in enumerate(pvs)]
-    
-    
+
 
 # ----------------------------------------------------------------------------
 #   caget
@@ -398,8 +412,7 @@ def _caget_event_handler(args):
     ctypes.pythonapi.Py_DecRef(args.usr)
     
     if args.status == ECA_NORMAL:
-        done.Signal(
-            dbr_to_value(args.raw_dbr, args.type, args.count, pv))
+        done.Signal(dbr_to_value(args.raw_dbr, args.type, args.count, pv))
     else:
         done.SignalException(ca_nothing(pv, args.status))
 
@@ -450,9 +463,10 @@ def caget_array(pvs, **kargs):
     # iterator (rather than a complete list) by default so that the caller
     # can process the results as they arrive (well, not really, actually:
     # they come back in order of request).
-    return cothread.WaitForAll([
-        cothread.Spawn(caget_one, pv, raise_on_wait = True, **kargs)
-        for pv in pvs], iterator = True)
+    return cothread.WaitForAll(
+        [ cothread.Spawn(caget_one, pv, raise_on_wait = True, **kargs)
+          for pv in pvs ],
+        iterator = True)
 
 
 def caget(pvs, **kargs):
@@ -460,8 +474,8 @@ def caget(pvs, **kargs):
         timeout = None, datatype = None,
         format = FORMAT_RAW, count = 0, throw = True)
 
-    Retrieves the value from one or more PVs.  If a single pv is given then a
-    single value is returned, otherwise a list of values is returned.
+    Retrieves the value from one or more PVs.  If a single pv is given then
+    a single value is returned, otherwise a list of values is returned.
 
     Every value returned has the following fields:
 
@@ -473,7 +487,6 @@ def caget(pvs, **kargs):
     If ok is False then the .errorcode field is set to the appropriate ECA_
     error code and str(value) will return an appropriate error message.
     
-
     The various arguments control the behaviour of caget as follows:
 
     timeout
@@ -512,10 +525,12 @@ def caget(pvs, **kargs):
             set of fields depends on the underlying datatype:
 
             DBR_SHORT, DBR_CHAR, DBR_LONG
-                The alarm .status and .severity fields together with
-                .units and limit fields: .upper_disp_limit, .lower_disp_limit,
-                .upper_alarm_limit, .lower_alarm_limit, .upper_warning_limit,
-                .lower_warning_limit, .upper_ctrl_limit, .lower_ctrl_limit.
+                The alarm .status and .severity fields together with .units
+                and limit fields:
+                .upper_disp_limit, .lower_disp_limit,
+                .upper_alarm_limit, .lower_alarm_limit,
+                .upper_warning_limit, .lower_warning_limit,
+                .upper_ctrl_limit, .lower_ctrl_limit.
             
             DBR_FLOAT, DBR_DOUBLE
                 As above together with a .precision field.
@@ -525,7 +540,8 @@ def caget(pvs, **kargs):
                 list of possible enumeration strings.
             
             DBR_STRING
-                _CTRL format is not supported for this field type.
+                _CTRL format is not supported for this field type, and
+                FORMAT_TIME data is returned instead.
 
     count
         If specified this can be used to limit the number of waveform values
@@ -552,8 +568,8 @@ def caget(pvs, **kargs):
 
 @event_handler
 def _caput_event_handler(args):
-    '''Event handler for successful caput with callback completion.
-    Returns status code to caller.'''
+    '''Event handler for caput with callback completion.  Returns status
+    code to caller.'''
 
     # This is called exactly once when a caput request completes.  Extract
     # our context information and discard the context immediately.
@@ -609,7 +625,7 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
         for pv, value in zip(pvs, values)])
 
     
-def caput(pvs, values, **kwargs):
+def caput(pvs, values, **kargs):
     '''caput(pvs, values,
         repeat_value = False, timeout = None, wait = False, throw = True)
 
@@ -649,9 +665,9 @@ def caput(pvs, values, **kwargs):
     corresponding PV name.  If throw=False was specified and a put failed
     then .errorcode is set to the appropriate ECA_ error code.'''
     if isinstance(pvs, str):
-        return caput_one(pvs, values, **kwargs)
+        return caput_one(pvs, values, **kargs)
     else:
-        return caput_array(pvs, values, **kwargs)
+        return caput_array(pvs, values, **kargs)
 
 
 

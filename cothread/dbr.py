@@ -146,10 +146,8 @@ class dbr_double(ctypes.Structure):
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', ctypes.c_double * 1)]
 
-    
-# DBR types with timestamps.  We use mixin classes here to combine the
-# timestamp copy_attributes with the other type specific attributes: the
-# order of parent classes is important!
+# DBR types with timestamps.
+
 class dbr_time_string(ctypes.Structure):
     dtype = str_dtype
     scalar = ca_str
@@ -225,8 +223,8 @@ class dbr_time_double(ctypes.Structure):
         ('RISC_pad',  ctypes.c_long),
         ('raw_value', ctypes.c_double * 1)]
 
-# DBR types with full control and graphical fields, also implemented using
-# mixin classes.
+# DBR types with full control and graphical fields
+
 class dbr_ctrl_short(ctypes.Structure):
     dtype = numpy.int16
     scalar = ca_int
@@ -276,7 +274,6 @@ class dbr_ctrl_enum(ctypes.Structure):
         ('raw_value', ctypes.c_ushort * 1)]
     
     def copy_attributes(self, other):
-        print self.no_str
         other.status = self.status
         other.severity = self.severity
         other.enums = [
@@ -339,7 +336,9 @@ class dbr_ctrl_double(ctypes.Structure):
         ('upper_ctrl_limit',    ctypes.c_double),
         ('lower_ctrl_limit',    ctypes.c_double),
         ('raw_value',           ctypes.c_double * 1)]
+
     
+# No idea what this is for, and at the moment we provide no support for it!
 class dbr_stsack_string(ctypes.Structure):
     _fields_ = [
         ('status', ctypes.c_ushort),
@@ -410,13 +409,8 @@ DbrCodeToType = {
 
 # List of basic DBR types that we can process directly.
 BasicDbrTypes = set([
-    DBR_STRING,
-    DBR_SHORT,
-    DBR_FLOAT,
-    DBR_ENUM,
-    DBR_CHAR,
-    DBR_LONG,
-    DBR_DOUBLE,
+    DBR_STRING,     DBR_SHORT,      DBR_FLOAT,      DBR_ENUM,
+    DBR_CHAR,       DBR_LONG,       DBR_DOUBLE,
 ])
 
 
@@ -486,7 +480,10 @@ def type_to_dbr(datatype, format = FORMAT_RAW):
     '''
     if datatype not in BasicDbrTypes:
         # See if numpy can help us out
-        datatype = NumpyCharCodeToDbr[numpy.dtype(datatype).char]
+        try:
+            datatype = NumpyCharCodeToDbr[numpy.dtype(datatype).char]
+        except:
+            raise InvalidDatatype('Datatype not supported for channel access')
 
     # Now take account of the format
     if format == FORMAT_RAW:
@@ -497,14 +494,14 @@ def type_to_dbr(datatype, format = FORMAT_RAW):
         return datatype + 14
     elif format == FORMAT_CTRL:
         if datatype == DBR_STRING:
-            # There is no ctrl option for strings, so in this case revert to
-            # the raw data option.
-            return datatype
+            # There is no ctrl option for strings, so in this case provide
+            # the richest format we have available.
+            return datatype + 14
         else:
             # Return corresponding DBR_CTRL_XXX value
             return datatype + 28
     else:
-        raise InvalidDatatype
+        raise InvalidDatatype('Format not recognised')
 
 
 def dbr_to_value(raw_dbr, datatype, count, name):
@@ -530,7 +527,7 @@ def dbr_to_value(raw_dbr, datatype, count, name):
 
     # String types need to be cleaned up: anything past the first
     # null is garbage and needs to be deleted.
-    if raw_dbr.dtype is str_dtype:
+    if dbr_type.dtype is str_dtype:
         for i in range(count):
             result[i] = truncate_string(result[i])
 
