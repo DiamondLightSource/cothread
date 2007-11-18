@@ -2,7 +2,6 @@
 for input from the interpreter command line.  Also includes optional support
 for the Qt event loop.'''
 
-import cothread
 import ctypes
 import select
 import sys
@@ -14,6 +13,7 @@ from ctypes import *
 # The order of these two is rather important: we are effectively patching
 # readline to use our own hook.
 import readline
+import cothread
 import call_readline
 
 

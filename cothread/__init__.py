@@ -13,7 +13,7 @@ modules:
 '''
 
 import cothread
-import input_hook
+#import input_hook
 
 from cothread import *
 
