@@ -36,12 +36,9 @@ import time
 import greenlet
 import bisect
 import traceback
-import select as _select
 
 from utility import *
-
-import ctypes
-
+import coselect
 
 
 __all__ = [
@@ -52,20 +49,12 @@ __all__ = [
     'Event',            # Event for waiting and signalling
     'EventQueue',       # Queue of objects with event handling
     'Quit',             # Immediate process quit
-    'WaitForAll',
-    'WaitForQuit',
-    'Quit',
+    'WaitForAll',       # Wait for all events to become ready
+    'WaitForQuit',      # Wait until Quit() is called
+    'Quit',             # Signal end of process
     'AbsTimeout',
-    'Timedout',
-    'select',
 ]
 
-
-
-# A helpful routine to ensure that our select() behaves as much as possible
-# like the real thing!
-PyObject_AsFileDescriptor = ctypes.pythonapi.PyObject_AsFileDescriptor
-PyObject_AsFileDescriptor.argtypes = [ctypes.py_object]
 
 
 
@@ -125,7 +114,7 @@ class _Scheduler(object):
         '__timer_queue',    # Tasks waiting for timers
         '__greenlet',       # Scheduler greenlet  
         '__poll_callback',  # Set while scheduler being polled from outside
-        '__select_queues',  # Array of file handles for select waiting
+        '__poll_queue',     # Polled files, event masks and tasks
     ]
 
     # Task wakeup reasons
@@ -185,12 +174,32 @@ class _Scheduler(object):
         self.__greenlet = greenlet.getcurrent()
         # Initially the schedule loop will run freely with its own select.
         self.__poll_callback = None
-        # Queues of tasks waiting for file handle wakeups, indexed by file
-        # handle, one queue per wakeup category (readable, writeable,
-        # exception).
-        self.__select_queues = ({}, {}, {})
+        # Dictionary of waitable descriptors for which polling needs to be
+        # done.  Each entry consists of an event mask together with a list of
+        # interested tasks.
+        self.__poll_queue = {}
         
 
+    def __tick(self):
+        '''This must be called regularly to ensure that all waiting tasks are
+        processed.  It processes all tasks that are ready to run and then runs
+        all timers that have expired.'''
+        # Wake up all the expired timers on entry.  These go to the end of
+        # the ready queue.
+        self.wakeup(self.__timer_queue.get_expired(), self.__WAKEUP_TIMEOUT)
+        
+        # Pick up the ready queue and process every task in it.  When each
+        # task is resumed it is passed a flag indicating whether it has been
+        # resumed because of an expired timer, or for some other reason
+        # (typically either a voluntary suspend, or a successful wait for an
+        # event).
+        ready_queue = self.__ready_queue
+        self.__ready_queue = []
+        for task, reason in ready_queue:
+            assert not task.dead
+            task.switch(reason)
+
+            
     def __schedule_loop(self):
         '''This runs a scheduler loop without returning.  If no poll interval
         is given then when there nothing to be done only timers will be
@@ -210,44 +219,42 @@ class _Scheduler(object):
                 # Nothing to do: block until something external happens.
                 delay = None
 
-            # Finally suspend until something is ready.  We select on all the
-            # handles that we're waiting for, and then __wakeup_select() will
-            # ensure that all interested parties are notified.
-            selects = [queue.keys() for queue in self.__select_queues]
-            self.__wakeup_select(*self.__select(*selects + [delay]))
+            # Finally suspend until something is ready.  The poll queue
+            # contains a list of all the file descriptors we're interested
+            # in.  First extract the (descriptor, events) pairs, do the
+            # suspend, and finally wake up any interested tasks.
+            poll_list = [
+                (file, queue[0])
+                for file, queue in self.__poll_queue.items()]
+            self.__wakeup_poll(self.__poll_suspend(poll_list, delay))
 
                 
-    def __select(self, *select_args):
+    def __poll_suspend(self, *poll_args):
         '''Suspends the scheduler until the appropriate ready condition is
-        reached.  Returns lists of ready file handles.'''
+        reached.  Returns lists of ready file descriptors and events.'''
         if self.__poll_callback is None:
-            # If we're not being polled from outside, run our own select.
-            return _select.select(*select_args)
+            # If we're not being polled from outside, run our own poll.
+            return coselect.poll_block(*poll_args)
         else:
             # If the scheduler loop was invoked from outside then return
             # control back to the caller: it will provide the select
             # operation we need.
-            return self.__poll_callback.switch(*select_args)
-
-        # Note that using select is actually not good: a bad file handle will
-        # cause select() to fail, and it's hard to fix.
-        #   Instead, if we use poll() this will be better.  Unfortunately,
-        # the interface through poll_scheduler() is then going to be a little
-        # more difficult.
+            return self.__poll_callback.switch(*poll_args)
 
 
-    def poll_scheduler(self, iwtd, owtd, ewtd):
+    def poll_scheduler(self, ready_list):
         '''This is called when the scheduler needs to be controlled from
         outside.  It will perform a full round of scheduling before returing
         control to the caller.
-            Four values are returned, being precisely the values required for
-        a call to select().  A sensible default outer scheduler loop would be
+            Two values are returned, a list of descriptors and events plus
+        a timeout, being precisely the values required for a call to
+        poll_block().  A sensible default outer scheduler loop would be
 
-            iwtd, owtd, ewtd = [], [], []
+            ready_list = []
             while True:
-                iwtd, owtd, ewtd = select(*poll_scheduler(iwtd, owtd, ewtd))
+                ready_list = poll_block(*poll_scheduler(ready_list))
         '''
-        assert self.__poll_callback is None, 'Multiple pollers will not work'
+        assert self.__poll_callback is None, 'Nested pollers will not work'
         
         # Switching to the scheduler will return control to us when the next
         # round is complete.
@@ -255,7 +262,7 @@ class _Scheduler(object):
         # schedule, as we may be resuming inside the dispatch loop: in effect
         # the first call to this routine interrupts the original scheduler.
         self.__poll_callback = greenlet.getcurrent()
-        result = self.__greenlet.switch(iwtd, owtd, ewtd)
+        result = self.__greenlet.switch(ready_list)
         self.__poll_callback = None
         
         if result == self.__WAKEUP_INTERRUPT:
@@ -265,26 +272,6 @@ class _Scheduler(object):
             return result
         
 
-    def __tick(self):
-        '''This must be called regularly to ensure that all waiting tasks are
-        processed.  It processes all tasks that are ready to run and then runs
-        all timers that have expired.'''
-        # Wake up the expired timers on entry.  We do this now (rather than
-        # at the end of task processing) to help with fairness.
-        self.wakeup(self.__timer_queue.get_expired(), self.__WAKEUP_TIMEOUT)
-        
-        # Pick up the ready queue and process every task in it.  When each
-        # task is resumed it is passed a flag indicating whether it has been
-        # resumed because of an expired timer, or for some other reason
-        # (typically either a voluntary suspend, or a successful wait for an
-        # event).
-        ready_queue = self.__ready_queue
-        self.__ready_queue = []
-        for task, reason in ready_queue:
-            assert not task.dead
-            task.switch(reason)
-
-            
     def spawn(self, function):
         '''Spawns a new task: function is spawned as a new background task
         as a child of the scheduler task.'''
@@ -300,7 +287,8 @@ class _Scheduler(object):
         up, with a call to wakeup()).
             Returns True iff the wakeup is from a timeout.'''
         # If no wakeup has been specified, create one.  This is a key
-        # component for ensuring consistent behaviour of the syste.
+        # component for ensuring consistent behaviour of the system: the
+        # wakeup object ensures each task is only woken up exactly once.
         if wakeup is None:
             wakeup = _Wakeup()
             
@@ -313,7 +301,14 @@ class _Scheduler(object):
             self.__timer_queue.put(wakeup, until)
 
         # Suspend until we're woken.
-        result = self.__greenlet.switch()
+        # Normally this call will return control to __tick(), but there are
+        # two other cases to consider.  On the very first suspend control is
+        # returned to the top of __scheduler(), and more interestingly, on
+        # suspending immediately after calling poll_scheduler() control is
+        # returned to __select().  This last case expects a list of ready
+        # descriptors to be returned, so we have to be compatible with this!
+        result = self.__greenlet.switch([])
+        
         if result == self.__WAKEUP_INTERRUPT:
             # We get here if main is suspended and the scheduler decides to
             # die.  Make sure our wakeup is cancelled, and then re-raise the
@@ -335,30 +330,45 @@ class _Scheduler(object):
         return wakeup_count
 
                 
-    def select_until(self, selector, wait_list, until):
-        '''Cooperative select: the calling task is suspended until one of
+    def poll_until(self, poller, until):
+        '''Cooperative poll: the calling task is suspended until one of
         the specified waitable objects becomes ready or the timeout expires.
         '''
-        for waits, queue in zip(wait_list, self.__select_queues):
-            for file in waits:
-                file = PyObject_AsFileDescriptor(file)
-                queue.setdefault(file, []).append(selector)
-        self.wait_until(until, wakeup = selector.wakeup)
+        # Add our poller to the appropriate poll event queues so that we'll
+        # get woken.
+        for file, events in poller.event_list():
+            # Each entry on the poll queue is a pair: a mask of events being
+            # waited for, and a list of pollers to be notified.
+            queue = self.__poll_queue.setdefault(file, [0, []])
+            queue[0] |= events
+            queue[1].append(poller)
+        self.wait_until(until, wakeup = poller.wakeup)
 
-    def __wakeup_select(self, *active_files):
-        '''Called with active file objects.  All waiting tasks are informed
-        of files for which interest has been registered.'''
-        for index, (active_list, queue) in enumerate(zip(
-                active_files, self.__select_queues)):
-            # There are three active lists and queues, for readable,
-            # writeable and exceptional condition objects.
-            for file in active_list:
-                # Use the underlying file handle as the queue index.
-                file = PyObject_AsFileDescriptor(file)
-                for selector in queue[file]:
-                    # cancel any timers.
-                    selector.notify_wakeup(file, index)
-                del queue[file]
+    def __wakeup_poll(self, poll_result):
+        '''Called with the result of a system poll: a list of file descriptors
+        and wakeup reasons.  Each waiting task is informed.'''
+        # Work through all the notified files: with each file is a received
+        # event mask which we'll pass through to the interested task.
+        for file, events in poll_result:
+            new_events = 0
+            new_pollers = []
+            for poller in self.__poll_queue[file][1]:
+                events = poller.notify_wakeup(file, events)
+                if events:
+                    # If a task says that it's still waiting for an event on
+                    # this file (evidently the events mask we gave it wasn't
+                    # interesting enough) it's going need to go back on the
+                    # queue.
+                    #     We could allow the task to wake up and do this
+                    # processing then instead, but it comes out a little
+                    # neater here.
+                    new_pollers.append(poller)
+                    new_events |= events
+            if new_pollers:
+                # Oh dear, somebody's still interested.
+                self.__poll_queue[file] = [new_events, new_pollers]
+            else:
+                del self.__poll_queue[file]
 
 
 class _Wakeup(object):
@@ -372,37 +382,8 @@ class _Wakeup(object):
         task = self.__task
         self.__task = None
         return task
-
-
-class _Selector(object):
-    '''Wrapper for handling select wakeup.'''
-    __slots__ = ['wakeup', '__ready_list']
-    
-    def __init__(self):
-        self.wakeup = _Wakeup()
-        self.__ready_list = ([], [], [])
-
-    def notify_wakeup(self, file, index):
-        '''This is called from the scheduler as each file becomes ready.  We
-        add the file to our list of ready handles and wake ourself up.'''
-        self.__ready_list[index].append(file)
-        _scheduler.wakeup([self.wakeup])
-
-    def ready_list(self, wait_list):
-        return [
-            [waiter
-                for waiter in waiters
-                if PyObject_AsFileDescriptor(waiter) in readys]
-            for waiters, readys in zip(wait_list, self.__ready_list)]
-            
-
-def select(iwtd, owtd, ewtd, timeout = None):
-    wait_list = (iwtd, owtd, ewtd)
-    until = Deadline(timeout)
-    selector = _Selector()
-    _scheduler.select_until(selector, wait_list, until)
-    return selector.ready_list(wait_list)
-
+    def woken(self):
+        return self.__task is None
 
 
 
@@ -528,7 +509,7 @@ class Spawn(EventBase):
                 # No good.  We can't allow this exception to propagate, as
                 # doing so will kill the scheduler.  Instead report the
                 # traceback right here.
-                print 'Spawed task raised uncaught exception in', \
+                print 'Spawned task raised uncaught exception in', \
                     self.__function.__name__
                 traceback.print_exc()
                 self.__result = (True, None)

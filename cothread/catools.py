@@ -56,6 +56,7 @@ class ca_nothing(Exception):
     '''This value is returned as a success indicator from caput, as a failure
     indicator from caget, and may be raised as an exception to report a data
     error on caget or caput with wait.'''
+    __slots__ = ['ok', 'name', 'errorcode']
     
     def __init__(self, name, errorcode = ECA_NORMAL):
         '''Initialise with PV name and associated errorcode.'''
@@ -105,6 +106,12 @@ def maybe_throw(function):
 
 class Channel(object):
     '''Wraps a single channel access channel object.'''
+    __slots__ = [
+        'name',
+        '__subscriptions',  # Set of listening subscriptions
+        '__connected',      # Event for waiting for channel connection
+        '_as_parameter_'    # Associated channel access channel handle
+    ]
     
     @connection_handler
     def on_ca_connect(args):
@@ -175,6 +182,7 @@ class ChannelCache(object):
     '''A cache of all open channels.  If a channel is not present in the
     cache it is automatically opened.  The cache needs to be purged to
     ensure a clean shutdown.'''
+    __slots__ = ['__channels']
     
     def __init__(self):
         self.__channels = {}
@@ -194,7 +202,7 @@ class ChannelCache(object):
         cause other channel access to fail, so only to be done on shutdown.'''
         for channel in self.__channels.values():
             channel._purge()
-        del self.__channels
+        self.__channels = {}
 
 
 
@@ -209,6 +217,13 @@ class Subscription(object):
     be overridden if required to customise behaviour.
         For most uses the default behaviour of calling a callback will be
     sufficient.'''
+    __slots__ = [
+        'name',             # Name of the PV subscribed to
+        'callback',         # The user callback function
+        'channel',          # The associated channel object
+        '__state',          # Whether the subscription is active
+        '_as_parameter_',   # Associated channel access subscription handle
+    ]
     
     # Subscription state values:
     __OPENING = 0       # Subscription not complete yet

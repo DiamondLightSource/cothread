@@ -12,16 +12,16 @@ def value_callback(value, index):
 
 pv_list = [
 #    'TS-DI-EBPM-03:CF:KY_S',
-    'TS-DI-EBPM-03:SA:X',
-    'TS-DI-EBPM-03:FT:WFA',
-    'TS-DI-EBPM-03:SA:MAXADC',
+    'SR01C-DI-EBPM-03:SA:X',
+    'SR01C-DI-EBPM-03:FT:WFA',
+    'SR01C-DI-EBPM-03:SA:MAXADC',
+#     'TS-DI-EBPM-03:SA:X',
+#     'TS-DI-EBPM-03:FT:WFA',
+#     'TS-DI-EBPM-03:SA:MAXADC',
     'bogus'
 ]
 
 
-# This call raises a very interesting question: what do we do when scheduler
-# calls are made before the scheduler is running (that is, in the scheduler's
-# own task)?
 subscriptions = catools.camonitor(
     pv_list, value_callback, datatype = float, count = 3)
 
