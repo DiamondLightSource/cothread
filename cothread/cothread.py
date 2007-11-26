@@ -1,4 +1,4 @@
-'''Simple cooperative threading using greenlets.  The following functions
+'''Simple cooperative threading using coroutines.  The following functions
 define the interface provided by this module.
 
     Spawn(function, arguments...)
@@ -8,13 +8,16 @@ define the interface provided by this module.
 
     Sleep(delay)
     SleepUntil(time)
-    Yield()
         The calling task is suspended until the given time.  Sleep(delay)
         suspends the task for at least delay seconds, SleepUntil(time)
         suspends until the specified time has passed (time is defined as the
-        value returned by time.time()), and Yield() is the same as Sleep(0).
+        value returned by time.time()).
             Control is not returned to the calling task until all other
         active tasks have been processed.
+        
+    Yield()
+        Yield() suspends control so that all other potentially busy tasks can
+        run.  
 
 Instances of the Event object can be used for communication between tasks.
 The following Event object methods are relevant.
@@ -43,16 +46,20 @@ import coselect
 
 __all__ = [
     'Spawn',            # Spawn new task
+    
     'Sleep',            # Suspend task for given delay
     'SleepUntil',       # Suspend task until specified time
     'Yield',            # Suspend task for immediate resumption
+    
     'Event',            # Event for waiting and signalling
     'EventQueue',       # Queue of objects with event handling
-    'Quit',             # Immediate process quit
     'WaitForAll',       # Wait for all events to become ready
+
+    'AbsTimeout',       # Converts timeout into absolute deadline format
+    'Timedout',         # Timeout exception raised by event waiting
+    
+    'Quit',             # Immediate process quit
     'WaitForQuit',      # Wait until Quit() is called
-    'Quit',             # Signal end of process
-    'AbsTimeout',
 ]
 
 
@@ -156,7 +163,7 @@ class _Scheduler(object):
                 # Switch to the main task asking it to re-raise the
                 # interrupt.  First we have to make sure it's not on the run
                 # queue.
-                for index, (task, reason) in self.__ready_queue:
+                for index, (task, reason) in enumerate(self.__ready_queue):
                     if task is caller:
                         del self.__ready_queue[index]
                         break
@@ -279,6 +286,16 @@ class _Scheduler(object):
         self.__ready_queue.append((task, self.__WAKEUP_NORMAL))
 
 
+    def do_yield(self):
+        '''Hands control to the next task with work to do, will return as
+        soon as there is time.'''
+        task = greenlet.getcurrent()
+        self.__ready_queue.append((task, self.__WAKEUP_NORMAL))
+        # See wait_until() below for explanations on why this isn't trivial.
+        if self.__greenlet.switch([]) == self.__WAKEUP_INTERRUPT:
+            raise
+
+
     def wait_until(self, until, suspend_queue = None, wakeup = None):
         '''The calling task is suspended.  If a deadline is given then the
         task will definitely be woken up when the deadline is reached if not
@@ -286,6 +303,10 @@ class _Scheduler(object):
         (and it is the caller's responsibility to ensure the task is woken
         up, with a call to wakeup()).
             Returns True iff the wakeup is from a timeout.'''
+        # If the timeout has already expired then do nothing at all.
+        if until is not None and time.time() >= until:
+            return True
+            
         # If no wakeup has been specified, create one.  This is a key
         # component for ensuring consistent behaviour of the system: the
         # wakeup object ensures each task is only woken up exactly once.
@@ -297,7 +318,7 @@ class _Scheduler(object):
         # caller to arrange a wakeup.
         if suspend_queue is not None:
             suspend_queue.append(wakeup)
-        if until:
+        if until is not None:
             self.__timer_queue.put(wakeup, until)
 
         # Suspend until we're woken.
@@ -308,7 +329,6 @@ class _Scheduler(object):
         # returned to __select().  This last case expects a list of ready
         # descriptors to be returned, so we have to be compatible with this!
         result = self.__greenlet.switch([])
-        
         if result == self.__WAKEUP_INTERRUPT:
             # We get here if main is suspended and the scheduler decides to
             # die.  Make sure our wakeup is cancelled, and then re-raise the
@@ -387,17 +407,6 @@ class _Wakeup(object):
 
 
 
-# There is only the one scheduler, which we create right away.  A dedicated
-# scheduler task is created: this allows the main task to suspend, but does
-# mean that the scheduler is not the parent of all the tasks it's managing.
-_scheduler = _Scheduler.create()
-
-
-class QuitScheduler(Exception):
-    '''Exception raised on quit request.  This should propagate through the
-    scheduler to abort all activity.'''
-
-
 class Timedout(Exception):
     '''Waiting for event timed out.'''
 
@@ -413,12 +422,10 @@ def AbsTimeout(timeout):
     and returns a timeout in absolute deadline format.'''
     if timeout is None:
         return None
+    elif isinstance(timeout, tuple):
+        return timeout
     else:
-        try:
-            _, = timeout
-            return timeout
-        except TypeError:
-            return (timeout + time.time(),)
+        return (timeout + time.time(),)
 
 def Deadline(timeout):
     '''Converts a timeout into a deadline.'''
@@ -509,11 +516,13 @@ class Spawn(EventBase):
                 # No good.  We can't allow this exception to propagate, as
                 # doing so will kill the scheduler.  Instead report the
                 # traceback right here.
-                print 'Spawned task raised uncaught exception in', \
-                    self.__function.__name__
+                print 'Spawned task', self.__function.__name__, \
+                    'raised uncaught exception'
                 traceback.print_exc()
                 self.__result = (True, None)
         self._Wakeup()
+        # See wait_until() for an explanation of this return value.
+        return []
 
     def Wait(self, timeout = None):
         '''Waits until the task has completed.  May raise an exception if the
@@ -567,8 +576,11 @@ class Event(EventBase):
         '''The caller will block until the event becomes true, or until the
         timeout occurs if a timeout is specified.  A Timeout exception is
         raised if a timeout occurs.'''
-        if not self.__value:
-            self._WaitUntil(timeout)
+        # If one task resets the event while another is waiting the wait may
+        # fail, so we have to loop here.
+        deadline = AbsTimeout(timeout)
+        while not self.__value:
+            self._WaitUntil(deadline)
 
         ok, result = self.__value
         if self.__auto_reset:
@@ -600,7 +612,7 @@ class Event(EventBase):
 
 
 class EventQueue(EventBase):
-    '''A queue of objects.'''
+    '''A queue of objects.  A queue can also be treated as an interator.'''
     __slots__ = [
         '__queue',
         '__closed',
@@ -621,14 +633,13 @@ class EventQueue(EventBase):
     def Wait(self, timeout = None):
         '''Returns the next object from the queue, or raises a Timeout
         exception if the timeout expires first.'''
-        if not self.__queue:
-            self._WaitUntil(timeout)
+        deadline = AbsTimeout(timeout)
+        while not self.__queue and not self.__closed:
+            self._WaitUntil(deadline)
         if self.__queue:
             return self.__queue.pop(0)
         else:
-            assert self.__closed, 'Why is the queue empty?'
             raise StopIteration
-            
 
     def Signal(self, value):
         '''Adds the given value to the tail of the queue.'''
@@ -638,8 +649,8 @@ class EventQueue(EventBase):
 
     def close(self):
         '''An event queue can be closed.  This will cause waiting to raise
-        the StopIteration exception, and will prevent any further signals to
-        the queue.'''
+        the StopIteration exception (once existing entries have been read),
+        and will prevent any further signals to the queue.'''
         self.__closed = True
         self._Wakeup(True)
 
@@ -653,6 +664,30 @@ class EventQueue(EventBase):
         return self.Wait()
 
 
+
+class Timer:
+    '''A cancellable one-shot timer.'''
+    
+    def __init__(self, timeout, callback):
+        '''The callback will be called after the specified timeout.'''
+        self.__deadline = AbsTimeout(timeout)
+        self.__callback = callback
+        self.__cancel = Event(auto_reset = False)
+        Spawn(self.__timer)
+
+    def __timer(self):
+        try:
+            self.__cancel.Wait(self.__deadline)
+        except Timedout:
+            # There can be a race between cancelling and timing out: ensure
+            # that if we were cancelled before being fired we do nothing.
+            if not self.__cancel:
+                self.__callback()
+
+    def cancel(self):
+        self.__cancel.Signal()
+            
+            
 
 def WaitForAll(event_list, timeout = None, iterator = False):
     '''Waits for all events in the event list to become ready or for the
@@ -670,47 +705,21 @@ def WaitForAll(event_list, timeout = None, iterator = False):
 
 
 
-# Other highly desireably entites:
+# Other possibly desirable entites:
 #
 #   An asynchronous event queue: can be written from another thread
-#
-#   Cancellable timers
+#       This shouldn't be too hard to implement using the existing
+#       select/poll mechanism for notificaiton.
 #
 #   The ability to wait for an event to occur one of a set of objects
+#       This would probably require quite deep hooking into the queueing
+#       mechanism, and seems of limited value (the natural alternative is to
+#       create a task per event).
 #
-#   The ability to wait for a coroutine to complete
+#   The ability to kill a task
+#       This is probably doable with the .throw greenlet method (or even with
+#       a special wakeup value), but may require some care.
 
-class AsyncEventQueue(EventBase):
-    def __init__(self):
-        pass
-
-class Timer(EventBase):
-    def __init__(self, timeout, callback, retrigger = False):
-        '''Triggers a callback to be made after the specified timeout.  If
-        retriggering is selected then the ti
-            Timers are called from the dedicated timer thread, which means
-        that blocking in one timer will cause all other timers to block. 
-        '''
-        pass
-            
-
-# Publish the global functions of the master scheduler.
-
-PollScheduler = _scheduler.poll_scheduler
-
-
-def SleepUntil(deadline):
-    '''Sleep until the specified deadline.'''
-    _scheduler.wait_until(deadline)
-
-def Sleep(timeout):
-    '''Sleep until the specified timeout has expired.'''
-    _scheduler.wait_until(time.time() + timeout)
-
-def Yield():
-    '''Yield control to another task.  Equivalent to a zero sleep.'''
-    # Implement this as a timeout which expires instantly.
-    _scheduler.wait_until(0)
 
 
 _QuitEvent = Event(auto_reset = False)
@@ -721,14 +730,35 @@ def Quit():
     
 def WaitForQuit(catch_interrupt = True):
     '''Waits for the quit event to be signalled.'''
-    if catch_interrupt:
-        try:
-            _QuitEvent.Wait()
-        except KeyboardInterrupt:
+    try:
+        _QuitEvent.Wait()
+    except KeyboardInterrupt:
+        if catch_interrupt:
             # As a courtesy we quietly catch and discard the keyboard
             # interrupt.  Unfortunately we don't have full control over where
             # this is going to be caught, but if we get it we can exit
             # quietly.
             pass
-    else:
-        _QuitEvent.Wait()
+        else:
+            raise
+
+
+# There is only the one scheduler, which we create right away.  A dedicated
+# scheduler task is created: this allows the main task to suspend, but does
+# mean that the scheduler is not the parent of all the tasks it's managing.
+_scheduler = _Scheduler.create()
+
+
+def SleepUntil(deadline):
+    '''Sleep until the specified deadline.  Note that if the deadline has
+    already passed then no yield of control will ooccur.'''
+    _scheduler.wait_until(deadline)
+
+def Sleep(timeout):
+    '''Sleep until the specified timeout has expired.'''
+    _scheduler.wait_until(time.time() + timeout)
+
+    
+# Publish the global functions of the scheduler.
+PollScheduler = _scheduler.poll_scheduler
+Yield = _scheduler.do_yield

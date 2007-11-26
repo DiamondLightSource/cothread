@@ -139,7 +139,7 @@ class exception_handler_args(ctypes.Structure):
 exception_handler = ctypes.CFUNCTYPE(None, exception_handler_args)
 
 
-# Connecton handler, used to report channel connection status.
+# Connection handler, used to report channel connection status.
 class ca_connection_handler_args(ctypes.Structure):
     _fields_ = [
         ('chid', ctypes.c_void_p),

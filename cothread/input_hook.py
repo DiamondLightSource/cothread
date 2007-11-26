@@ -104,4 +104,9 @@ def iqt(poll_interval = 10):
         global _qapp
         _qapp = qt.QApplication(sys.argv)
 
+    # Ensure a quit request is made when the last Qt window is closed.
+    qt.qApp.connect(qt.qApp, qt.SIGNAL('lastWindowClosed()'), cothread.Quit)
+    # Run the Qt event loop.  Unfortunately we have to run it in polling
+    # mode: connecting up all the sockets might be feasible, but anyway,
+    # that's how it's done now.
     cothread.Spawn(_poll_iqt, qt, poll_interval)

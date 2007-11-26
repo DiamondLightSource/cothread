@@ -27,7 +27,8 @@ class MonitorWaveform:
         self.value = zeros(BPM_count, dtype = datatype)
         self.changed = 0
 
-        camonitor(BPMpvs(name), self.MonitorCallback, datatype = datatype)
+        camonitor(BPMpvs(name), self.MonitorCallback,
+            datatype = datatype, all_updates = True)
         Spawn(self.timer, tick)
 #        server.Timer(tick, self.Update)
 
@@ -52,7 +53,7 @@ class MonitorWaveform:
 MonitorWaveform('SA:X')
 MonitorWaveform('SA:Y')
 
-Sleep(2)
+# Sleep(2)
 
-# # Run until interrupted.
-# WaitForQuit()
+# Run until interrupted.
+WaitForQuit()

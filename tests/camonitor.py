@@ -2,12 +2,12 @@
 # Simple example of camonitor tool using greenlets etcetera.
 
 from cothread.cothread import *
-from cothread import catools
+from cothread.catools import *
 import sys
 
 
 def value_callback(value, index):
-    print value.name, value
+    print value.timestamp, value.name, value
 
 
 pv_list = [
@@ -22,8 +22,8 @@ pv_list = [
 ]
 
 
-subscriptions = catools.camonitor(
-    pv_list, value_callback, datatype = float, count = 3)
+subscriptions = camonitor(
+    pv_list, value_callback, datatype = float, count = 3, format = FORMAT_TIME)
 
 Sleep(1)
 print 'Deleting subscription', subscriptions[0].name
