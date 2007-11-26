@@ -430,7 +430,7 @@ def camonitor(pvs, callback, **kargs):
         return _Subscription(pvs, callback, **kargs)
     else:
         return [
-            _Subscription(pv, lambda v: callback(v, n), **kargs)
+            _Subscription(pv, lambda v, n=n: callback(v, n), **kargs)
             for n, pv in enumerate(pvs)]
 
 
