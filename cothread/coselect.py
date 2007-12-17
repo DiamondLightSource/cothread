@@ -24,6 +24,8 @@ __all__ = [
     'POLLWRNORM',
     'POLLWRBAND',
     'POLLMSG',
+
+    'POLLEXTRA',        # If any of these are set there is a socket problem
 ]
 
 
@@ -44,6 +46,8 @@ POLLWRNORM = _select.POLLWRNORM
 POLLWRBAND = _select.POLLWRBAND
 POLLMSG    = _select.POLLMSG
 
+# These three flags are always treated as of interest.
+POLLEXTRA = POLLERR | POLLHUP | POLLNVAL
 
 
 def poll_block(poll_list, timeout = None):
@@ -57,11 +61,15 @@ def poll_block(poll_list, timeout = None):
     if timeout is not None:
         # Convert timeout into ms for calling poll() method.
         timeout *= 1000
-    return p.poll(timeout)
+    try:
+        return p.poll(timeout)
+    except _select.error:
+        # Convert a select error into an empty list of events.  This will
+        # occur if a signal is caught, for example if we're suspended and
+        # then resumed!
+        return []
 
 
-# These three flags are always treated as of interest.
-_ALWAYS_POLL = POLLERR | POLLHUP | POLLNVAL
 
 class _Poller(object):
     '''Wrapper for handling poll wakeup.'''
@@ -84,7 +92,7 @@ class _Poller(object):
         '''This is called from the scheduler as each file becomes ready.  We
         add the file to our list of ready descriptors and wake ourself up.'''
         # Mask out only the events we're really interested in.
-        events = (self.__events[file] | _ALWAYS_POLL) & events
+        events = (self.__events[file] | POLLEXTRA) & events
         if events:
             # We're interested!  Record the event flag and wake our task.
             self.__ready_list[file] |= events
@@ -182,7 +190,7 @@ def select(iwtd, owtd, ewtd, timeout = None):
         for object in input:
             file = PyObject_AsFileDescriptor(object)
             events = poll_result[file]
-            if events & _ALWAYS_POLL:
+            if events & POLLEXTRA:
                 # If any of the extra events come up, raise an exception.
                 # This corresponds to errors raised by the os select().
                 raise SelectError(events)

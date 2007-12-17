@@ -21,7 +21,7 @@ import traceback
 import cothread
 from cadef import *
 from dbr import *
-from utility import *
+
 
 __all__ = [
     # The core functions.
@@ -74,7 +74,7 @@ def maybe_throw(function):
     transformed into an ordinary ca_nothing value!'''
     
     def throw_wrapper(pv, *args, **kargs):
-        if keyword_argument(kargs, 'throw', True):
+        if kargs.pop('throw', True):
             return function(pv, *args, **kargs)
         else:
             # We catch all the expected exceptions, converting them into

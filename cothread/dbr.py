@@ -3,6 +3,7 @@
 
 import ctypes
 import numpy
+import time
 import datetime
 
 
@@ -51,19 +52,25 @@ If control values requested and datatype is DBR_ENUM:
 '''
 
 
+class ca_base(object):
+    @property
+    def datetime(self):
+        return datetime.datetime.fromtimestamp(self.timestamp)
+    
+
 # Augmented array used for all return values with more than one element.
-class ca_array(numpy.ndarray):
+class ca_array(ca_base, numpy.ndarray):
     __doc__ = ca_doc_string
 
 # Augmented basic Python types used for scalar values.
 
-class ca_str(str):
+class ca_str(ca_base, str):
     __doc__ = ca_doc_string
 
-class ca_int(int):
+class ca_int(ca_base, int):
     __doc__ = ca_doc_string
 
-class ca_float(float):
+class ca_float(ca_base, float):
     __doc__ = ca_doc_string
 
         
@@ -448,14 +455,14 @@ def truncate_string(string):
     return string.split('\0', 1)[0]
 
 
-EPICS_epoch = datetime.datetime(1990, 1, 1)
+# The EPICS epoch begins 1st January 1990.
+EPICS_epoch = time.mktime((1990, 1, 1, 0, 0, 0, 0, 0, 0))
 
 def timestamp(raw_stamp):
     '''A raw_stamp is a pair of values, seconds and nanoseconds, defining a
     time offset into the EPICS epoch (origin 1/1/1990).  This routine returns
-    the corresponding Python timestamp.'''
-    return EPICS_epoch + datetime.timedelta(
-        seconds = raw_stamp[0], microseconds = raw_stamp[1] / 1000.0)
+    the corresponding Python timestamp as a time value.'''
+    return EPICS_epoch + raw_stamp[0] + raw_stamp[1] * 1e-9
 
     
 # Format codes for type_to_dbr function.
@@ -559,7 +566,7 @@ def value_to_dbr(value):
     value = numpy.require(value, requirements = 'C')
     if value.shape == ():
         value.shape = (1,)
-    assert len(value.shape) == 1, 'Can\'t put multidimensional arrays!'
+    assert value.ndim == 1, 'Can\'t put multidimensional arrays!'
 
     if value.dtype.char == 'S' and value.itemsize != MAX_STRING_SIZE:
         # Need special processing to hack the array so that characters are

@@ -65,14 +65,17 @@ def _readline_hook(stdin):
         # Now disable any further hooking by resetting the hook.  We have to
         # set it to zero, so this requires a certain amount of fakery so the
         # type system will play properly.
-        cast(call_readline_InputHookP, POINTER(c_int))[0] = 0
+        cast(call_readline_InputHookP, POINTER(c_void_p))[0] = 0
         return False
 
 
-def readline_hook():
+def readline_hook(enable_hook = True):
     '''Install readline hook.  This allows the scheduler to run in parallel
     with interactive python: while readline is waiting for input, the
-    scheduler still operates.'''
+    scheduler still operates.
+        This routine can also be used to disable the input hook by setting the
+    enable_hook parameter to False -- for example, this can be helpful if a
+    background activity is causing a nuisance.'''
     
     # The order of these two is rather important: we are effectively patching
     # readline to use our own hook.
@@ -84,8 +87,11 @@ def readline_hook():
     global call_readline_InputHookP
     call_readline_InputHookP = pointer(hook_function.in_dll(
         call_readline_lib, 'call_readline_InputHook'))
-    
-    call_readline_InputHookP[0] = _readline_hook
+
+    if enable_hook:
+        call_readline_InputHookP[0] = _readline_hook
+    else:
+        cast(call_readline_InputHookP, POINTER(c_void_p))[0] = 0
 
 
 def _poll_iqt(qt, poll_interval):

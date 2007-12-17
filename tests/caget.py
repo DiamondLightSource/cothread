@@ -6,6 +6,9 @@ import sys
 import optparse
 import traceback
 
+from pkg_resources import require
+require('cothread')
+
 from cothread.catools import *
 
 

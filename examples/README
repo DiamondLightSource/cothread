@@ -1,0 +1,20 @@
+Some very simple examples of using cothread and catools.
+
+simple.py
+    The simplest possible use of caget().
+
+camonitor_test.py
+    The simplest possible use of camonitor()
+
+caget_failure.py
+    Demonstration of error handling for caget().
+
+caget_structure.py
+    Demonstration of access to extra channel data.
+
+qt_monitor.py
+    Integrating Qt and channel access.
+
+scope_epics.py
+scope.ui
+    A simple oscilloscope demonstrating Qt and camonitor.

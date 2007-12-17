@@ -40,7 +40,6 @@ import greenlet
 import bisect
 import traceback
 
-from utility import *
 import coselect
 
 
@@ -497,7 +496,7 @@ class Spawn(EventBase):
         self.__args = args
         self.__kargs = kargs
         self.__result = ()
-        self.__raise_on_wait = keyword_argument(kargs, 'raise_on_wait')
+        self.__raise_on_wait = kargs.pop('raise_on_wait', False)
         # Hand control over to the run method in the scheduler.
         _scheduler.spawn(self.__run)
 
