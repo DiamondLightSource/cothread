@@ -4,7 +4,6 @@
 
 import sys
 import optparse
-import traceback
 
 from pkg_resources import require
 require('cothread')
@@ -59,9 +58,9 @@ get = caget(arglist,
     format = options.format, count = options.count, throw = options.throw)
 for result in get:
     if result.ok:
-        print result.name, type(result), repr(result)
+        print result.name, result
         for field in extra_fields:
             if hasattr(result, field):
                 print field, getattr(result, field)
     else:
-        print result.name, 'failed', result
+        print result.name, 'failed:', result

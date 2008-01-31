@@ -64,7 +64,7 @@ class ca_nothing(Exception):
         self.errorcode = errorcode
 
     def __str__(self):
-        return '%s: %s' % (self.name, ca_message(self.errorcode))
+        return ca_message(self.errorcode)
 
 
 def maybe_throw(function):
@@ -237,14 +237,15 @@ class _Subscription(object):
 
         if args.status == ECA_NORMAL:
             # Good data: extract value from the dbr.
-            value = dbr_to_value(
-                args.raw_dbr, args.type, args.count, self.channel.name)
+            self.__signal(dbr_to_value(
+                args.raw_dbr, args.type, args.count, self.channel.name))
         else:
             # Something is wrong: let the subscriber know
-            value = ca_nothing(self.channel.name, args.status)
+            self.__signal(ca_nothing(self.channel.name, args.status))
 
+    def __signal(self, value):
         if self.all_updates:
-            # If all_updates is requested they every incoming update directly
+            # If all_updates is requested then every incoming update directly
             # generates a corresponding callback call.
             value.update_count = 1
             self.__callback_queue.Signal((self, self.callback, value))
@@ -264,7 +265,7 @@ class _Subscription(object):
         channel changes.  Note that this is also called asynchronously.'''
         if not connected:
             # Channel has become disconnected: tell the subscriber.
-            self.on_event(ca_nothing(self.channel.name, ECA_DISCONN))
+            self.__signal(ca_nothing(self.channel.name, ECA_DISCONN))
 
     def __del__(self):
         '''On object deletion ensure that the associated subscription is
@@ -377,8 +378,8 @@ def camonitor(pvs, callback, **kargs):
         all_updates = False)
 
     Creates a subscription to one or more PVs, returning a subscription
-    object for each PV.  If a single PV is given then a single value is
-    returned, otherwise a list of values is returned.
+    object for each PV.  If a single PV is given then a single subscription
+    object is returned, otherwise a list of subscriptions is returned.
 
     Subscriptions will remain active until the close() method is called on
     the returned subscription object.
@@ -734,8 +735,10 @@ def _PollChannelAccess():
 
 
 # The value of the exception handler below is rather doubtful...
-@exception_handler
-def catools_exception(args):
-    '''print ca exception message'''
-    print >> sys.stderr, 'catools_exception:', args.ctx, ca_message(args.stat)
-ca_add_exception_event(catools_exception, 0)
+if False:
+    @exception_handler
+    def catools_exception(args):
+        '''print ca exception message'''
+        print >> sys.stderr, 'catools_exception:', \
+            args.ctx, ca_message(args.stat)
+    ca_add_exception_event(catools_exception, 0)
