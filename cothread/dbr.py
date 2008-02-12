@@ -66,27 +66,18 @@ If control values requested and datatype is DBR_ENUM:
     strs (list of possible enumeration strings)
 '''
 
-class ca_base(object):
-    # We postpone the computation of the datetime value to avoid encountering
-    # an annoying bug in fromtimestamp: it can fail if the fraction part is
-    # in the range 0.9999995 .. 1.0!
-    @property
-    def datetime(self):
-        return datetime.datetime.fromtimestamp(self.timestamp)
-
-
 # Augmented array used for all return values with more than one element.
-class ca_array(ca_base, numpy.ndarray):
+class ca_array(numpy.ndarray):
     __doc__ = ca_doc_string
 
 # Augmented basic Python types used for scalar values.
-class ca_str(ca_base, str):
+class ca_str(str):
     __doc__ = ca_doc_string
 
-class ca_int(ca_base, int):
+class ca_int(int):
     __doc__ = ca_doc_string
 
-class ca_float(ca_base, float):
+class ca_float(float):
     __doc__ = ca_doc_string
 
 
@@ -98,14 +89,6 @@ class ca_timestamp(ctypes.Structure):
     _fields_ = [
         ('secs',                ctypes.c_long),
         ('nsec',                ctypes.c_long)]
-
-    @property
-    def timestamp(self):
-        return self.secs + self.nsec * 1e-9
-
-    @property
-    def datetime(self):
-        return datetime.datetime.fromtimestamp(self.timestamp)
 
     def __str__(self):
         return '%d.%09d' % (self.secs, self.nsec)
@@ -131,7 +114,12 @@ def copy_attributes_time(self, other):
     raw_stamp = self.raw_stamp
     raw_stamp.secs += EPICS_epoch
     other.raw_stamp = raw_stamp
-    other.timestamp = raw_stamp.secs + raw_stamp.nsec * 1e-9
+    # The timestamp is rounded to microseconds, both to avoid confusion
+    # (because the ns part is rounded already) and to avoid an excruciating
+    # bug in the .fromtimestamp() function.
+    ts = round(raw_stamp.secs + raw_stamp.nsec * 1e-9, 6)
+    other.timestamp = ts
+    other.datetime = datetime.datetime.fromtimestamp(ts)
 
 def copy_attributes_ctrl(self, other):
     other.status = self.status
