@@ -66,19 +66,27 @@ If control values requested and datatype is DBR_ENUM:
     strs (list of possible enumeration strings)
 '''
 
+class ca_base(object):
+    # We postpone the computation of the datetime value to avoid encountering
+    # an annoying bug in fromtimestamp: it can fail if the fraction part is
+    # in the range 0.9999995 .. 1.0!
+    @property
+    def datetime(self):
+        return datetime.datetime.fromtimestamp(self.timestamp)
+
 
 # Augmented array used for all return values with more than one element.
-class ca_array(numpy.ndarray):
+class ca_array(ca_base, numpy.ndarray):
     __doc__ = ca_doc_string
 
 # Augmented basic Python types used for scalar values.
-class ca_str(str):
+class ca_str(ca_base, str):
     __doc__ = ca_doc_string
 
-class ca_int(int):
+class ca_int(ca_base, int):
     __doc__ = ca_doc_string
 
-class ca_float(float):
+class ca_float(ca_base, float):
     __doc__ = ca_doc_string
 
 
@@ -123,9 +131,7 @@ def copy_attributes_time(self, other):
     raw_stamp = self.raw_stamp
     raw_stamp.secs += EPICS_epoch
     other.raw_stamp = raw_stamp
-    ts = raw_stamp.secs + raw_stamp.nsec * 1e-9
-    other.timestamp = ts
-    other.datetime = datetime.datetime.fromtimestamp(ts)
+    other.timestamp = raw_stamp.secs + raw_stamp.nsec * 1e-9
 
 def copy_attributes_ctrl(self, other):
     other.status = self.status
