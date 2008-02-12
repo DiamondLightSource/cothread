@@ -11,7 +11,7 @@ from cothread.cothread import *
 from cothread.catools import *
 
 parser = optparse.OptionParser(
-    usage = 'Usage: %prog ioc-list\nMonitor PVs using channel access')
+    usage = 'Usage: %prog pv-list\nMonitor PVs using channel access')
 parser.add_option(
     '-d', dest = 'datatype', type = 'int',
     help = 'Define datatype to monitor')

@@ -7,13 +7,14 @@ import optparse
 
 from pkg_resources import require
 require('cothread')
+# sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
 
 from cothread.catools import *
 
 
 
 parser = optparse.OptionParser(
-    usage = 'Usage: %prog ioc-list\nRetrieve PV values over channel access')
+    usage = 'Usage: %prog pv-list\nRetrieve PV values over channel access')
 parser.add_option(
     '-d', dest = 'datatype', type = 'int',
     help = 'Define datatype to fetch')
@@ -39,6 +40,7 @@ extra_fields = [
     'status',
     'severity',
     'timestamp',
+    'raw_stamp',
     'units',
     'upper_disp_limit',
     'lower_disp_limit',

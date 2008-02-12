@@ -652,10 +652,20 @@ def caput_one(pv, value, timeout=None, wait=False):
 
     
 def caput_array(pvs, values, repeat_value=False, **kargs):
-    if repeat_value or isinstance(values, str) or not iterable(values):
-        # A convenience hack to repeat a single value.
+    # Bring the arrays of pvs and values into alignment.  
+    if repeat_value or isinstance(values, str):
+        # If repeat_value is requested or the value is a string then we treat
+        # it as a single value.
         values = [values] * len(pvs)
+    else:
+        try:
+            values = list(values)
+        except TypeError:
+            # If the value can't be treated as a list then again we treat it
+            # as a single value
+            values = [values] * len(pvs)
     assert len(pvs) == len(values), 'PV and value lists must match in length'
+    
     return cothread.WaitForAll([
         cothread.Spawn(caput_one, pv, value, raise_on_wait = True, **kargs)
         for pv, value in zip(pvs, values)])
