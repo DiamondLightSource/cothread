@@ -59,6 +59,8 @@ __all__ = [
     
     'Quit',             # Immediate process quit
     'WaitForQuit',      # Wait until Quit() is called
+
+    'Timer',            # One-shot cancellable timer
 ]
 
 

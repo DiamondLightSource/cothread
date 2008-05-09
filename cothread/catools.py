@@ -500,9 +500,11 @@ def caget_one(pv, timeout=None, datatype=None, format=FORMAT_RAW, count=0):
 def caget_array(pvs, **kargs):
     # Spawn a separate caget task for each pv: this allows them to complete
     # in parallel which can speed things up considerably.
-    return cothread.WaitForAll(
-        [ cothread.Spawn(caget_one, pv, raise_on_wait = True, **kargs)
-          for pv in pvs ])
+    #    The raise_on_wait flag means that any exceptions raised by any of
+    # the spawned caget_one() calls will appear as exceptions to WaitForAll().
+    return cothread.WaitForAll([
+        cothread.Spawn(caget_one, pv, raise_on_wait = True, **kargs)
+        for pv in pvs])
 
 
 def caget(pvs, **kargs):

@@ -1,16 +1,18 @@
 #!/usr/bin/env python2.4
 # Simple example of caget tool using greenlets etcetera.
 
-
 import sys
 import optparse
 
-from pkg_resources import require
-require('cothread')
-# sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
+TESTING = False
+
+if TESTING:
+    sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
+else:
+    from pkg_resources import require
+    require('cothread')
 
 from cothread.catools import *
-
 
 
 parser = optparse.OptionParser(
