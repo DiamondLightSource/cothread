@@ -189,7 +189,7 @@ def select(iwtd, owtd, ewtd, timeout = None):
     for result, input, flag in zip(results, inputs, flag_mapping):
         for object in input:
             file = PyObject_AsFileDescriptor(object)
-            events = poll_result[file]
+            events = poll_result.get(file, 0)
             if events & POLLEXTRA:
                 # If any of the extra events come up, raise an exception.
                 # This corresponds to errors raised by the os select().
