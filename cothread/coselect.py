@@ -86,17 +86,17 @@ class _Poller(object):
         for file, events in event_list:
             file = PyObject_AsFileDescriptor(file)
             self.__events[file] = self.__events.get(file, 0) | events
-            self.__ready_list[file] = 0
 
     def notify_wakeup(self, file, events):
         '''This is called from the scheduler as each file becomes ready.  We
         add the file to our list of ready descriptors and wake ourself up.'''
         # Mask out only the events we're really interested in.
-        events = (self.__events[file] | POLLEXTRA) & events
+        events &= self.__events[file] | POLLEXTRA
         if events:
             # We're interested!  Record the event flag and wake our task.
-            self.__ready_list[file] |= events
+            self.__ready_list[file] = self.__ready_list.get(file, 0) | events
             cothread._scheduler.wakeup([self.wakeup])
+            return 0
         elif self.wakeup.woken():
             # Doesn't matter, we're already awake!
             return 0

@@ -35,10 +35,12 @@ Similarly the EventQueue can be used for communication.
 '''
 
 import sys
+import os
 import time
 import greenlet
 import bisect
 import traceback
+from collections import deque
 
 import coselect
 
@@ -52,6 +54,7 @@ __all__ = [
     
     'Event',            # Event for waiting and signalling
     'EventQueue',       # Queue of objects with event handling
+    'ThreadedEventQueue',   # Event queue designed to work with threads
     'WaitForAll',       # Wait for all events to become ready
 
     'AbsTimeout',       # Converts timeout into absolute deadline format
@@ -374,8 +377,8 @@ class _Scheduler(object):
             new_events = 0
             new_pollers = []
             for poller in self.__poll_queue[file][1]:
-                events = poller.notify_wakeup(file, events)
-                if events:
+                notify_events = poller.notify_wakeup(file, events)
+                if notify_events:
                     # If a task says that it's still waiting for an event on
                     # this file (evidently the events mask we gave it wasn't
                     # interesting enough) it's going need to go back on the
@@ -384,7 +387,7 @@ class _Scheduler(object):
                     # processing then instead, but it comes out a little
                     # neater here.
                     new_pollers.append(poller)
-                    new_events |= events
+                    new_events |= notify_events
             if new_pollers:
                 # Oh dear, somebody's still interested.
                 self.__poll_queue[file] = [new_events, new_pollers]
@@ -665,7 +668,39 @@ class EventQueue(EventBase):
         return self.Wait()
 
 
+class ThreadedEventQueue(object):
+    '''An event queue designed to work with threads.'''
 
+    def __init__(self):
+        # According to the documentation this is thread safe, so we don't
+        # need to take any particular precautions when using this!
+        self.__values = deque()
+        self.__wait, self.__signal = os.pipe()
+
+    def Wait(self, timeout = None, thread = False):
+        '''Waits for a value to be written to the queue.  If called by a
+        cothread then thread=False should be specified (otherwise all other
+        cothreads will be blocked);  if called by any other thread then
+        thread=True should be specified (otherwise waiting will fail, and
+        damage may occur to internal structures).'''
+        if thread:
+            poll = coselect.poll_block
+        else:
+            poll = coselect.poll_list
+        if not poll([(self.__wait, coselect.POLLIN)], timeout):
+            raise Timedout('Timed out waiting for signal')
+            
+        os.read(self.__wait, 1)
+        return self.__values.popleft()
+
+    def Signal(self, value):
+        '''Posts a value to the event queue.  This can safely be called from
+        a thread or a cothread.'''
+        self.__values.append(value)
+        os.write(self.__signal, '-')
+
+
+        
 class Timer:
     '''A cancellable one-shot timer.'''
     
@@ -707,10 +742,6 @@ def WaitForAll(event_list, timeout = None, iterator = False):
 
 
 # Other possibly desirable entites:
-#
-#   An asynchronous event queue: can be written from another thread
-#       This shouldn't be too hard to implement using the existing
-#       select/poll mechanism for notificaiton.
 #
 #   The ability to wait for an event to occur one of a set of objects
 #       This would probably require quite deep hooking into the queueing
