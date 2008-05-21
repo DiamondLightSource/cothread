@@ -458,7 +458,7 @@ def _caget_event_handler(args):
 
 
 @maybe_throw
-def caget_one(pv, timeout=None, datatype=None, format=FORMAT_RAW, count=0):
+def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     '''Retrieves a value from a single PV in the requested format.  Blocks
     until the request is complete, raises an exception if any problems
     occur.'''
@@ -509,7 +509,7 @@ def caget_array(pvs, **kargs):
 
 def caget(pvs, **kargs):
     '''caget(pvs,
-        timeout = None, datatype = None,
+        timeout = 5, datatype = None,
         format = FORMAT_RAW, count = 0, throw = True)
 
     Retrieves the value from one or more PVs.  If a single pv is given then
@@ -528,9 +528,11 @@ def caget(pvs, **kargs):
     The various arguments control the behaviour of caget as follows:
 
     timeout
-        Timeout for the caget operation.  This can be either a timeout
-        interval in seconds, or a absolute deadline (in time() format) as a
-        single element tuple.
+        Timeout for the caget operation.  This can be a timeout interval
+        in seconds, an absolute deadline (in time() format) as a single
+        element tuple, or None to specify that no timeout will occur.  Note
+        that a timeout of 0 will timeout immediately if any waiting is
+        required.
 
     datatype
         This controls the format of the data that will be requested.  This
@@ -621,7 +623,7 @@ def _caput_event_handler(args):
     
 
 @maybe_throw
-def caput_one(pv, value, timeout=None, wait=False):
+def caput_one(pv, value, timeout=5, wait=False):
     '''Writes a value to a single pv, waiting for callback on completion if
     requested.'''
     
@@ -675,7 +677,7 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
     
 def caput(pvs, values, **kargs):
     '''caput(pvs, values,
-        repeat_value = False, timeout = None, wait = False, throw = True)
+        repeat_value = False, timeout = 5, wait = False, throw = True)
 
     Writes values to one or more PVs.  If multiple PVs are given together
     with multiple values then both lists or arrays should match in length,
@@ -690,9 +692,11 @@ def caput(pvs, values, **kargs):
         same array of values is written to each PV.
 
     timeout
-        Timeout for the caput operation.  This can be either a timeout
-        interval in seconds, or an absolute deadline (in time() format) as a
-        single element tuple.
+        Timeout for the caput operation.  This can be a timeout interval
+        in seconds, an absolute deadline (in time() format) as a single
+        element tuple, or None to specify that no timeout will occur.  Note
+        that a timeout of 0 will timeout immediately if any waiting is
+        required.
 
     wait
         If wait=True is specified then channel access put with callback is

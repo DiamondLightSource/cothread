@@ -160,14 +160,14 @@ class SelectError(Exception):
     def __init__(self, flags):
         self.flags = flags
     def __str__(self):
-        message = 'Select error:'
-        if self.flags & POLLERR:
-            message = message + ' Error on file descriptor'
-        if self.flags & POLLHUP:
-            message = message + ' File descriptor disconnected'
-        if self.flags & POLLNVAL:
-            message = message + ' Invalid descriptor'
-        return message
+        reasons = [
+            (POLLERR,  'Error on file descriptor'),
+            (POLLHUP,  'File descriptor disconnected'),
+            (POLLNVAL, 'Invalid descriptor')]
+        return 'Select error: ' + \
+            ', '.join([reason
+                for flag, reason in reasons
+                if self.flags & flag])
 
 
 def select(iwtd, owtd, ewtd, timeout = None):

@@ -41,6 +41,7 @@ import greenlet
 import bisect
 import traceback
 from collections import deque
+import thread
 
 import coselect
 
@@ -617,10 +618,7 @@ class Event(EventBase):
 
 class EventQueue(EventBase):
     '''A queue of objects.  A queue can also be treated as an interator.'''
-    __slots__ = [
-        '__queue',
-        '__closed',
-    ]
+    __slots__ = ['__queue', '__closed']
 
     class Empty(Exception):
         '''Event queue is empty.'''
@@ -670,6 +668,7 @@ class EventQueue(EventBase):
 
 class ThreadedEventQueue(object):
     '''An event queue designed to work with threads.'''
+    __slots__ = ['__values', '__wait', '__signal']
 
     def __init__(self):
         # According to the documentation this is thread safe, so we don't
@@ -677,16 +676,16 @@ class ThreadedEventQueue(object):
         self.__values = deque()
         self.__wait, self.__signal = os.pipe()
 
-    def Wait(self, timeout = None, thread = False):
-        '''Waits for a value to be written to the queue.  If called by a
-        cothread then thread=False should be specified (otherwise all other
-        cothreads will be blocked);  if called by any other thread then
-        thread=True should be specified (otherwise waiting will fail, and
-        damage may occur to internal structures).'''
-        if thread:
-            poll = coselect.poll_block
-        else:
+    def Wait(self, timeout = None):
+        '''Waits for a value to be written to the queue.  This can safely be
+        called from either a cothread or another thread: the appropriate form
+        of cooperative or normal blocking will be selected automatically.'''
+        if thread.get_ident() == _scheduler_thread_id:
+            # Normal cothread case, use cooperative wait
             poll = coselect.poll_list
+        else:
+            # Another thread, so block caller until ready
+            poll = coselect.poll_block
         if not poll([(self.__wait, coselect.POLLIN)], timeout):
             raise Timedout('Timed out waiting for signal')
             
@@ -701,27 +700,41 @@ class ThreadedEventQueue(object):
 
 
         
-class Timer:
-    '''A cancellable one-shot timer.'''
+class Timer(object):
+    '''A cancellable one-shot or auto-retriggering timer.'''
+    __slots__ = ['__timeout', '__callback', '__cancel', '__retrigger']
     
-    def __init__(self, timeout, callback):
-        '''The callback will be called after the specified timeout.'''
-        self.__deadline = AbsTimeout(timeout)
+    def __init__(self, timeout, callback, retrigger = False):
+        '''The callback will be called after the specified timeout.  If
+        retrigger is set then the timer will automatically retrigger until
+        it is cancelled.'''
+        assert callable(callback), 'Ensure the callback is callable'
+        self.__timeout = timeout
         self.__callback = callback
+        self.__retrigger = retrigger
         self.__cancel = Event(auto_reset = False)
         Spawn(self.__timer)
 
     def __timer(self):
-        try:
-            self.__cancel.Wait(self.__deadline)
-        except Timedout:
-            # There can be a race between cancelling and timing out: ensure
-            # that if we were cancelled before being fired we do nothing.
-            if not self.__cancel:
+        while True:
+            try:
+                self.__cancel.Wait(self.__timeout)
+            except Timedout:
+                # There can be a race between cancelling and timing out:
+                # ensure that if we were cancelled before being fired we do
+                # nothing.
+                if self.__cancel:
+                    return
                 self.__callback()
+            if not self.__retrigger:
+                return
 
     def cancel(self):
+        '''Cancels the timer: the timer is guaranteed not to fire once this
+        call has been made.'''
+        self.__retrigger = False
         self.__cancel.Signal()
+        del self.__callback
             
             
 
@@ -743,7 +756,7 @@ def WaitForAll(event_list, timeout = None, iterator = False):
 
 # Other possibly desirable entites:
 #
-#   The ability to wait for an event to occur one of a set of objects
+#   The ability to wait for an event to occur on one of a set of objects.
 #       This would probably require quite deep hooking into the queueing
 #       mechanism, and seems of limited value (the natural alternative is to
 #       create a task per event).
@@ -779,6 +792,9 @@ def WaitForQuit(catch_interrupt = True):
 # scheduler task is created: this allows the main task to suspend, but does
 # mean that the scheduler is not the parent of all the tasks it's managing.
 _scheduler = _Scheduler.create()
+# We hang onto the thread ID for the cothread thread (at present there can
+# only be one) so that we can recognise when we're in another thread.
+_scheduler_thread_id = thread.get_ident()
 
 
 def SleepUntil(deadline):
