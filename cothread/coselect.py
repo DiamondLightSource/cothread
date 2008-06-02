@@ -11,6 +11,8 @@ __all__ = [
     'poll',             # Non-blocking emulation of poll object
     'poll_list',        # Simpler interface to non-blocking polling
     'poll_block',       # Simpler interface to blocking polling
+
+    'SelectError',      # Exception raised by select()
     
     # Poll constants
     'POLLIN',           # Data ready to read
@@ -46,7 +48,7 @@ POLLWRNORM = _select.POLLWRNORM
 POLLWRBAND = _select.POLLWRBAND
 POLLMSG    = _select.POLLMSG
 
-# These three flags are always treated as of interest.
+# These three flags are always treated as of interest and are never consumed.
 POLLEXTRA = POLLERR | POLLHUP | POLLNVAL
 
 
@@ -89,20 +91,23 @@ class _Poller(object):
 
     def notify_wakeup(self, file, events):
         '''This is called from the scheduler as each file becomes ready.  We
-        add the file to our list of ready descriptors and wake ourself up.'''
+        add the file to our list of ready descriptors and wake ourself up.
+        We return two masks: a mask of events that we've consumed, and a mask
+        of events that we're still interested in.'''
         # Mask out only the events we're really interested in.
         events &= self.__events[file] | POLLEXTRA
         if events:
             # We're interested!  Record the event flag and wake our task.
             self.__ready_list[file] = self.__ready_list.get(file, 0) | events
             cothread._scheduler.wakeup([self.wakeup])
-            return 0
+            return (events & ~POLLEXTRA, 0)
         elif self.wakeup.woken():
-            # Doesn't matter, we're already awake!
-            return 0
+            # Doesn't matter, we're already awake!  Allegedly we're not
+            # interested in any of the listed events...
+            return (0, 0)
         else:
             # Tell the notifier to call us another time.
-            return self.__events[file]
+            return (0, self.__events[file])
 
     def event_list(self):
         return self.__events.items()

@@ -8,41 +8,21 @@ from numpy import *
 import optparse
 
 
+parser = optparse.OptionParser(
+    usage = 'Usage: %prog [options] pv value\nWrite value to PV')
+parser.add_option(
+    '-t', dest = 'timeout', default = None, type = 'float',
+    help = 'Specify caget timeout')
+parser.add_option(
+    '-c', dest = 'throw', default = True, action = 'store_false',
+    help = 'Catch exception')
+parser.add_option(
+    '-w', dest = 'wait', default = False, action = 'store_true',
+    help = 'Use caput with callback')
+options, arglist = parser.parse_args()
+if len(arglist) != 2:
+    parser.print_help()
+    sys.exit()
 
-# print caput('ENUM', 'Zero')
-# print repr(caget('ENUM'))
-# 
-# print caput('STRIN', 'test string')
-# print repr(caget('STRIN'))
-# 
-# print caput('STROUT', 'another test')
-# print repr(caget('STROUT'))
-# 
-# # print caput('STROUT', 'x' * 40)
-# # print caget('STROUT')
-# 
-# sys.exit()
-
-
-def SetAndTest(pv, value):
-    print caput(pv, value)
-    print caget(pv, count = 6)
-
-SetAndTest('TESTWF', zeros(6))
-SetAndTest('TESTWF', ones(6))
-SetAndTest('TESTWF', map(str, 2*ones(6)))
-SetAndTest('TESTWF', 'rubbish')
-
-sys.exit()
-
-
-value = numpy.arange(6, dtype = float)
-
-for i in 0.2 + numpy.arange(3) * 0.1:
-#     print catools.caput('SR-DI-DCCT-01:SIGNAL', value + i, wait = True,
-#         throw = False)
-    output = map(str, value + i)
-#    output = '1234'
-#    output = value + i
-    print caput('TESTWF', output, wait = True)
-    print caget('TESTWF', count = 6)
+print caput(arglist[0], arglist[1],
+    timeout = options.timeout, wait = options.wait, throw = options.throw)

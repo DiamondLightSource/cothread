@@ -355,6 +355,7 @@ class _Subscription(object):
                 # subscription after reporting the problem.
                 print 'Subscription %s callback raised exception' % self.name
                 traceback.print_exc()
+                print 'Subscription %s closed' % self.name
                 self.close()
 
     def __merged_callback(self, _):

@@ -374,12 +374,32 @@ class _Scheduler(object):
         and wakeup reasons.  Each waiting task is informed.'''
         # Work through all the notified files: with each file is a received
         # event mask which we'll pass through to the interested task.
+        #
+        # Some care is required here if we are to neither deliver spurious
+        # wakeups nor lose wakeups.
+        #     We make two assumption about our wakeup call, translating into
+        # assumptions on either coselect.poll_block or poll_scheduler:
+        #   1/ if an event is ready on a file we will eventually be notified;
+        #   2/ if an event is not ready we will not be notified -- in other
+        #      words, if a poll notify occurs we can safely access the file
+        #      without risk of blocking.
+        #
+        # The goal of the loop below is to translate these assumptions into
+        # corresponding properties on poll_until.  The problem arises when
+        # there is more than one listener on an event, as the first listener
+        # may consume the event before subsequent listeners receive it.
+        #     The simplest solution is to be to communicate each event to just
+        # one interested listener, but ensure that the event remains
+        # monitored.
         for file, events in poll_result:
             new_events = 0
             new_pollers = []
             for poller in self.__poll_queue[file][1]:
-                notify_events = poller.notify_wakeup(file, events)
-                if notify_events:
+                # Find out which events the waiting process is interested in
+                consumed, wakeup = poller.notify_wakeup(file, events)
+                # Consume any events taken by the woken process
+                events &= ~consumed
+                if wakeup:
                     # If a task says that it's still waiting for an event on
                     # this file (evidently the events mask we gave it wasn't
                     # interesting enough) it's going need to go back on the
@@ -388,7 +408,7 @@ class _Scheduler(object):
                     # processing then instead, but it comes out a little
                     # neater here.
                     new_pollers.append(poller)
-                    new_events |= notify_events
+                    new_events |= wakeup
             if new_pollers:
                 # Oh dear, somebody's still interested.
                 self.__poll_queue[file] = [new_events, new_pollers]
@@ -521,7 +541,8 @@ class Spawn(EventBase):
                 # No good.  We can't allow this exception to propagate, as
                 # doing so will kill the scheduler.  Instead report the
                 # traceback right here.
-                print 'Spawned task', self.__function.__name__, \
+                print 'Spawned task', \
+                    getattr(self.__function, '__name__', '(unknown)'), \
                     'raised uncaught exception'
                 traceback.print_exc()
                 self.__result = (True, None)
