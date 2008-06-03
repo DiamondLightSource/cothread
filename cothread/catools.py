@@ -219,6 +219,7 @@ class _Subscription(object):
         '__state',          # Whether the subscription is active
         '_as_parameter_',   # Associated channel access subscription handle
         'all_updates',      # True iff all updates delivered without merging
+        'notify_disconnect', # Whether to report disconnect events
         '__value',          # Most recent update if merging updates
         '__update_count',   # Number of updates seen since last notification
     ]
@@ -263,7 +264,7 @@ class _Subscription(object):
     def _on_connect(self, connected):
         '''This is called each time the connection state of the underlying
         channel changes.  Note that this is also called asynchronously.'''
-        if not connected:
+        if not connected and self.notify_disconnect:
             # Channel has become disconnected: tell the subscriber.
             self.__signal(ca_nothing(self.channel.name, ECA_DISCONN))
 
@@ -286,7 +287,7 @@ class _Subscription(object):
     def __init__(self, name, callback, 
             events = DBE_VALUE,
             datatype = None, format = FORMAT_RAW, count = 0,
-            all_updates = False):
+            all_updates = False, notify_disconnect = False):
         '''Subscription initialisation: callback and context are used to
         frame values written to the queue;  events selects which types of
         update are notified;  datatype, format and count define the format
@@ -295,6 +296,7 @@ class _Subscription(object):
         self.name = name
         self.callback = callback
         self.all_updates = all_updates
+        self.notify_disconnect = notify_disconnect
         self.__update_count = 0
 
         # We connect to the channel so that we can be kept informed of
@@ -376,7 +378,7 @@ def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
         events = DBE_VALUE,
         datatype = None, format = FORMAT_RAW, count = 0,
-        all_updates = False)
+        all_updates = False, notify_disconnect = False)
 
     Creates a subscription to one or more PVs, returning a subscription
     object for each PV.  If a single PV is given then a single subscription
@@ -427,7 +429,13 @@ def camonitor(pvs, callback, **kargs):
         value.
             If updates are being merged then the value returned will be
         augmented with a field .update_count recording how many updates
-        occurred on this value.'''
+        occurred on this value.
+
+    notify_disconnect
+        If this is True then IOC disconnect events will be reported by
+        calling the callback with a ca_nothing error with .ok False,
+        otherwise only valid values will be passed to the callback routine.
+    '''
     if isinstance(pvs, str):
         return _Subscription(pvs, callback, **kargs)
     else:
