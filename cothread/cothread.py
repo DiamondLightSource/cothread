@@ -147,14 +147,15 @@ class _Scheduler(object):
         return scheduler_task.switch(greenlet.getcurrent())
 
     @classmethod
-    def __scheduler(cls, caller):
+    def __scheduler(cls, main_task):
         '''The top level scheduler loop.  Starts by creating the scheduler,
         and then manages dispatching from the top level.'''
 
-        # First create the scheduler and pass it back to our caller.  The
-        # next time we get control it's time to run the scheduling loop.
+        # First create the scheduler and pass it back to our caller, who we
+        # expect to be the main task.  The next time we get control it's time
+        # to run the scheduling loop.
         self = cls()
-        caller.switch(self)
+        main_task.switch(self)
 
         # If the schedule loop raises an exception then propogate the
         # exception up to the main thread before restarting the scheduler.
@@ -169,12 +170,12 @@ class _Scheduler(object):
                 # interrupt.  First we have to make sure it's not on the run
                 # queue.
                 for index, (task, reason) in enumerate(self.__ready_queue):
-                    if task is caller:
+                    if task is main_task:
                         del self.__ready_queue[index]
                         break
                 # All task wakeup entry points will interpret this as a 
                 # request to re-raise the exception.
-                caller.switch(self.__WAKEUP_INTERRUPT)
+                main_task.switch(self.__WAKEUP_INTERRUPT)
         
     def __init__(self):
         # List of all tasks that are currently ready to be dispatched.

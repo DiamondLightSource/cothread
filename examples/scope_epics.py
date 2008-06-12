@@ -3,6 +3,7 @@
 "Form Example with Monitor"
 
 import subprocess
+import os
 
 # version control
 from pkg_resources import require
@@ -35,7 +36,8 @@ def load(filename, cls):
 
 
 # Qt designer form class
-load('scope.ui', 'Scope')
+scope_ui_file = os.path.join(os.path.dirname(__file__), 'scope.ui')
+load(scope_ui_file, 'Scope')
 
 # subclass form to implement buttons
 class MyScope(Scope):
