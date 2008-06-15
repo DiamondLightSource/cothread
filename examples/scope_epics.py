@@ -1,14 +1,12 @@
 #!/usr/bin/env python2.4
 
-"Form Example with Monitor"
+'''Form Example with Monitor'''
 
 import subprocess
 import os
 
 # version control
-from pkg_resources import require
-require('cothread')
-
+import require
 from cothread.catools import *
 from cothread import *
 iqt()
@@ -21,9 +19,9 @@ from qt import *
 
 
 def load(filename, cls):
-    "loads python class from ui file"
+    '''loads python class from ui file'''
     pyuic = subprocess.Popen(
-        ["pyuic2.4", filename],
+        ['pyuic2.4', filename],
         stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     (stdout, stderr) = pyuic.communicate()
     if pyuic.returncode != 0:
@@ -41,10 +39,10 @@ load(scope_ui_file, 'Scope')
 
 # subclass form to implement buttons
 class MyScope(Scope):
-    "application class"
+    '''application class'''
     def __init__(self):
         Scope.__init__(self)
-        self.channel.setText("SR21C-DI-EBPM-01:FR:WFX")
+        self.channel.setText('SR21C-DI-EBPM-01:FR:WFX')
         self.monitor = None
         # make any contents fill the empty frame
         grid = QVBoxLayout(self.axes)
@@ -53,7 +51,7 @@ class MyScope(Scope):
         
     def bConnect_clicked(self):
         name = str(self.channel.text())
-        print "Connect Clicked", name
+        print 'Connect Clicked', name
         # disconnect old channel if any
         if self.monitor:
             self.monitor.close()
@@ -61,15 +59,15 @@ class MyScope(Scope):
         self.monitor = camonitor(name, self.on_event)
         
     def on_event(self, value):
-        "camonitor callback"
+        '''camonitor callback'''
         if value.ok:
             x = arange(value.shape[0])
             self.p.setCurveData(1, x, value)
             
     def makeplot(self):
-        "set up plotting"
+        '''set up plotting'''
         # draw a plot in the frame
-        p = Plot(self.axes, Curve([], [], "FR:WFX", Pen(Qt.blue)))
+        p = Plot(self.axes, Curve([], [], 'FR:WFX', Pen(Qt.blue)))
         # === Plot Customization ===
         # turn off grid
         p.enableGridX(False)

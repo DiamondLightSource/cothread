@@ -16,9 +16,35 @@ __all__ = [
     # Published functions
     'type_to_dbr',  # Convert data type request into DBR datatype
     'dbr_to_value', # Convert dbr value into user value (array or scalar)
-    'value_to_dbr'  # Convert Python value into dbr format
+    'value_to_dbr', # Convert Python value into dbr format
+
+    'ca_extra_fields',
 ]
 
+# List of all the field names that can be added to an augmented field.
+ca_extra_fields = [
+    # Fields common to all data types
+    'name',         # Name of the PV used to create this value
+    'ok',           # True for normal data, False for error code
+    # Fields common to time and ctrl types
+    'severity',     # Alarm severity
+    'status',       # CA status code: reason for severity
+    # Timestamp specific fields
+    'raw_stamp',    # Unformatted timestamp in separate seconds and nsecs
+    'timestamp',    # Timestamp in seconds
+    'datetime',     # Timestamp in datetime format (probably gratuitous)
+    # Control specific fields
+    'units',        # Units for display
+    'upper_disp_limit',
+    'lower_disp_limit',
+    'upper_alarm_limit',
+    'lower_alarm_limit',
+    'upper_warning_limit',
+    'lower_warning_limit',
+    'upper_ctrl_limit',
+    'lower_ctrl_limit',
+    'precision',    # Display precision for floating point values
+]
 
 
 # Standard hard-wired EPICS array sizes.
@@ -69,10 +95,14 @@ If control values requested and datatype is DBR_ENUM:
 # Augmented array used for all return values with more than one element.
 class ca_array(numpy.ndarray):
     __doc__ = ca_doc_string
+    def __pos__(self):
+        return numpy.array(self)
 
 # Augmented basic Python types used for scalar values.
 class ca_str(str):
     __doc__ = ca_doc_string
+    def __pos__(self):
+        return str(self)
 
 class ca_int(int):
     __doc__ = ca_doc_string
@@ -536,8 +566,7 @@ def type_to_dbr(datatype, format = FORMAT_RAW):
 
 def dbr_to_value(raw_dbr, datatype, count, name):
     '''Convert a raw DBR structure into a packaged Python value.  All values
-    are returned as augmented types: all values except for strings are returned
-    as subclasses of ndarray.'''
+    are returned as augmented types.'''
 
     # Reinterpret the raw_dbr as a pointer to the appropriate structure as
     # identified by the given datatype.  We can then cast the raw_dbr

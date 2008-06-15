@@ -47,15 +47,17 @@ __all__ = [
     # Event type notification codes for camonitor
     'DBE_VALUE',        # Notify normal value changes  
     'DBE_LOG',          # Notify archival value changes
-    'DBE_ALARM',        # Notify alarm state changes   
+    'DBE_ALARM',        # Notify alarm state changes
+
+    'ca_extra_fields',  # List of all possible augmented field names
 ]
 
 
 
 class ca_nothing(Exception):
-    '''This value is returned as a success indicator from caput, as a failure
-    indicator from caget, and may be raised as an exception to report a data
-    error on caget or caput with wait.'''
+    '''This value is returned as a success or failure indicator from caput,
+    as a failure indicator from caget, and may be raised as an exception to
+    report a data error on caget or caput with wait.'''
     
     def __init__(self, name, errorcode = ECA_NORMAL):
         '''Initialise with PV name and associated errorcode.'''
@@ -65,6 +67,9 @@ class ca_nothing(Exception):
 
     def __str__(self):
         return ca_message(self.errorcode)
+
+    def __nonzero__(self):
+        return self.ok
 
 
 def maybe_throw(function):

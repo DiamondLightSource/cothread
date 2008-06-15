@@ -7,9 +7,6 @@ modules:
 
     catools
         Channel access support tools for client access to EPICS records.
-
-    iqt
-        Support for interactive Qt
 '''
 
 def _ImportModule(module_name):

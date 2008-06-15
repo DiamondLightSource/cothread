@@ -2,13 +2,12 @@
 
 import sys
 
+import require
+from cothread import *
+from cothread.catools import *
 
 from pkg_resources import require as Require
 Require('matplotlib')
-Require('cothread')
-
-from cothread import *
-from cothread.catools import *
 
 from pylab import *
 from numpy import *

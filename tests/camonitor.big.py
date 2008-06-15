@@ -5,6 +5,7 @@ import sys
 
 from numpy import *
 
+import require
 from cothread.cothread import *
 from cothread.catools import *
 
@@ -29,13 +30,7 @@ class MonitorWaveform:
 
         camonitor(BPMpvs(name), self.MonitorCallback,
             datatype = datatype, all_updates = True)
-        Spawn(self.timer, tick)
-#        server.Timer(tick, self.Update)
-
-    def timer(self, tick):
-        while True:
-            Sleep(tick)
-            self.Update()
+        Timer(tick, self.Update, retrigger=True)
 
     def MonitorCallback(self, value, index):
         '''This routine is called each time any of the monitored elements
@@ -52,8 +47,6 @@ class MonitorWaveform:
 
 MonitorWaveform('SA:X')
 MonitorWaveform('SA:Y')
-
-# Sleep(2)
 
 # Run until interrupted.
 WaitForQuit()

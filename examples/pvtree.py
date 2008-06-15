@@ -6,8 +6,7 @@
 import sys
 import re
 
-from pkg_resources import require
-require('cothread')
+import require
 from cothread import Timedout
 from cothread.catools import *
 
@@ -90,7 +89,8 @@ visited_set = set()
 
 # As well as numbers, match on anything starting with @ or # -- these look
 # like addresses.
-NUMBER = re.compile(r'@|#|[0-9]+(\.[0-9]*)?$|\.[0-9]+$')
+NUMBER = re.compile(
+    r'@|#|([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][-+]?[0-9]+)?$')
 
 def recognise_value(value):
     '''Implements some heuristics for recognising a value.'''

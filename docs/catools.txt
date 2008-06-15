@@ -1,0 +1,390 @@
+Using the catools Library
+=========================
+Michael Abbott
+
+Other documents:
+
+* Cothread library: link:cothread.html[] 
+* Cothread Python pydoc documentation: link:pydoc/cothread.html[]
+
+Overview
+--------
+
+The +catools+ library provides three functions for access to EPICS ``process
+variables'' over channel access:
+
++caget(pvs, ...)+::
+Returns a single snapshot of the current value of each PV.
+
++caput(pvs, values, ...)+::
+Writes values to one or more PVs.
+
++camonitor(pvs, callback, ...)+::
+Receive notification each time any of the listed PVs changes.
+
+To use these functions a certain amount of setup work is required.  The
+following code illustrates a simple application which reads a value from one
+PV, writes to another PV, and monitors a third until terminated with
+control-C.
+
+    # Library version specification required for dls libraris
+    from pkg_resources import require
+    require('cothread')
+
+    import cothread
+    from cothread.catools import *
+
+    # Using caput: write 1234 into PV1.  Raises exception on failure
+    caput('PV1', 1234)
+
+    # Print out the value reported by PV2.
+    print caget('PV2')
+
+    # Monitor PV3, printing out each update as it is received.
+    def callback(value):
+        print 'callback', value
+    camonitor('PV3', callback)
+
+    # Now run the camonitor process until interrupted by Ctrl-C.
+    cothread.WaitForQuit()
+
+The following details are general to all cothread applications.
+
+1. The routine +pkg_resources.require()+ must be used to specify a particular
+version of the library to use, for example
++
+    require('cothread==1.6')
++
+or if the most recent version is ok then the version number can be omitted as
+in the example.
+
+2. Of course, the libraries must be imported.  The +catools+ library is a
+sub-module of the +cothread+ library, and can be imported separately.
+
+3. The program must suspend in an event loop of some sort.  The routine
++cothread.WaitForQuit()+ should normally be used, as otherwise the +camonitor+
+activity has no opportunity to run before the program exits!
+
+For the latest ``bleeding edge'' (unreleased) version of the cothread library
+replace the +require('cothread')+ statement above with the following:
+
+    import sys
+    sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
+
+
+Function Reference
+------------------
+
+The +catools+ API consists of the three functions +caput+, +caget+ and
++camonitor+.  The functions +caget+ and +camonitor+ return or deliver
+``augmented'' values which are documented in more detail in the section
+<<Values, Working with Values>> below.
+
+
+[[Common]]
+Common Notes
+~~~~~~~~~~~~
+
+All three arguments take an argument +pvs+ which can specify the name of a
+single PV or can be a list of PVs.  In all cases the returned result has the
+same ``shape'' as the +pvs+ argument, in other words, if +pvs+ is a single
+string then a single value (error code, value, or subscription) is returned,
+and if +pvs+ is a list then a list of exactly the same length is returned.
+
+In general there are advantages to calling +caput+ or +caget+ on a list of
+PVs, as in this case the channel access delays will occur in parallel.
+
+Several arguments are common among at least two functions: +throw+ determines
+how errors are handled, +timeout+ determines timeouts, and finally +datatype+,
++format+ and +count+ determine data formats and are documented in <<Augmented,
+Augmented Values>>.
+
++timeout+::
+The +timeout+ argument specified how long +caput+ or +caget+ will wait for the
+entire operation to complete.  This timeout is in seconds, and can be one of
+several formats: a timeout interval in seconds, an absolute deadline (in
++time()+ format) as a single element tuple, or None to specify that no timeout
+will occur.  Note that a timeout of 0 will timeout immediately if any waiting
+is required.
++
+If a timeout occurs then a +Timedout+ exception will be raised unless
++throw=False+ has been set.
+
+
++throw+::
+
+This parameter determines the behaviour of +caget+, +caput+ and +camonitor+
+when an error occurs.  If +throw=False+ (the default) is set then an exception
+is raised, otherwise if +True+ is specified an error code value is returned
+for each failing value.
+
+
+
+
+Functions
+~~~~~~~~~
+
++caput(pvs, values, repeat_value=False, timeout=5, wait=False, throw=True)+::
+
+Writes values to one or more PVs.  If +pvs+ is a single string then +values+
+is treated as a single value to be written to the named proces variable,
+otherwise +pvs+ must be iterable, and unless +repeat_value=True+ is set,
++values+ must also be an iterable of the same length in which case
++values[i]+ is written to +pvs[i]+.  Otherwise, if a single value is given or
+if +repeat_value=True+ is specified, +values+ is written to all PVs.
++
+The arguments control the behavour of caput as follows:
++
+--
++repeat_value+::
+When writing a value to a list of PVs ensures that +values+ is treated as a
+single value to be written to each PV.
+
++wait+::
+If +wait=True+ is specified then channel access put with callback is
+invoked, and the +caput+ operation will wait until the server
+acknowledges successful completion before returning.
+
++timeout+, +throw+::
+Documented in <<Common, Common Notes>> above.
+--
++
+The return value from +caput+ is either a list or a single value, depending on
+whether +pvs+ is a single string.  For each PV a +ca_nothing+ success code is
+returned on success, otherwise either an exception is raised or an appropriate
+error code is returned for each failing PV if +throw=True+ is set.  The return
+code can be tested for boolean success, so for example it
+is possible to write:
++
+    if not caput(pv, value, throw=False):
+        process caput error
+
+
+
+
++caget(pvs, timeout=5, datatype=None, format=FORMAT_RAW, count=0, throw=True)+::
+
+Retrieves the value from one or more PVs.  If +pvs+ is a single string then
+a single value is returned, otherwise a list of values is returned.  Each
+value returned is an <<Augmented Values, Augmented Value>>, see 
+below for details.
++
+If +.ok+ is +False+ then the +.errorcode+ field is set to the appropriate
++ECA_+ error code and +str(value)+ will return an appropriate error message.
++
+The various arguments control the behaviour of +caget+ as follows:
++
+--
++datatype+, +format+, +count+::
+See documentation for <<Augmented, Augmented Values>> below.
+
++timeout+, +throw+::
+Documented in <<Common, Common Notes>> above.  If a value cannot be retrieved
+and +throw=False+ is set then for each failing PV an empty value with +.ok ==
+False+ is returned.
+--
++
+The format of values returned depends on the number of values requested
+for each PV.  If only one value is requested then the value is returned
+as a scalar, otherwise as a numpy array.
+
+
+
+
++camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)+:: 
+
+Creates a subscription to one or more PVs, returning a subscription
+object for each PV.  If a single PV is given then a single subscription
+object is returned, otherwise a list of subscriptions is returned.
++
+Subscriptions will remain active until the +.close()+ method is called on
+the returned subscription object.
++
+The precise way in which the callback routine is called on updates
+depends on whether +pvs+ is a single name or a list of names.  If it is
+single name then it is called as
++
+    callback(value)
++
+for each update.  If +pvs+ is a list of names then each update is
+reported as
++
+    callback(value, index)
++
+where +index+ is the position in the original array of PVs of the PV
+generating this update.  The values passed to +callback+ are <<Augmented,
+Augmented Values>>. 
++
+The parameters modify the behaviour as follows:
++
+--
++events+::
+This identifies the type of update which will be notified.  A
+bit-wise or of any the following are possible:
+
++DBE_VALUE+;;       Notify normal value changes
++DBE_LOG+;;         Notify archive value changes
++DBE_ALARM+;;       Notify alarm state changes
+
++datatype+, +format+, +count+::
+See documentation for <<Augmented, Augmented Values>> below.
+
++all_updates+::
+If this is +True+ then every update received from channel access will
+be delivered to the callback, otherwise multiple updates received
+between callback queue dispatches will be merged into the most recent
+value.
+
+If updates are being merged then the value returned will be
+augmented with a field +.update_count+ recording how many updates
+occurred on this value.
+
++notify_disconnect+::
+If this is +True+ then IOC disconnect events will be reported by
+calling the callback with a +ca_nothing+ error with +.ok+ False,
+otherwise only valid values will be passed to the callback routine.
+--
+
+
+[[Values]]
+Working with Values
+-------------------
+
+There are two types of values returned by catools functions: ``augmented'' and
+``error codes''.  The +caput+ function only returns an error code value (which
+may indicate success), while +caget+ and +camonitor+ will normally return (or
+deliver) augmented values, but will return (or deliver) an error code on
+failure.
+
+The following fields are common to both types of value.  This means that is is
+always safe to test +value.ok+ for a value returned by +caget+ or +caput+ or
+deliverd by +camonitor+.
+
++.ok+::
+Set to +True+ if the data is good, +False+ if there was an error.  For
+augmented values +.ok+ is always set to +True+.
+
++.name+::
+Name of the pv.
+
+
+[[Augmented]]
+Augmented Values
+~~~~~~~~~~~~~~~~
+
+Augmented values are normally Python or +numpy+ values with extra fields: the
++.ok+ and +.name+ fields are already mentioned above, and further extra fields
+will be present depending on format requested for the data.  As pointed
+out above, +.ok+ is always +True+.
+
+Four different types of augmented value are returned: strings, integers,
+floating point numbers or arrays, depending on the length of the data
+requested -- an array is only used when the data length is >1.
+
+In almost all circumstances an augmented value will behave exactly like a
+normal value, but there are a few cases where differences in behaviour are
+observed (these are mostly bugs).  If this occurs the augumentation can be
+stripped from an augmented value +value+ by writing +\+value+ -- this returns
+the underlying value.
+
+The type of augmented values is determined both by parameters passed to
++caget+ and +camonitor+ and by the underlying datatype.  Both of these
+functions share parameters +datatype+, +format+ and +count+ which can be used
+to force the type of the data returned:
+
+
++datatype+::
+This controls the format of the data that will be requested.  This
+can be any of the following:
+
+1.  +None+ (the default).  In this case the ``native'' datatype provided
+    by the channel will be returned.
+
+2.  A +DBR_+ value, one of +DBR_STRING+, +DBR_SHORT+, +DBR_FLOAT+, +DBR_ENUM+,
+    +DBR_CHAR+, +DBR_LONG+ or +DBR_DOUBLE+.
+
+3.  A python type compatible with any of the above values, such as
+    +int+, +float+ or +str+.  These correspond to +DBR_LONG+, +DBR_DOUBLE+ and
+    +DBR_STRING+ respectively.
+
+4.  Any +numpy+ +dtype+ compatible with any of the above values.
+
++format+::
+This controls how much auxilliary information will be returned with
+the retrieved data, and can be one of the following:
++
+--
++FORMAT_RAW+ (default)::
+The data is returned unaugmented except for the +.name+ and +.ok+ fields.
+
++FORMAT_TIME+::
+The data is augmented by timestamp fields +.timestamp+ and +.datetime+
+together with .+alarm+, +.status+ and +.severity+ fields.  The value in
++.timestamp+ is in +time()+ format (seconds in Unix UTC epoch), and the
++.datetime+ timestamp is in +datetime+ module format.
+
++FORMAT_CTRL+::
+The data is augmented by channel access ``control'' fields.  
+
+The set of fields returned in +FORMAT_CTRL+ depends on the underlying datatype
+as follows:
+
++DBR_SHORT+, +DBR_CHAR+, +DBR_LONG+;;
+The alarm +.status+ and +.severity+ fields together with +.units+
+and limit fields:
++.upper_disp_limit+, +.lower_disp_limit+,
++.upper_alarm_limit+, +.lower_alarm_limit+,
++.upper_warning_limit+, +.lower_warning_limit+,
++.upper_ctrl_limit+, +.lower_ctrl_limit+.
+The meaning of these fields is determined by channel access.
+
++DBR_FLOAT+, +DBR_DOUBLE+;;
+As above together with a +.precision+ field.
+
++DBR_ENUM+;;
+Alarm +.status+ and +.severity+ fields together with +.enums+, a
+list of possible enumeration strings.  The underlying value for an enumeration
+will be an index into +.enums+.
+
++DBR_STRING+;;
++_CTRL+ format is not supported for this field type, and
++FORMAT_TIME+ data is returned instead.
+--
+
++count+::
+If specified this can be used to limit the number of waveform points
+retrieved from the server. 
+
+
+[[ca_nothing]]
+Error Code Values
+~~~~~~~~~~~~~~~~~
+
+Error code values are used to indicate a success return from +caput+ (in
+which case +.ok+ is +True+), to indicated disconnection using +camonitor+, and
+to indicate any other failure, either as a return value or raised as an
+exception.  
+
+All error code values have type +ca_nothing+ and provide the following fields:
+
++.ok+::
+Set to +True+ if the data is good, +False+ if there was an error.  Testing an
+error code value for boolean will return the value of +.ok+, so for example it
+is possible to write:
++
+    if not caput(pv, value, throw=False):
+        process caput error
+
++.name+::
+Name of the pv.
+
++.errorcode+::
+Channel access error code.  The following values are worth noting:
+
++ECA_SUCCESS+;;  Success error code.  In this case +.ok+ is +True+.
+
++ECA_DISCONN+;;  Channel disconnected.  This is used by +canotify+ to report
+channel disconnect events.
+
++ECA_TIMEOUT+;;  Channel timed out.  Reported if user specified timeout
+ocurred before completion and if +throw=False+ specified.

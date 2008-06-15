@@ -1,0 +1,257 @@
+Using the cothread and catools Library
+======================================
+Michael Abbott
+
+The +cothread+ Python library is designed for building tools using cooperative
+threading.  
+
+The +cothread.catools+ library is designed to support easy channel access from
+Python, and makes essential use of the features of cooperative threads.
+
+Related documentation:
+
+* Channel Access Library: link:catools.html[]
+* Pydoc documentation: link:pydoc/cothread.html[],
+link:pydoc/cothread.coselect.html[].
+
+
+Introduction to Cothreads
+-------------------------
+
+This is an approach to concurrent programming where there is only
+one thread of processing (which Python enforces in practice), but apparently
+concurrent processes (or _cothreads_) can cooperatively share the processor.  
+
+Control is passed from one cothread to another when the current cothread
+explicitly suspends control, ultimately via a call to a +cothread+ library
+routine.  This means that between such suspending calls control will not be
+interrupted.  This has two advantages:
+
+* No locking between threads is required.  This is a very helpful benefit of
+using cothreads, as getting locking between multiple threads right is actually
+suprisingly difficult.
+
+* The thread of processing is frequently more predictable: between two
+suspension points there is no possibility of unexpected background activity!
+
+On the other hand, there is one disadvantage which needs to be kept in mind:
+
+* If a cothread blocks (for example, by calling +sleep()+ or reading from a
+socket or remote file without first calling +select()+) then _all_ cothreads
+will be blocked.  The cothread library provides routines to help with this.
+
+Cothread Functions
+~~~~~~~~~~~~~~~~~~
+
+The following functions define the basic cothread interface provided by this
+module.
+
+
++Spawn(function, arguments, raise_on_wait=False, ...)+::
+
+A new cooperative thread, or _cothread_, is created as a call to 
++function(arguments)+ where +arguments+ can be any list of values and keyword
+argument (except for the special +raise_on_wait+ flag).  Control is not
+transferred to the new cothread until control is yielded, in other words,
+this call does not yield control.
++
+This is the fundamental building block of the cothreading library.  It is
+quite cheap to spawn fresh cothreads, and so this routine can be used
+quite freely.
++
+It is possible to wait for the completion of a spawned cothread by calling its
++Wait+ method:
++
+--
++Wait(timeout=None)+::
+
+This blocks until the spawned cothread completes, either by returning from its
+function call, or by raising an exception.  If the cothread was created with
++raise_on_wait+ set to +True+ then any exception raised by the cothread will
+be re-raised when +Wait+ is called.
+--
+
+
++Sleep(delay)+, +SleepUntil(time)+::
+ 
+The calling task is suspended until the given time.  +Sleep(delay)+
+suspends the task for at least delay seconds, +SleepUntil(time)+
+suspends until the specified time has passed (+time+ is defined as the
+value returned by +time.time()+).
+
++Yield()+::
+
+Yield() suspends control so that all other potentially busy tasks can
+run.  Control is not returned to the calling task until all other
+active tasks have been processed.
+
+
+Communication between cothreads is provided by +Event+ and +EventQueue+
+objects.  An +Event+ can hold at most one value (or signal), while an
++EventQueue+ can hold a list of unbounded length.
+
+
++Event(auto_reset=True)+::
+
+An event object is initially created _unsignalled_.  The +auto_reset+ flag
+determines whether the signalled state of the event object is persistent, and
+determines how many cothreads are woken when +Signal+ is called on an event.
+The +bool+ state of an event object is +True+ iff it is signalled.
++
+The following methods define the behaviour of this object.
++
+--
++Wait(timeout=None)+::
+The calling cothread will be suspended until a signal is written to the
++Event+ by a call to +Signal()+, at which point the value passed to +Signal()+
+is returned.  If a timeout occurs (a timeout of +None+ specifies no timeout)
+this is signalled by raising the exception +Timedout+.
++
+If +auto_reset+ was specified as +True+ then the signal is consumed, and
+subsequent calls to +Wait+ will block until further +Signal+ calls occur.
+
++Signal(value=None)+::
+The event object is marked as signalled and the value passed is recorded to be
+returned by a call to +Wait+.  If one or more cothreads are waiting for a
+signal then at least one will be woken with the new value (if +auto_reset+ is
++True+ then only one will be woken, otherwise all will be).
++
+Note that this routine does *not* suspend the caller, even if another cothread
+is woken: it will not process until later.
+
++SignalException(exception)+::
+This is similar in effect to +Signal+, but the effect on cothreads calling
++Wait+ is that they will receive the given exception.
+
++Reset()+::
+Resets the signal and erases its value.
+--
+
+
++EventQueue()+::
+
+The +EventQueue+ is designed to support the communication of a stream of
+values between two cothreads.  Calling +len()+ on an event queue returns the
+number of entries currently in its queue.  An event queue can also be consumed
+as an iterator, see code example below.
++
+The following methods are supported:
++
+--
++Wait(timeout=None)+::
+Returns the next object from the queue, blocking if necessary.  If a timeout
+occurs then +Timedout+ is raised.  If the queue has been closed then
++StopIteration+ is raised.
++
+If the queue is non empty when +Wait()+ is called control will not be
+suspended.
+
++Signal(value)+::
+Adds the given value to the queue, waking up a waiting cothread if one is
+waiting.  This routine does not suspend the caller.
+--
++
+Example code using iteration over an +EventQueue+. 
+
+    def consumer(e):
+        for x in e:
+            print 'consumed', x
+            
+    eq = EventQueue()
+    Spawn(consumer, eq)
+
+    for i in range(10):
+        eq.Signal(i)
+        Sleep(1)
+
+
++ThreadedEventQueue()+::
+
+The +ThreadedEventQueue+ behaves like an +EventQueue+, but is designed to be
+used to communicate between a Python thread outside of the cothread library
+and a cothread.  Communication can occur in either direction: an outside
+thread can call +Signal+ on a threaded event queue while a cothread calls
++Wait+, or vice versa.
++
+If a thread calls +Wait+ it will block until a cothread (or another thread)
+calls +Signal+.  If this is undesirable then the field +.wait_descriptor+ can
+be waited on using the standard +select+ or +poll+ functions.  Note that this
+file handle must _only_ be used for waiting, and must not be read!
+
+
++Timer(timeout, callback, retrigger=False)+::
+
+This triggers a call to +callback+ after a delay of at least +timeout+
+seconds.  If +retrigger+ is +True+ then after +callback+ completes the timer
+will be reenabled and the cycle will repeat, otherwise only one call will
+occur.
++
+The timer can be cancelled at any time before it has triggered by calling
++.cancel()+ on the timer object created by calling +Timer()+.
+
+
++WaitForAll(event_list, timeout=None, iterator=False)+::
+
+This routine waits for all events in +event_list+ to become ready: this is
+done by simply iterating through all the events in turn, waiting for them to
+complete.  If +timeout+ expires then an exception is raised.
+
+
++Quit()+, +WaitForQuit(catch_interrupt=True)+::
+
+The routine +WaitForQuit+ blocks until +Quit+ is called, or until interrupted
+by an exception.  By default (if +catch_interrupt=True+ is set) the keyboard
+interrupt is silently caught, but still causes +WaitForQuit+ to exit.
++
+This is designed to be used as the final blocking call at the end of the main
+program so that other event loops can run.  
+
+
+
++readline_hook(enable_hook=True)+::
+
+If console interactive operation is required then this routine should be
+called during initialisation.  With the readline hook enabled the cothreading
+scheduler is able to run while the Python interpreter is reading input from
+the keyboard.
+
+
++iqt(poll_interval = 10)+::
+
+If Qt is to be used then this routine must be called during initialisation to
+enable the Qt event loop.
++
+In the current implementation Qt is polled.  This may be rewritten shortly.
+
+
+Coselect Functions
+~~~~~~~~~~~~~~~~~~
+
+To enable cothreaded access to sockets and other external event generating
+sources the +cothread.coselect+ library provides coperative implementations of
++select+ and +poll+ from the Python library +select+ module.  This module
+provides the following functions.
+
+
++select(iwtd, owtd, ewtd, timeout=None)+::
+
+Cooperative +select+ function, interface compatible with the Python library
++select.select+ function (though the exceptions raised are different).
+
+
++poll()+::
+
+Cooperative +poll+ object, interface compatible with the Python library
++select.poll+ object.
+
+
++poll_list(event_list, timeout=None)+::
+
+Simpler function for waiting for one or more events to occur.  This function
+is used to implement the more compatible +select+ and +poll+ interfaces.
++
+The +event_list+ parameter is a list of pairs, each consisting of a waitable
+descriptor and an event mask (generated by oring together +POLL...+
+constants).  This routine will cooperatively block until any descriptor
+signals a selected event (or any event from +HUP+, +ERR+, +NVAL+) or until
+the timeout (in seconds) occurs.

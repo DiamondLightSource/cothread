@@ -4,14 +4,7 @@
 import sys
 import optparse
 
-TESTING = False
-
-if TESTING:
-    sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
-else:
-    from pkg_resources import require
-    require('cothread')
-
+import require
 from cothread.catools import *
 
 

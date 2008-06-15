@@ -1,16 +1,15 @@
 #!/usr/bin/env python2.4
 
-"camonitor minimal example"
+'''camonitor minimal example'''
 
-from pkg_resources import require
-require('cothread')
+import require
 from cothread.catools import *
-from cothread import *
+from cothread import WaitForQuit
 
 def callback(value):
-    "monitor callback"
+    '''monitor callback'''
     print value.name, value
     
-camonitor("SR21C-DI-EBPM-01:FR:WFX", callback)
+camonitor('SR21C-DI-EBPM-01:FR:WFX', callback)
 
 WaitForQuit()

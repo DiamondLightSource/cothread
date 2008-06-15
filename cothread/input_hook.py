@@ -46,7 +46,7 @@ def _readline_hook(stdin):
                 poll_list.append((stdin, coselect.POLLIN))
                 
             # Wait until either stdin or the scheduler are ready.
-            ready_list = coselect.poll_block(poll_list, timeout)
+            ready_list = cothread._scheduler._poll_block(poll_list, timeout)
 
             # Check for input on stdin
             for file, events in ready_list:
@@ -98,6 +98,20 @@ def _poll_iqt(qt, poll_interval):
     while True:
         qt.qApp.processEvents(poll_interval)
         cothread.Sleep(poll_interval / 1000.)
+
+
+class poll_block_iqt:
+    '''Blocks until any (descriptor, event_mask) pair in poll_list is ready or
+    the specified timeout occurs and returns a list of ready descriptors.'''
+
+    def __init__(self):
+        assert False, 'Place holder, do not use!'
+        import qt
+        self.qt = qt
+
+    def __call__(self, poll_list, timeout):
+        # Validate our list of descriptors with a true call to poll.
+        return coselect.poll_block(poll_list, timeout)
         
 
 def iqt(poll_interval = 10):

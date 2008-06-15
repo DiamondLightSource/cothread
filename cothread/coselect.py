@@ -187,6 +187,8 @@ def select(iwtd, owtd, ewtd, timeout = None):
     interest = [(file, flag)
         for files, flag in zip(inputs, flag_mapping)
         for file in files]
+    
+    # Now wait until at least one of our interests occurs.
     poll_result = dict(poll_list(interest, timeout))
 
     # Now convert the results back.

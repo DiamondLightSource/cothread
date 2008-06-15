@@ -1,11 +1,8 @@
 #!/usr/bin/env python2.4
 
-"minimal Qt example"
+'''minimal Qt example'''
 
-# version control
-from pkg_resources import require
-require('cothread')
-
+import require
 import cothread
 from cothread import catools
 import qt
@@ -14,7 +11,7 @@ cothread.iqt()
 
 
 # make a label widget (None is the parent, this is top-level widget)
-label = qt.QLabel("Hello World", None)
+label = qt.QLabel('Hello World', None)
 label.resize(200, 50)
 # must show top-level widgets manually
 label.show()
@@ -22,17 +19,8 @@ label.show()
 # animate label
 def signal(value):
     if value.ok:
-        label.setText("DCCT %f" % value)
-
-catools.camonitor("SR21C-DI-DCCT-01:SIGNAL", signal)
-
-def tick():
-    "thread main function - good for sequencing"
-    while True:
-        result = catools.caget("SR01C-DI-EBPM-01:SA:X")
-        print "caget value %f" % result
-        cothread.Sleep(1.0)
+        label.setText('DCCT %f' % value)
 
 
-cothread.Spawn(tick)
+catools.camonitor('SR21C-DI-DCCT-01:SIGNAL', signal)
 cothread.WaitForQuit()

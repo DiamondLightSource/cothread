@@ -127,6 +127,7 @@ class _Scheduler(object):
         '__greenlet',       # Scheduler greenlet  
         '__poll_callback',  # Set while scheduler being polled from outside
         '__poll_queue',     # Polled files, event masks and tasks
+        '_poll_block',      # Routine to call when waiting for something
     ]
 
     # Task wakeup reasons
@@ -191,6 +192,8 @@ class _Scheduler(object):
         # done.  Each entry consists of an event mask together with a list of
         # interested tasks.
         self.__poll_queue = {}
+        # By default use blocking poll while waiting for the next event.
+        self._poll_block = coselect.poll_block
         
 
     def __tick(self):
@@ -247,7 +250,7 @@ class _Scheduler(object):
         reached.  Returns lists of ready file descriptors and events.'''
         if self.__poll_callback is None:
             # If we're not being polled from outside, run our own poll.
-            return coselect.poll_block(*poll_args)
+            return self._poll_block(*poll_args)
         else:
             # If the scheduler loop was invoked from outside then return
             # control back to the caller: it will provide the select
@@ -514,10 +517,7 @@ class Spawn(EventBase):
             If raise_on_wait is set then any exception raised during the
         execution of this task will be postponed until Wait() is called.  This
         allows such exceptions to be caught without disturbing the normal
-        operation of the system.
-            Otherwise exceptions are allowed to propogate.  This means that
-        they will pass through the scheduler causing it to stop operation:
-        there is little point in catching such exceptions.'''
+        operation of the system.  Otherwise any exception is reported.'''
         EventBase.__init__(self)
         self.__function = function
         self.__args = args
@@ -639,12 +639,9 @@ class Event(EventBase):
 
 
 class EventQueue(EventBase):
-    '''A queue of objects.  A queue can also be treated as an interator.'''
+    '''A queue of objects.  A queue can also be treated as an iterator.'''
     __slots__ = ['__queue', '__closed']
 
-    class Empty(Exception):
-        '''Event queue is empty.'''
-        
     def __init__(self):
         EventBase.__init__(self)
         self.__queue = []
@@ -690,13 +687,13 @@ class EventQueue(EventBase):
 
 class ThreadedEventQueue(object):
     '''An event queue designed to work with threads.'''
-    __slots__ = ['__values', '__wait', '__signal']
+    __slots__ = ['__values', 'wait_descriptor', '__signal']
 
     def __init__(self):
         # According to the documentation this is thread safe, so we don't
         # need to take any particular precautions when using this!
         self.__values = deque()
-        self.__wait, self.__signal = os.pipe()
+        self.wait_descriptor, self.__signal = os.pipe()
 
     def Wait(self, timeout = None):
         '''Waits for a value to be written to the queue.  This can safely be
@@ -708,10 +705,10 @@ class ThreadedEventQueue(object):
         else:
             # Another thread, so block caller until ready
             poll = coselect.poll_block
-        if not poll([(self.__wait, coselect.POLLIN)], timeout):
+        if not poll([(self.wait_descriptor, coselect.POLLIN)], timeout):
             raise Timedout('Timed out waiting for signal')
             
-        os.read(self.__wait, 1)
+        os.read(self.wait_descriptor, 1)
         return self.__values.popleft()
 
     def Signal(self, value):
@@ -828,7 +825,4 @@ def Sleep(timeout):
     '''Sleep until the specified timeout has expired.'''
     _scheduler.wait_until(time.time() + timeout)
 
-    
-# Publish the global functions of the scheduler.
-PollScheduler = _scheduler.poll_scheduler
 Yield = _scheduler.do_yield

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.4
 # Simple example of caget tool using greenlets etcetera.
 
+import require
 from cothread.catools import *
 
 import sys

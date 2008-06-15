@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.4
 
+import require
 from cothread.cothread import *
 from time import time as time_time
 
