@@ -13,10 +13,11 @@ from ctypes import *
 import cothread
 import coselect
 
+from cothread import _scheduler
+
 
 __all__ = [
     'iqt',              # Enable interactive Qt loop
-    'readline_hook',    # Enable readline with interactive Python
 ]
 
 
@@ -35,7 +36,7 @@ def _readline_hook(stdin):
             # Let the scheduler run.  We tell it which sockets are ready, and
             # it returns with a new list of sockets to watch.  We add our own
             # stdin socket to the set.
-            poll_list, timeout = cothread.PollScheduler(ready_list)
+            poll_list, timeout = _scheduler.poll_scheduler(ready_list)
             # Oh blast: we have to do some hacking here to add stdin to the
             # poll_list.
             for i in range(len(poll_list)):
@@ -46,7 +47,7 @@ def _readline_hook(stdin):
                 poll_list.append((stdin, coselect.POLLIN))
                 
             # Wait until either stdin or the scheduler are ready.
-            ready_list = cothread._scheduler._poll_block(poll_list, timeout)
+            ready_list = _scheduler._poll_block(poll_list, timeout)
 
             # Check for input on stdin
             for file, events in ready_list:
@@ -69,7 +70,7 @@ def _readline_hook(stdin):
         return False
 
 
-def readline_hook(enable_hook = True):
+def _install_readline_hook(enable_hook = True):
     '''Install readline hook.  This allows the scheduler to run in parallel
     with interactive python: while readline is waiting for input, the
     scheduler still operates.
@@ -130,3 +131,7 @@ def iqt(poll_interval = 10):
     # mode: connecting up all the sockets might be feasible, but anyway,
     # that's how it's done now.
     cothread.Spawn(_poll_iqt, qt, poll_interval)
+
+
+# Automatically install the readline hook.  This is the safest thing to do.
+_install_readline_hook(True)

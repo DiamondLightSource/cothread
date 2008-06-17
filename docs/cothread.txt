@@ -3,24 +3,24 @@ Using the cothread and catools Library
 Michael Abbott
 
 The +cothread+ Python library is designed for building tools using cooperative
-threading.  
+threading.  This means that, with care, programs can effectively run several
+tasks simultaneously.
 
 The +cothread.catools+ library is designed to support easy channel access from
-Python, and makes essential use of the features of cooperative threads.
+Python, and makes essential use of the features of cooperative threads -- in
+particular, +camonitor+ notifies updates in the background.
 
-Related documentation:
-
-* Channel Access Library: link:catools.html[]
-* Pydoc documentation: link:pydoc/cothread.html[],
-link:pydoc/cothread.coselect.html[].
+Related documentation: link:catools.html[Channel Access Library],
+link:index.html[Index Page]. 
 
 
 Introduction to Cothreads
 -------------------------
 
-This is an approach to concurrent programming where there is only
-one thread of processing (which Python enforces in practice), but apparently
-concurrent processes (or _cothreads_) can cooperatively share the processor.  
+Cothread are an approach to concurrent programming where there is only one
+thread of processing (Python anyway only allows one processor per process to
+be active), but apparently concurrent processes (or _cothreads_) can
+cooperatively share the processor.  
 
 Control is passed from one cothread to another when the current cothread
 explicitly suspends control, ultimately via a call to a +cothread+ library
@@ -36,12 +36,54 @@ suspension points there is no possibility of unexpected background activity!
 
 On the other hand, there is one disadvantage which needs to be kept in mind:
 
-* If a cothread blocks (for example, by calling +sleep()+ or reading from a
-socket or remote file without first calling +select()+) then _all_ cothreads
-will be blocked.  The cothread library provides routines to help with this.
+* If a cothread blocks (for example, by calling +time.sleep()+ or reading from
+a socket or remote file without first calling +select.select()+) then _all_
+cothreads will be blocked.  The cothread library provides routines to help
+with this (+cothread.Sleep+ and +cothread.select+ in these examples).
 
-Cothread Functions
-~~~~~~~~~~~~~~~~~~
+To use the +cothread+ library the following overall structure should be
+followed in the top level application:
+
+    # First the version of cothread library must be specified
+    from pkg_resources import require
+    require('cothread==1.6')
+
+    # Import the cothread library in each module that uses it.
+    import cothread
+
+    # Enable Qt processing
+    cothread.iqt()
+
+    # Do the real work of the module, including spawning any background tasks.
+    ...
+
+    # Finally allow all background tasks to run to completion.
+    cothread.WaitForQuit()
+
+1. +require('cothread==1.6')+.  This statement is required by the way Diamond
+Controls modules are managed: it is necessary to specify precisely _which_
+version of a module is to be used.  This means that API changes can be made in
+future releases without breaking existing code.  
++
+Alternatively +require('cothread')+ can be used to request the most recent
+installed version.
+
+2. If Qt is to be used (for any graphical user interface) then the cothread
+library needs to be informed: this is done by calling +iqt()+ before any work
+is done with Qt.  This call ensures that Qt processing will occur while the
+cothread scheduler is idle.
+
+3. Finally the main cothread (the thread of control used to start and run the
+program) must not exit until the program has finished.  If all the desired
+activity is in background tasks (spawned cothreads, +camonitor+ processing or
+other background activity) then the simplest thing is to call +WaitForQuit()+
+before exiting: this will wait until the +Quit+ function is called, or
+control-C is pressed somewhere, or the last Qt window is closed.
+
+
+Cothread API
+------------
+
 
 The following functions define the basic cothread interface provided by this
 module.
@@ -206,14 +248,6 @@ interrupt is silently caught, but still causes +WaitForQuit+ to exit.
 This is designed to be used as the final blocking call at the end of the main
 program so that other event loops can run.  
 
-
-
-+readline_hook(enable_hook=True)+::
-
-If console interactive operation is required then this routine should be
-called during initialisation.  With the readline hook enabled the cothreading
-scheduler is able to run while the Python interpreter is reading input from
-the keyboard.
 
 
 +iqt(poll_interval = 10)+::

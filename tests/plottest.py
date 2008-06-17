@@ -12,7 +12,6 @@ Require('matplotlib')
 from pylab import *
 from numpy import *
 
-readline_hook()
 iqt()
 
 

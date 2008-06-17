@@ -3,8 +3,6 @@ import os
 from cothread import *
 from cothread.coselect import *
 
-readline_hook()
-
 
 def reader(r):
     while True:

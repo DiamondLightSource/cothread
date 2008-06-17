@@ -279,7 +279,9 @@ class _Subscription(object):
         self.close()
         
     def close(self):
-        '''Closes the subscription and releases any associated resources.'''
+        '''Closes the subscription and releases any associated resources.
+        Note that no further callbacks will occur on a closed subscription,
+        not even callbacks currently queued for execution.'''
         if self.__state == self.__OPEN:
             self.channel._remove_subscription(self)
             ca_clear_subscription(self)
@@ -354,16 +356,19 @@ class _Subscription(object):
         background process to dispatch subscription events.'''
         while True:
             self, callback, value = cls.__callback_queue.Wait()
-            try:
-                callback(value)
-            except:
-                # We try and be robust about exceptions in handlers, but to
-                # prevent a perpetual storm of exceptions, we close the
-                # subscription after reporting the problem.
-                print 'Subscription %s callback raised exception' % self.name
-                traceback.print_exc()
-                print 'Subscription %s closed' % self.name
-                self.close()
+            # Only perform callbacks on open subscriptions.
+            if self.__state == self.__OPEN:
+                try:
+                    callback(value)
+                except:
+                    # We try and be robust about exceptions in handlers, but
+                    # to prevent a perpetual storm of exceptions, we close the
+                    # subscription after reporting the problem.
+                    print 'Subscription %s callback raised exception' % \
+                        self.name
+                    traceback.print_exc()
+                    print 'Subscription %s closed' % self.name
+                    self.close()
 
     def __merged_callback(self, _):
         '''Called on notification of update when merging multiple updates.
