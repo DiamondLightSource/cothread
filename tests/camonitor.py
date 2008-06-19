@@ -5,7 +5,7 @@ import sys
 import optparse
 
 import require
-from cothread.cothread import *
+from cothread import *
 from cothread.catools import *
 
 parser = optparse.OptionParser(

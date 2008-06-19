@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.4
 
 import sys
 
@@ -20,8 +20,8 @@ ALL_BPMS = [
     for cell in range(24)
     for n in range(7)]
 
+ALL_BPMS = ['SR01C-DI-EBPM-%02d' % (cell+1) for cell in range(2)]
 
-pvs = ['SR01C-DI-EBPM-01:FR:WFX', 'SR01C-DI-EBPM-01:FR:WFY']
 
 pvs = ['%s:%s' % (bpm, pv)
     for bpm in ALL_BPMS
@@ -43,8 +43,10 @@ def update_plot(l, x):
 def timer():
     while True:
         Sleep(0.5)
+        print 'tick'
         draw()
 
+#ioff()
 ll = do_plot(caget(pvs, timeout = 10))
 m = camonitor(pvs,
     lambda x, n:
