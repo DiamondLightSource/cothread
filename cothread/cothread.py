@@ -818,7 +818,7 @@ _scheduler_thread_id = thread.get_ident()
 
 def SleepUntil(deadline):
     '''Sleep until the specified deadline.  Note that if the deadline has
-    already passed then no yield of control will ooccur.'''
+    already passed then no yield of control will occur.'''
     _scheduler.wait_until(deadline)
 
 def Sleep(timeout):
