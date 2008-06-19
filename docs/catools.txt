@@ -390,13 +390,13 @@ The following fields are present in all augmented values.
 The following fields are present in all values if +FORMAT_TIME+ is specified.
 
 +.raw_stamp+:: Record timestamp in raw format as provided by EPICS (but in the
-local Unix epoch, not the EPICS epoch).  Has two fields +.secs+ and +.nsec+.
-Provided in case full ns timestamp precision is required.  Present if
-+FORMAT_TIME+ specified.
+local Unix epoch, not the EPICS epoch).  Is a tuple of the form +(secs, nsec)+
+with integer seconds and nanosecond values, provided in case full ns timestamp
+precision is required.  
 
 +.timestamp+:: Timestamp in seconds in format compatible with +time.time()+
 rounded to the nearest microsecond: for nanosecond precision use +.raw_stamp+
-instead.  Present if +FORMAT_TIME+ specified.
+instead.  
 +
 To compute the timestamp in +datetime+ format, which can be more suitable for
 display applications, it can be added to the value by computing

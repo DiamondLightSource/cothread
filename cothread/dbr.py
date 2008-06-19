@@ -65,16 +65,15 @@ If timestamps requested:
     status, severity,
     timestamp, raw_stamp
 
-    The timestamp is returned in all three possible forms because of problems
-    with each representation:
+    The timestamp is returned in two forms:
         timestamp
             This is the time stamp in the system epoch in seconds represented
             as a double.  Rounding leads to errors at the resolution of
-            sub-microseconds.
+            sub-microseconds, so this result is rounded to the nearest
+            microsecond.
         raw_stamp
-            This structure has the raw time stamp (in system epoch) with
-            separate integer fields .secs and .nsec for the seconds and
-            nanoseconds.
+            This is a tuple of the time stamp as (secs, nsec) with separate
+            integer fields .secs and .nsec for the seconds and nanoseconds.
 
 If control values requested (and datatype is not DBR_ENUM):
     status, severity, units,
@@ -137,20 +136,20 @@ def copy_attributes_time(self, other):
     # Handling the timestamp is a little awkward.  We provide both a
     # raw_stamp and a timestamp value as there is loss of ns precision in
     # the timestamp value (represented as a double) and the raw_stamp value
-    # is awkward for computation
-    raw_stamp = self.raw_stamp
-    raw_stamp.secs += EPICS_epoch
-    other.raw_stamp = raw_stamp
+    # is awkward for computation.
+    secs = self.raw_stamp.secs + EPICS_epoch
+    nsec = self.raw_stamp.nsec
+    other.raw_stamp = (secs, nsec)
     # The timestamp is rounded to microseconds, both to avoid confusion
     # (because the ns part is rounded already) and to avoid an excruciating
     # bug in the .fromtimestamp() function.
-    other.timestamp = round(raw_stamp.secs + raw_stamp.nsec * 1e-9, 6)
+    other.timestamp = round(secs + nsec * 1e-9, 6)
 
 def copy_attributes_ctrl(self, other):
     other.status = self.status
     other.severity = self.severity
 
-    other.units = truncate_string(self.units)
+    other.units = ctypes.string_at(self.units)
     other.upper_disp_limit = self.upper_disp_limit
     other.lower_disp_limit = self.lower_disp_limit
     other.upper_alarm_limit = self.upper_alarm_limit
@@ -173,7 +172,7 @@ class dbr_string(ctypes.Structure):
     dtype = str_dtype
     scalar = ca_str
     copy_attributes = copy_attributes_none
-    _fields_ = [('raw_value', ctypes.c_byte * MAX_STRING_SIZE)]
+    _fields_ = [('raw_value', (ctypes.c_byte * MAX_STRING_SIZE) * 1)]
     
 class dbr_short(ctypes.Structure):
     dtype = numpy.int16
@@ -221,7 +220,7 @@ class dbr_time_string(ctypes.Structure):
         ('status',    ctypes.c_short),
         ('severity',  ctypes.c_short),
         ('raw_stamp', ca_timestamp),
-        ('raw_value', ctypes.c_byte * MAX_STRING_SIZE)]
+        ('raw_value', (ctypes.c_byte * MAX_STRING_SIZE) * 1)]
 
 class dbr_time_short(ctypes.Structure):
     dtype = numpy.int16
@@ -341,9 +340,7 @@ class dbr_ctrl_enum(ctypes.Structure):
     def copy_attributes(self, other):
         other.status = self.status
         other.severity = self.severity
-        other.enums = [
-            truncate_string(s[:])
-            for s in self.raw_strs[:self.no_str]]
+        other.enums = map(ctypes.string_at, self.raw_strs[:self.no_str])
         
 class dbr_ctrl_char(ctypes.Structure):
     dtype = numpy.uint8
@@ -507,12 +504,6 @@ NumpyCharCodeToDbr = {
 }
 
 
-def truncate_string(string):
-    '''Takes a C-format string from a fixed length buffer and returns a Python
-    string truncated at the first null character.'''
-    return string.split('\0', 1)[0]
-
-
 # Format codes for type_to_dbr function.
 FORMAT_RAW = 0
 FORMAT_TIME = 1
@@ -572,10 +563,10 @@ def dbr_to_value(raw_dbr, datatype, count, name):
 
     if count == 1:
         # Single scalar values can be created directly from the raw value
+        result = raw_dbr.raw_value[0]
         if dbr_type.dtype is str_dtype:
-            result = ctypes.string_at(raw_dbr.raw_value)
-        else:
-            result = raw_dbr.raw_value[0]
+            # string_at() ensures the string is properly null terminated.
+            result = ctypes.string_at(result)
         result = raw_dbr.scalar(result)
     else:
         # Build a fresh dbr_array to receive a copy of the raw data in the
@@ -585,13 +576,17 @@ def dbr_to_value(raw_dbr, datatype, count, name):
         #     It is essential that the dtype correctly matches the memory
         # layout of the raw dbr, and of course that the count is accurate.
         result = ca_array(shape = (count,), dtype = dbr_type.dtype)
-        ctypes.memmove(result.ctypes.data, raw_dbr.raw_value, result.nbytes)
 
-        # String types need to be cleaned up: anything past the first
-        # null is garbage and needs to be deleted.
         if dbr_type.dtype is str_dtype:
+            # Copy strings one by one so that we can ensure that each string
+            # is properly null terminated.
+            p_raw_value = ctypes.pointer(raw_dbr.raw_value[0])
             for i in range(count):
-                result[i] = truncate_string(result[i])
+                result[i] = ctypes.string_at(p_raw_value[i])
+        else:
+            # For normal waveforms copy the underlying data directly.
+            ctypes.memmove(
+                result.ctypes.data, raw_dbr.raw_value, result.nbytes)
 
     # Finally copy across any attributes togethe with the pv name and a
     # success indicator.
@@ -617,7 +612,7 @@ def value_to_dbr(value):
     if value.dtype.char == 'S' and value.itemsize != MAX_STRING_SIZE:
         # Need special processing to hack the array so that characters are
         # actually 40 characters long.
-        new_value = numpy.empty(value.shape, numpy.dtype('S40'))
+        new_value = numpy.empty(value.shape, str_dtype)
         new_value[:] = value
         value = new_value
     
