@@ -42,6 +42,8 @@ ca_extra_fields = [
     'upper_ctrl_limit',
     'lower_ctrl_limit',
     'precision',    # Display precision for floating point values
+    # Other
+    'enums',        # Enumeration strings for ENUM type
 ]
 
 
