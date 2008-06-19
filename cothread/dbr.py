@@ -570,29 +570,28 @@ def dbr_to_value(raw_dbr, datatype, count, name):
     dbr_type = DbrCodeToType[datatype]
     raw_dbr = ctypes.cast(raw_dbr, ctypes.POINTER(dbr_type))[0]
 
-    # Build a fresh dbr_array to receive a copy of the raw data in the dbr.
-    # We have to take a copy, because the dbr is transient, and it is helpful
-    # to use a numpy array as a container, because of the support it
-    # provides.
-    #     It is essential that the dtype correctly matches the memory layout
-    # of the raw dbr, and of course that the count is accurate.
-    result = ca_array(shape = (count,), dtype = dbr_type.dtype)
-    ctypes.memmove(result.ctypes.data, raw_dbr.raw_value, result.nbytes)
-
-    # String types need to be cleaned up: anything past the first
-    # null is garbage and needs to be deleted.
-    if dbr_type.dtype is str_dtype:
-        for i in range(count):
-            result[i] = truncate_string(result[i])
-
-    # Unit length arrays are treated specially: we return the associated
-    # scalar instead.
-    #    It is possible to instead simply reshape the result to a zero
-    # dimensional array, but unfortunately such values don't behave enough
-    # like their underlying scalars.  This way we're really returning a
-    # subtype of the appropriate data type.
     if count == 1:
-        result = raw_dbr.scalar(result[0])
+        # Single scalar values can be created directly from the raw value
+        if dbr_type.dtype is str_dtype:
+            result = ctypes.string_at(raw_dbr.raw_value)
+        else:
+            result = raw_dbr.raw_value[0]
+        result = raw_dbr.scalar(result)
+    else:
+        # Build a fresh dbr_array to receive a copy of the raw data in the
+        # dbr.  We have to take a copy, because the dbr is transient, and it
+        # is helpful to use a numpy array as a container, because of the
+        # support it provides.
+        #     It is essential that the dtype correctly matches the memory
+        # layout of the raw dbr, and of course that the count is accurate.
+        result = ca_array(shape = (count,), dtype = dbr_type.dtype)
+        ctypes.memmove(result.ctypes.data, raw_dbr.raw_value, result.nbytes)
+
+        # String types need to be cleaned up: anything past the first
+        # null is garbage and needs to be deleted.
+        if dbr_type.dtype is str_dtype:
+            for i in range(count):
+                result[i] = truncate_string(result[i])
 
     # Finally copy across any attributes togethe with the pv name and a
     # success indicator.
