@@ -1,7 +1,7 @@
 # Makefile for building cothread documentation
 
 # Ensure asciidoc is on the path.
-PATH := /home/share/embedded/local/bin:$(PATH)
+PATH := $(PATH):/dls_sw/tools/local/bin
 
 ASCIIDOC_FILES = $(wildcard *.txt)
 

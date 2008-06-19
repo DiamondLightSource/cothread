@@ -13,4 +13,3 @@ Index to cothread documentation
   link:pydoc/cothread.input_hook.html[+cothread.input_hook+],
   link:pydoc/cothread.cadef.html[+cothread.cadef+],
   link:pydoc/cothread.dbr.html[+cothread.dbr+].
-

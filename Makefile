@@ -11,8 +11,9 @@ all: dist make_docs
 
 clean: remove clean_docs
 
-dist: setup.py
+dist: setup.py $(wildcard cothread/*.py src/*.c) 
 	$(PYTHON) setup.py bdist_egg
+	touch dist
 
 remove:
 	$(PYTHON) setup.py clean
@@ -22,9 +23,10 @@ remove:
 
 install: all
 	$(PYTHON) setup.py dls_install -m --script-dir=$(SCRIPT_DIR) dist/*.egg
-	
+
 test: all
-	$(PYTHON) setup.py dls_install -m --install-dir=$(TEST_INSTALL_DIR) --script-dir=$(TEST_SCRIPT_DIR) dist/*.egg
+	$(PYTHON) setup.py dls_install -m --install-dir=$(TEST_INSTALL_DIR) \
+            --script-dir=$(TEST_SCRIPT_DIR) dist/*.egg
 
 make_docs:
 	make -C docs

@@ -10,25 +10,23 @@ The +cothread.catools+ library is designed to support easy channel access from
 Python, and makes essential use of the features of cooperative threads -- in
 particular, +camonitor+ notifies updates in the background.
 
-Related documentation: link:catools.html[Channel Access Library],
+Related documentation: link:catools.html[Channel Access Library], back to
 link:index.html[Index Page]. 
 
 
 Introduction to Cothreads
 -------------------------
 
-Cothread are an approach to concurrent programming where there is only one
-thread of processing (Python anyway only allows one processor per process to
-be active), but apparently concurrent processes (or _cothreads_) can
-cooperatively share the processor.  
-
+Cothreads (or ``cooperative threads'') are an approach to concurrent
+programming where there is only one true thread of processing, but apparently
+concurrent processes (or _cothreads_) can cooperatively share the processor.
 Control is passed from one cothread to another when the current cothread
 explicitly suspends control, ultimately via a call to a +cothread+ library
 routine.  This means that between such suspending calls control will not be
 interrupted.  This has two advantages:
 
 * No locking between threads is required.  This is a very helpful benefit of
-using cothreads, as getting locking between multiple threads right is actually
+using cothreads, as getting locking between multiple threads right can be
 suprisingly difficult.
 
 * The thread of processing is frequently more predictable: between two
@@ -37,28 +35,30 @@ suspension points there is no possibility of unexpected background activity!
 On the other hand, there is one disadvantage which needs to be kept in mind:
 
 * If a cothread blocks (for example, by calling +time.sleep()+ or reading from
-a socket or remote file without first calling +select.select()+) then _all_
+a socket or remote file without first calling a select function) then _all_
 cothreads will be blocked.  The cothread library provides routines to help
-with this (+cothread.Sleep+ and +cothread.select+ in these examples).
+with this (see +Sleep+ and +select+ below).
 
 To use the +cothread+ library the following overall structure should be
 followed in the top level application:
 
-    # First the version of cothread library must be specified
-    from pkg_resources import require
-    require('cothread==1.6')
+----------------------------
+# First the version of cothread library must be specified
+from pkg_resources import require
+require('cothread==1.6')    # or just require('cothread')
 
-    # Import the cothread library in each module that uses it.
-    import cothread
+# Import the cothread library in each module that uses it.
+import cothread
 
-    # Enable Qt processing
-    cothread.iqt()
+# Enable Qt processing
+cothread.iqt()
 
-    # Do the real work of the module, including spawning any background tasks.
-    ...
+# Do the real work of the module, including spawning any background tasks.
+...
 
-    # Finally allow all background tasks to run to completion.
-    cothread.WaitForQuit()
+# Finally allow all background tasks to run to completion.
+cothread.WaitForQuit()
+----------------------------
 
 1. +require('cothread==1.6')+.  This statement is required by the way Diamond
 Controls modules are managed: it is necessary to specify precisely _which_
@@ -67,11 +67,14 @@ future releases without breaking existing code.
 +
 Alternatively +require('cothread')+ can be used to request the most recent
 installed version.
++
+Note that the +require+ statements should only occur once in each application:
+it is an easy mistake to place them at the head of each Python module.  
 
 2. If Qt is to be used (for any graphical user interface) then the cothread
 library needs to be informed: this is done by calling +iqt()+ before any work
 is done with Qt.  This call ensures that Qt processing will occur while the
-cothread scheduler is idle.
+cothread scheduler is idle, and effectively turns Qt into another cothread.
 
 3. Finally the main cothread (the thread of control used to start and run the
 program) must not exit until the program has finished.  If all the desired
@@ -79,6 +82,84 @@ activity is in background tasks (spawned cothreads, +camonitor+ processing or
 other background activity) then the simplest thing is to call +WaitForQuit()+
 before exiting: this will wait until the +Quit+ function is called, or
 control-C is pressed somewhere, or the last Qt window is closed.
+
+
+Cothread Suspension Points
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using cothreads only certain function calls will cause control to be
+yielded to another cothread, or in other words, will cause suspension of the
+calling cothread -- we call such a routine a ``suspension point''.
+
+Understanding suspension points is important for effective use of cothreads:
+between suspension points no other cothread will run, and the current cothread
+has exclusive control of the process (except for any ``real'' threads that
+might be running).  Once a suspension point is reached any other cothread can
+run, in fact typically _all_ other ready cothreads will run to their own
+suspension points before control is returned to the suspended cothread.
+
+The following are suspension points in the core +cothread+ library:
+
++Sleep+, +SleepUntil+:: Note that if a delay of 0 is specified to +Sleep+ or
+if the deadline for +SleepUntil+ has passed the caller will not be suspended.
+
++Yield+::  This suspends the caller until all other active cothreads have run
+to their own suspension points.
+
+event++.Wait++:: On a +Spawn+, +Event+ or +EventQueue+ object the +Wait+
+method will only suspend the caller if the event object is not yet ready and
+any specified timeout has not yet expired.
+
+
+The +coselect+ module adds the following suspension points:
+
++select+, +poll+, +poll_list+:: All of these routines suspend the caller until
+at least one file descriptor in a monitored list is ready.  The caller will be
+suspended even if the ready condition is already met.
+
+In the +catools+ module the following routines can cause suspension (note
+that +camonitor+ is the only routine guaranteed not to suspend):
+
++caget+:: This always suspends the caller until the requested
+channel access data has arrived (or a timeout occurs), the only exception
+being if an expired timeout is specified.  
+
++caput+:: This routine does not always suspend the caller: the circumstances
+in which suspension does and does not occur are reasonably complex, and on the
+whole it's safer to treat this routine as unpredictable in this regard.
+
+
+Callbacks and Timers
+~~~~~~~~~~~~~~~~~~~~
+
+Callbacks and timers are also provided through the cothread library, and it's
+important to understand how they interact with other routines.
+
+Timers::
+
+Timers are created by the +Timer+ function documented below.  The callback
+that is invoked as part of the timer is a fresh cothread, spawned when the
+timer is created.  This means that the timer callback function can run for as
+long as desired without interfering with other timer callbacks (so long as it
+suspends regularly, of course!)  
++
+Note however that a timer will not retrigger itself until its current callback
+routine completes.
+
+
+Callbacks from +camonitor+::
+
+The callback routines called in response to +camonitor+ are all invoked on a
+single cothread.  This means that extended processing within a single callback
+will prevent any other callbacks from being processed.  To avoid this either
+spawn a new cothread to perform further process, or communicate with an
+existing separate cothread.
+
+
+Other callbacks::
+
+Other callbacks will depend on the library generating them, but it's safest to
+treat them as ``blocking'' in the sense described above.
 
 
 Cothread API
@@ -91,15 +172,13 @@ module.
 
 +Spawn(function, arguments, raise_on_wait=False, ...)+::
 
-A new cooperative thread, or _cothread_, is created as a call to 
+A new cooperative thread, or _cothread_, is created as a call to
 +function(arguments)+ where +arguments+ can be any list of values and keyword
-argument (except for the special +raise_on_wait+ flag).  Control is not
-transferred to the new cothread until control is yielded, in other words,
-this call does not yield control.
+arguments (except for the special +raise_on_wait+ flag).  This routine is not
+a suspension point.
 +
 This is the fundamental building block of the cothreading library.  It is
-quite cheap to spawn fresh cothreads, and so this routine can be used
-quite freely.
+quite cheap to spawn fresh cothreads, and so this routine can be used freely.
 +
 It is possible to wait for the completion of a spawned cothread by calling its
 +Wait+ method:
@@ -135,7 +214,7 @@ objects.  An +Event+ can hold at most one value (or signal), while an
 
 +Event(auto_reset=True)+::
 
-An event object is initially created _unsignalled_.  The +auto_reset+ flag
+Event objects are initially created _unsignalled_.  The +auto_reset+ flag
 determines whether the signalled state of the event object is persistent, and
 determines how many cothreads are woken when +Signal+ is called on an event.
 The +bool+ state of an event object is +True+ iff it is signalled.
@@ -147,8 +226,8 @@ The following methods define the behaviour of this object.
 The calling cothread will be suspended until a signal is written to the
 +Event+ by a call to +Signal()+, at which point the value passed to +Signal()+
 is returned.  If a timeout occurs (a timeout of +None+ specifies no timeout)
-this is signalled by raising the exception +Timedout+.
-+
+this is signalled by raising the exception ++Timedout++.
+
 If +auto_reset+ was specified as +True+ then the signal is consumed, and
 subsequent calls to +Wait+ will block until further +Signal+ calls occur.
 
@@ -157,7 +236,7 @@ The event object is marked as signalled and the value passed is recorded to be
 returned by a call to +Wait+.  If one or more cothreads are waiting for a
 signal then at least one will be woken with the new value (if +auto_reset+ is
 +True+ then only one will be woken, otherwise all will be).
-+
+
 Note that this routine does *not* suspend the caller, even if another cothread
 is woken: it will not process until later.
 
@@ -166,7 +245,8 @@ This is similar in effect to +Signal+, but the effect on cothreads calling
 +Wait+ is that they will receive the given exception.
 
 +Reset()+::
-Resets the signal and erases its value.
+Resets the signal and erases its value.  Also erases any exception written to
+the event.
 --
 
 
@@ -184,7 +264,7 @@ The following methods are supported:
 Returns the next object from the queue, blocking if necessary.  If a timeout
 occurs then +Timedout+ is raised.  If the queue has been closed then
 +StopIteration+ is raised.
-+
+
 If the queue is non empty when +Wait()+ is called control will not be
 suspended.
 
@@ -194,18 +274,19 @@ waiting.  This routine does not suspend the caller.
 --
 +
 Example code using iteration over an +EventQueue+. 
++
+----------------------------
+def consumer(e):
+    for x in e:
+        print 'consumed', x
 
-    def consumer(e):
-        for x in e:
-            print 'consumed', x
-            
-    eq = EventQueue()
-    Spawn(consumer, eq)
+eq = EventQueue()
+Spawn(consumer, eq)
 
-    for i in range(10):
-        eq.Signal(i)
-        Sleep(1)
-
+for i in range(10):
+    eq.Signal(i)
+    Sleep(1)
+----------------------------
 
 +ThreadedEventQueue()+::
 
@@ -254,8 +335,7 @@ program so that other event loops can run.
 
 If Qt is to be used then this routine must be called during initialisation to
 enable the Qt event loop.
-+
-In the current implementation Qt is polled.  This may be rewritten shortly.
+
 
 
 Coselect Functions

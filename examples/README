@@ -18,3 +18,9 @@ qt_monitor.py
 scope_epics.py
 scope.ui
     A simple oscilloscope demonstrating Qt and camonitor.
+
+cahelper.py
+    Helper functions for channel access.
+
+require.py
+    How to configure for cothread import.

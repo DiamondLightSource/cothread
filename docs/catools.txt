@@ -2,10 +2,9 @@ Using the catools Library
 =========================
 Michael Abbott
 
-Other documents:
+Related documentation: link:cothread.html[Cothread Library], back to
+link:index.html[Index Page]. 
 
-* Cothread library: link:cothread.html[] 
-* Cothread Python pydoc documentation: link:pydoc/cothread.html[]
 
 Overview
 --------
@@ -27,33 +26,37 @@ following code illustrates a simple application which reads a value from one
 PV, writes to another PV, and monitors a third until terminated with
 control-C.
 
-    # Library version specification required for dls libraris
-    from pkg_resources import require
-    require('cothread')
+----------------------------
+# Library version specification required for dls libraris
+from pkg_resources import require
+require('cothread')
 
-    import cothread
-    from cothread.catools import *
+import cothread
+from cothread.catools import *
 
-    # Using caput: write 1234 into PV1.  Raises exception on failure
-    caput('PV1', 1234)
+# Using caput: write 1234 into PV1.  Raises exception on failure
+caput('PV1', 1234)
 
-    # Print out the value reported by PV2.
-    print caget('PV2')
+# Print out the value reported by PV2.
+print caget('PV2')
 
-    # Monitor PV3, printing out each update as it is received.
-    def callback(value):
-        print 'callback', value
-    camonitor('PV3', callback)
+# Monitor PV3, printing out each update as it is received.
+def callback(value):
+    print 'callback', value
+camonitor('PV3', callback)
 
-    # Now run the camonitor process until interrupted by Ctrl-C.
-    cothread.WaitForQuit()
+# Now run the camonitor process until interrupted by Ctrl-C.
+cothread.WaitForQuit()
+----------------------------
 
 The following details are general to all cothread applications.
 
 1. The routine +pkg_resources.require()+ must be used to specify a particular
 version of the library to use, for example
 +
-    require('cothread==1.6')
+----------------------------
+require('cothread==1.6')
+----------------------------
 +
 or if the most recent version is ok then the version number can be omitted as
 in the example.
@@ -68,8 +71,10 @@ activity has no opportunity to run before the program exits!
 For the latest ``bleeding edge'' (unreleased) version of the cothread library
 replace the +require('cothread')+ statement above with the following:
 
-    import sys
-    sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
+----------------------------
+import sys
+sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
+----------------------------
 
 
 Function Reference
@@ -113,10 +118,10 @@ If a timeout occurs then a +Timedout+ exception will be raised unless
 
 +throw+::
 
-This parameter determines the behaviour of +caget+, +caput+ and +camonitor+
-when an error occurs.  If +throw=False+ (the default) is set then an exception
-is raised, otherwise if +True+ is specified an error code value is returned
-for each failing value.
+This parameter determines the behaviour of +caget+ and +caput+ when an error
+occurs.  If +throw=False+ (the default) is set then an exception is raised,
+otherwise if +True+ is specified an error code value is returned for each
+failing PV.
 
 
 
@@ -127,7 +132,7 @@ Functions
 +caput(pvs, values, repeat_value=False, timeout=5, wait=False, throw=True)+::
 
 Writes values to one or more PVs.  If +pvs+ is a single string then +values+
-is treated as a single value to be written to the named proces variable,
+is treated as a single value to be written to the named process variable,
 otherwise +pvs+ must be iterable, and unless +repeat_value=True+ is set,
 +values+ must also be an iterable of the same length in which case
 +values[i]+ is written to +pvs[i]+.  Otherwise, if a single value is given or
@@ -150,27 +155,29 @@ Documented in <<Common, Common Notes>> above.
 --
 +
 The return value from +caput+ is either a list or a single value, depending on
-whether +pvs+ is a single string.  For each PV a +ca_nothing+ success code is
+the shape of +pvs+.  For each PV a +ca_nothing+ success code is
 returned on success, otherwise either an exception is raised or an appropriate
 error code is returned for each failing PV if +throw=True+ is set.  The return
 code can be tested for boolean success, so for example it
 is possible to write:
 +
-    if not caput(pv, value, throw=False):
-        process caput error
+----------------------------
+if not caput(pv, value, throw=False):
+    process caput error
+----------------------------
 
 
 
 
 +caget(pvs, timeout=5, datatype=None, format=FORMAT_RAW, count=0, throw=True)+::
 
-Retrieves the value from one or more PVs.  If +pvs+ is a single string then
+Retrieves a value from one or more PVs.  If +pvs+ is a single string then
 a single value is returned, otherwise a list of values is returned.  Each
-value returned is an <<Augmented Values, Augmented Value>>, see 
+value returned is an <<Augmented, Augmented Value>>, see 
 below for details.
 +
 If +.ok+ is +False+ then the +.errorcode+ field is set to the appropriate
-+ECA_+ error code and +str(value)+ will return an appropriate error message.
++ECA_+ error code and +str(value)+ will return an error message.
 +
 The various arguments control the behaviour of +caget+ as follows:
 +
@@ -204,12 +211,16 @@ The precise way in which the callback routine is called on updates
 depends on whether +pvs+ is a single name or a list of names.  If it is
 single name then it is called as
 +
-    callback(value)
+----------------------------
+callback(value)
+----------------------------
 +
 for each update.  If +pvs+ is a list of names then each update is
 reported as
 +
-    callback(value, index)
+----------------------------
+callback(value, index)
+----------------------------
 +
 where +index+ is the position in the original array of PVs of the PV
 generating this update.  The values passed to +callback+ are <<Augmented,
@@ -250,11 +261,11 @@ otherwise only valid values will be passed to the callback routine.
 Working with Values
 -------------------
 
-There are two types of values returned by catools functions: ``augmented'' and
-``error codes''.  The +caput+ function only returns an error code value (which
-may indicate success), while +caget+ and +camonitor+ will normally return (or
-deliver) augmented values, but will return (or deliver) an error code on
-failure.
+There are two types of values returned by catools functions: ``augmented
+values'' and ``error codes''.  The +caput+ function only returns an error code
+value (which may indicate success), while +caget+ and +camonitor+ will
+normally return (or deliver) augmented values, but will return (or deliver) an
+error code on failure.
 
 The following fields are common to both types of value.  This means that is is
 always safe to test +value.ok+ for a value returned by +caget+ or +caput+ or
@@ -300,8 +311,18 @@ can be any of the following:
 1.  +None+ (the default).  In this case the ``native'' datatype provided
     by the channel will be returned.
 
-2.  A +DBR_+ value, one of +DBR_STRING+, +DBR_SHORT+, +DBR_FLOAT+, +DBR_ENUM+,
-    +DBR_CHAR+, +DBR_LONG+ or +DBR_DOUBLE+.
+2.  A +DBR_+ value, one of the following:
+
++DBR_STRING+;;  Strings are up to 39 characters long -- this is a constraint
+set by EPICS.
++DBR_CHAR+, +DBR_SHORT+, +DBR_LONG+;;  These are all signed integer types,
+with 8, 16 and 32 bit values respectively.
++DBR_FLOAT+, +DBR_DOUBLE+;; Floating point values with 32 and 64 bit values,
+respectively.
++DBR_ENUM+;; A 16 bit unsigned integer value representing an index into an
+array of strings.  The associated strings can be retrieved by using
++format=FORMAT_CTRL+ and inspecting the +.enums+ field.
+
 
 3.  A python type compatible with any of the above values, such as
     +int+, +float+ or +str+.  These correspond to +DBR_LONG+, +DBR_DOUBLE+ and
@@ -318,10 +339,9 @@ the retrieved data, and can be one of the following:
 The data is returned unaugmented except for the +.name+ and +.ok+ fields.
 
 +FORMAT_TIME+::
-The data is augmented by timestamp fields +.timestamp+ and +.datetime+
+The data is augmented by timestamp fields +.timestamp+ and +.raw_stamp+
 together with .+alarm+, +.status+ and +.severity+ fields.  The value in
-+.timestamp+ is in +time()+ format (seconds in Unix UTC epoch), and the
-+.datetime+ timestamp is in +datetime+ module format.
++.timestamp+ is in +time()+ format (seconds in Unix UTC epoch).
 
 +FORMAT_CTRL+::
 The data is augmented by channel access ``control'' fields.  
@@ -353,7 +373,73 @@ will be an index into +.enums+.
 
 +count+::
 If specified this can be used to limit the number of waveform points
-retrieved from the server. 
+retrieved from the server, otherwise the entire waveform is always returned.
+
+
+Fields
+^^^^^^
+Summary of all available fields in augmented values.
+
+The following fields are present in all augmented values.
+
++.name+:: Name of record, always present.
+
++.ok+:: Set to +True+, always present.
+
+
+The following fields are present in all values if +FORMAT_TIME+ is specified.
+
++.raw_stamp+:: Record timestamp in raw format as provided by EPICS (but in the
+local Unix epoch, not the EPICS epoch).  Has two fields +.secs+ and +.nsec+.
+Provided in case full ns timestamp precision is required.  Present if
++FORMAT_TIME+ specified.
+
++.timestamp+:: Timestamp in seconds in format compatible with +time.time()+
+rounded to the nearest microsecond: for nanosecond precision use +.raw_stamp+
+instead.  Present if +FORMAT_TIME+ specified.
++
+To compute the timestamp in +datetime+ format, which can be more suitable for
+display applications, it can be added to the value by computing
++
+------------------
+import datetime
+value.datetime = datetime.datetime.fromtimestamp(value.timestamp)
+------------------
+
+
+The following fields are present in all values if +FORMAT_TIME+ or
++FORMAT_CTRL+ is specified.
+
++.severity+:: EPICS alarm severity, normally one of the values listed below.
++
+*********************
+0:: => No alarm
+1:: =>  Alarm condition, minor severity
+2:: =>  Alarm condition, major severity.
+*********************
+
++.status+:: Reason code associated with alarm severity, always present with
++.severity+ code.
+
+
+The following fields are present in numeric values if +FORMAT_CTRL+ is
+specified.  Values of type +DBR_ENUM+ or +DBR_STRING+ are not numeric.
+
++.units+::  Units for display.  
+
++.upper_disp_limit+, +.lower_disp_limit+:: Suggested display limits for
+numerical values.  
+
++.upper_alarm_limit+, +.lower_alarm_limit+, +.upper_warning_limit+, +.lower_warning_limit+, +.upper_ctrl_limit+, +.lower_ctrl_limit+:: \
+These are all mystery EPICS numeric limits.  If somebody knows what they mean,
+please update this documentation accordingly!  
+
++.precision+:: For floating point values only, the specified display precision
+(or 0 if not specified).  Present if value is a floating point type.
+
+The following field is only present in +DBR_ENUM+ values.
+
++.enums+:: For enumeration values only, an array of enumeration strings.
 
 
 [[ca_nothing]]
@@ -372,11 +458,13 @@ Set to +True+ if the data is good, +False+ if there was an error.  Testing an
 error code value for boolean will return the value of +.ok+, so for example it
 is possible to write:
 +
-    if not caput(pv, value, throw=False):
-        process caput error
+----------------------------
+if not caput(pv, value, throw=False):
+    process caput error
+----------------------------
 
 +.name+::
-Name of the pv.
+Name of the PV which generated this error..
 
 +.errorcode+::
 Channel access error code.  The following values are worth noting:
