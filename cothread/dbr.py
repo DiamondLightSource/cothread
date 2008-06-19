@@ -55,9 +55,10 @@ MAX_ENUM_STATES = 16
 
 
 ca_doc_string = \
-'''All values returned from channel access are returned as an "augmented"
-types with extra fields.  The following field is always present:
+'''All values returned from channel access are returned as "augmented"
+types with extra fields.  The following fields are always present:
     name
+    ok
 
 Depending on the request type, the following extra fields may be present:
 
@@ -85,7 +86,7 @@ If control values requested (and datatype is not DBR_ENUM):
 
 If control values requested and datatype is DBR_ENUM:
     status, severity, 
-    strs (list of possible enumeration strings)
+    enums (list of possible enumeration strings)
 '''
 
 # Augmented array used for all return values with more than one element.
@@ -115,9 +116,6 @@ class ca_timestamp(ctypes.Structure):
     _fields_ = [
         ('secs',                ctypes.c_long),
         ('nsec',                ctypes.c_long)]
-
-    def __str__(self):
-        return '%d.%09d' % (self.secs, self.nsec)
         
         
 # ----------------------------------------------------------------------------
@@ -588,7 +586,7 @@ def dbr_to_value(raw_dbr, datatype, count, name):
             ctypes.memmove(
                 result.ctypes.data, raw_dbr.raw_value, result.nbytes)
 
-    # Finally copy across any attributes togethe with the pv name and a
+    # Finally copy across any attributes together with the pv name and a
     # success indicator.
     raw_dbr.copy_attributes(result)
     result.name = name

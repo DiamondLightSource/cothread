@@ -21,9 +21,9 @@ parser.add_option(
     '-w', dest = 'wait', default = False, action = 'store_true',
     help = 'Use caput with callback')
 options, arglist = parser.parse_args()
-if len(arglist) != 2:
+if len(arglist) < 2:
     parser.print_help()
     sys.exit()
 
-print caput(arglist[0], arglist[1],
+print caput(arglist[0], arglist[1:],
     timeout = options.timeout, wait = options.wait, throw = options.throw)
