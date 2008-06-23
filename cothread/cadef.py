@@ -1,12 +1,42 @@
-# Functions imported directly from libca.
+# This file is part of the Diamond cothread library.
 #
-# See http://he3.dartmouth.edu/manuals/CAref.html for detailed documentation
-# of the functions below.
+# Copyright (C) 2007 James Rowland, 2007-2008 Michael Abbott,
+# Diamond Light Source Ltd.
 #
-# Actually, see http://www.aps.anl.gov/epics/base/R3-14/8-docs/CAref.html
+# The Diamond cothread library is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version.
 #
-# This module is a thin wrapper over the cadef.h file to be found in
-#   /dls_sw/epics/R3.14.8.2/base/include/cadef.h
+# The Diamond cothread library is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+#
+# Contact:
+#      Dr. Michael Abbott,
+#      Diamond Light Source Ltd,
+#      Diamond House,
+#      Chilton,
+#      Didcot,
+#      Oxfordshire,
+#      OX11 0DE
+#      michael.abbott@diamond.ac.uk
+
+'''Functions imported directly from libca.
+
+See http://he3.dartmouth.edu/manuals/CAref.html for detailed documentation
+of the functions below.
+
+Actually, see http://www.aps.anl.gov/epics/base/R3-14/8-docs/CAref.html
+
+This module is a thin wrapper over the cadef.h file to be found in
+    /dls_sw/epics/R3.14.8.2/base/include/cadef.h
+'''
 
 import ctypes
 
@@ -35,9 +65,9 @@ CA_OP_CONN_UP        = 6
 CA_OP_CONN_DOWN      = 7
 
 # Flags used to identify notificaton events to request for subscription.
-DBE_VALUE = 1
-DBE_LOG = 2
-DBE_ALARM = 4
+DBE_VALUE   = 1
+DBE_LOG     = 2
+DBE_ALARM   = 4
 
 # Status codes as returned by virtually all ca_ routines
 ECA_NORMAL = 1
@@ -113,12 +143,12 @@ ECA_UNRESPTMO = 480
 # completes or the data is available.
 class event_handler_args(ctypes.Structure):
     _fields_ = [
-        ('usr', ctypes.py_object),      # Associated private data
-        ('chid', ctypes.c_int),         # Channel ID for this request
-        ('type', ctypes.c_int),         # DBR type of data returned
-        ('count', ctypes.c_int),        # Number of data points returned
+        ('usr',     ctypes.py_object),  # Associated private data
+        ('chid',    ctypes.c_int),      # Channel ID for this request
+        ('type',    ctypes.c_int),      # DBR type of data returned
+        ('count',   ctypes.c_int),      # Number of data points returned
         ('raw_dbr', ctypes.c_void_p),   # Pointer to raw dbr array
-        ('status', ctypes.c_int)]       # ECA_ status code of operation
+        ('status',  ctypes.c_int)]      # ECA_ status code of operation
 event_handler = ctypes.CFUNCTYPE(None, event_handler_args)
     
 
@@ -126,24 +156,24 @@ event_handler = ctypes.CFUNCTYPE(None, event_handler_args)
 # report path.
 class exception_handler_args(ctypes.Structure):
     _fields_ = [
-        ('usr', ctypes.c_void_p),       # Associated private data
-        ('chid', ctypes.c_void_p),      # Channel ID or NULL
-        ('type', ctypes.c_int),         # Data type requested
-        ('count', ctypes.c_int),        # Number of data points requested
-        ('addr', ctypes.c_void_p),      # User address for GET operation
-        ('stat', ctypes.c_int),         # Channel access status code
-        ('op',  ctypes.c_int),          # CA_OP_ operation code
-        ('ctx', ctypes.c_char_p),       # Context information string
-        ('pFile', ctypes.c_char_p),     # Location in source: file name
-        ('lineNo', ctypes.c_int)]       #             ... and line number
+        ('usr',     ctypes.c_void_p),   # Associated private data
+        ('chid',    ctypes.c_void_p),   # Channel ID or NULL
+        ('type',    ctypes.c_int),      # Data type requested
+        ('count',   ctypes.c_int),      # Number of data points requested
+        ('addr',    ctypes.c_void_p),   # User address for GET operation
+        ('stat',    ctypes.c_int),      # Channel access status code
+        ('op',      ctypes.c_int),      # CA_OP_ operation code
+        ('ctx',     ctypes.c_char_p),   # Context information string
+        ('pFile',   ctypes.c_char_p),   # Location in source: file name
+        ('lineNo',  ctypes.c_int)]      #             ... and line number
 exception_handler = ctypes.CFUNCTYPE(None, exception_handler_args)
 
 
 # Connection handler, used to report channel connection status.
 class ca_connection_handler_args(ctypes.Structure):
     _fields_ = [
-        ('chid', ctypes.c_void_p),
-        ('op', ctypes.c_int)]
+        ('chid',    ctypes.c_void_p),
+        ('op',      ctypes.c_int)]
 connection_handler = ctypes.CFUNCTYPE(None, ca_connection_handler_args)
 
 

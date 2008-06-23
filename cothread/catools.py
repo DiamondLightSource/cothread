@@ -1,3 +1,32 @@
+# This file is part of the Diamond cothread library.
+#
+# Copyright (C) 2007 James Rowland, 2007-2008 Michael Abbott,
+# Diamond Light Source Ltd.
+#
+# The Diamond cothread library is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version.
+#
+# The Diamond cothread library is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+#
+# Contact:
+#      Dr. Michael Abbott,
+#      Diamond Light Source Ltd,
+#      Diamond House,
+#      Chilton,
+#      Didcot,
+#      Oxfordshire,
+#      OX11 0DE
+#      michael.abbott@diamond.ac.uk
+
 '''Pure Python ctypes interface to EPICS libca Channel Access library
 
 Supports three methods:
@@ -245,8 +274,9 @@ class _Subscription(object):
             # Good data: extract value from the dbr.
             self.__signal(dbr_to_value(
                 args.raw_dbr, args.type, args.count, self.channel.name))
-        else:
-            # Something is wrong: let the subscriber know
+        elif self.notify_disconnect:
+            # Something is wrong: let the subscriber know, but only if
+            # they've requested disconnect nofication.
             self.__signal(ca_nothing(self.channel.name, args.status))
 
     def __signal(self, value):
@@ -294,7 +324,7 @@ class _Subscription(object):
     def __init__(self, name, callback, 
             events = DBE_VALUE,
             datatype = None, format = FORMAT_RAW, count = 0,
-            all_updates = False, notify_disconnect = False):
+            all_updates = False, notify_disconnect = True):
         '''Subscription initialisation: callback and context are used to
         frame values written to the queue;  events selects which types of
         update are notified;  datatype, format and count define the format
@@ -388,7 +418,7 @@ def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
         events = DBE_VALUE,
         datatype = None, format = FORMAT_RAW, count = 0,
-        all_updates = False, notify_disconnect = False)
+        all_updates = False, notify_disconnect = True)
 
     Creates a subscription to one or more PVs, returning a subscription
     object for each PV.  If a single PV is given then a single subscription

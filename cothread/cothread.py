@@ -1,3 +1,32 @@
+# This file is part of the Diamond cothread library.
+#
+# Copyright (C) 2007 James Rowland, 2007-2008 Michael Abbott,
+# Diamond Light Source Ltd.
+#
+# The Diamond cothread library is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version.
+#
+# The Diamond cothread library is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+#
+# Contact:
+#      Dr. Michael Abbott,
+#      Diamond Light Source Ltd,
+#      Diamond House,
+#      Chilton,
+#      Didcot,
+#      Oxfordshire,
+#      OX11 0DE
+#      michael.abbott@diamond.ac.uk
+
 '''Simple cooperative threading using coroutines.  The following functions
 define the interface provided by this module.
 
@@ -71,8 +100,7 @@ __all__ = [
 
 
 class _TimerQueue(object):
-    '''A timer queue: objects are held on the queue in timeout sequence
-    '''
+    '''A timer queue: objects are held on the queue in timeout sequence.'''
     __slots__ = ['__values', '__timeouts']
 
     # The queue is implemented using the bisect function to insert objects
@@ -161,15 +189,14 @@ class _Scheduler(object):
         # If the schedule loop raises an exception then propogate the
         # exception up to the main thread before restarting the scheduler.
         # This has mostly the right effects: a standalone program will
-        # terminate, and an interactive program will receive back control,
-        # and the scheduler should carry on operating.
+        # terminate, and an interactive program will receive back control, and
+        # the scheduler should carry on operating.
         while True:
             try:
                 self.__schedule_loop()
             except:
-                # Switch to the main task asking it to re-raise the
-                # interrupt.  First we have to make sure it's not on the run
-                # queue.
+                # Switch to the main task asking it to re-raise the interrupt.
+                # First we have to make sure it's not on the run queue.
                 for index, (task, reason) in enumerate(self.__ready_queue):
                     if task is main_task:
                         del self.__ready_queue[index]
@@ -217,9 +244,7 @@ class _Scheduler(object):
 
             
     def __schedule_loop(self):
-        '''This runs a scheduler loop without returning.  If no poll interval
-        is given then when there nothing to be done only timers will be
-        run.'''
+        '''This runs a scheduler loop without returning.'''
         while True:
             # Dispatch all waiting tasks
             self.__tick()

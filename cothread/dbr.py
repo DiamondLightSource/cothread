@@ -1,5 +1,35 @@
-# Channel access datatype support.  Derived from definitions in the EPICS
-# header file db_access.h
+# This file is part of the Diamond cothread library.
+#
+# Copyright (C) 2007 James Rowland, 2007-2008 Michael Abbott,
+# Diamond Light Source Ltd.
+#
+# The Diamond cothread library is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the License,
+# or (at your option) any later version.
+#
+# The Diamond cothread library is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+#
+# Contact:
+#      Dr. Michael Abbott,
+#      Diamond Light Source Ltd,
+#      Diamond House,
+#      Chilton,
+#      Didcot,
+#      Oxfordshire,
+#      OX11 0DE
+#      michael.abbott@diamond.ac.uk
+
+'''Channel access datatype support.  Derived from definitions in the EPICS
+header file db_access.h
+'''
 
 import ctypes
 import numpy
@@ -48,10 +78,10 @@ ca_extra_fields = [
 
 
 # Standard hard-wired EPICS array sizes.
-MAX_STRING_SIZE = 40
-MAX_UNITS_SIZE = 8
-MAX_ENUM_STRING_SIZE = 26
-MAX_ENUM_STATES = 16 
+MAX_STRING_SIZE = 40        # Size of string type 
+MAX_UNITS_SIZE = 8          # Size of units string
+MAX_ENUM_STRING_SIZE = 26   # Size of individual enumeration strings
+MAX_ENUM_STATES = 16        # Numer of possible enumeration strings
 
 
 ca_doc_string = \
@@ -540,7 +570,7 @@ def type_to_dbr(datatype, format = FORMAT_RAW):
         if datatype == DBR_STRING:
             # There is no ctrl option for strings, so in this case provide
             # the richest format we have available.
-            return datatype + 14
+            return DBR_TIME_STRING
         else:
             # Return corresponding DBR_CTRL_XXX value
             return datatype + 28

@@ -1,3 +1,39 @@
+/* This routine patches the behaviour of the builtin readline module by
+ * replacing its call_readline() function with our own implementation: this
+ * is simply done by writing our PyOS_ReadlineFunctionPointer after readline
+ * has been imported.
+ *     The purpose of this is to allow us to change the behaviour of the
+ * input hook so that interrupts can be propagated back to the reading
+ * application.  This is done by means of the following patch to the file
+ * Modules/readline.c in the Python sources:
+ * 
+ 
+			has_input = select(fileno(rl_instream) + 1, &selectset,
+					   NULL, NULL, &timeout);
+-			if(PyOS_InputHook) PyOS_InputHook();
++            if (call_readline_InputHook  &&
++                call_readline_InputHook(fileno(rl_instream)))
++            {
++                has_input = -1;
++                PyErr_SetInterrupt();
++                break;
++            }
+                }
+
+                if(has_input > 0) {
+                        rl_callback_read_char();
+                }
+-		else if (errno == EINTR) {
++        else if (errno == EINTR || has_input < 0) {
+                        int s;
+ #ifdef WITH_THREAD
+                        PyEval_RestoreThread(_PyOS_ReadlineTState);
+
+ * 
+ * The rest of this file is derived by cutting away the rest of the
+ * initialisation so that our call_readline() will work alongside the
+ * original readline module. */
+
 #include "Python.h"
 #include <setjmp.h>
 #include <signal.h>
@@ -23,11 +59,6 @@ int (*call_readline_InputHook)(int) = NULL;
 #undef HAVE_CONFIG_H /* Else readline/chardefs.h includes strings.h */
 #include <readline/readline.h>
 #include <readline/history.h>
-
-#ifdef HAVE_RL_COMPLETION_MATCHES
-#define completion_matches(x, y) \
-    rl_completion_matches((x), ((rl_compentry_func_t *)(y)))
-#endif
 
 
 
