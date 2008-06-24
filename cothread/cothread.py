@@ -63,6 +63,9 @@ The following Event object methods are relevant.
 Similarly the EventQueue can be used for communication.
 '''
 
+# It might be worth taking a close look at:
+#   http://wiki.secondlife.com/wiki/Eventlet
+
 import sys
 import os
 import time
