@@ -104,7 +104,6 @@ __all__ = [
 
 class _TimerQueue(object):
     '''A timer queue: objects are held on the queue in timeout sequence.'''
-    __slots__ = ['__values', '__timeouts']
 
     # The queue is implemented using the bisect function to insert objects
     # into the queue without having to resort the list.  This is cheap and
@@ -151,15 +150,6 @@ class _TimerQueue(object):
 
 class _Scheduler(object):
     '''Coroutine activity scheduler.'''
-
-    __slots__ = [
-        '__ready_queue',    # Tasks waiting to run
-        '__timer_queue',    # Tasks waiting for timers
-        '__greenlet',       # Scheduler greenlet  
-        '__poll_callback',  # Set while scheduler being polled from outside
-        '__poll_queue',     # Polled files, event masks and tasks
-        '_poll_block',      # Routine to call when waiting for something
-    ]
 
     # Task wakeup reasons
     __WAKEUP_NORMAL = 0     # Normal wakeup
@@ -452,7 +442,6 @@ class _Wakeup(object):
     '''A _Wakeup object is used when a task is to be suspended on one or more
     queues.  On wakeup the original task is returned, but only once: this is
     used to ensure that entries on other queues are effectively cancelled.'''
-    __slots__ = ['__task']
     def __init__(self):
         self.__task = greenlet.getcurrent()
     def wakeup(self):
@@ -494,7 +483,6 @@ def Deadline(timeout):
 
 class EventBase(object):
     '''The base class for implementing events and signals.'''
-    __slots__ = ['__waiters']
 
     def __init__(self):
         # List of tasks currently waiting to be woken up.
@@ -530,11 +518,6 @@ class EventBase(object):
 class Spawn(EventBase):
     '''This class is used to wrap cooperative threads: every task (except
     for main) managed by the scheduler should be an instance of this class.'''
-    __slots__ = [
-        '__function', '__args', '__kargs',
-        '__result',
-        '__raise_on_wait',
-    ]
 
     finished = property(fget = lambda self: bool(self.__result))
     
@@ -604,10 +587,6 @@ class Spawn(EventBase):
 class Event(EventBase):
     '''Any number of tasks can wait for an event to occur.  A single value
     can also be associated with the event.'''
-    __slots__ = [
-        '__value',
-        '__auto_reset',
-    ]
 
     value = property(fget = lambda self: self.__value)
     
@@ -668,7 +647,6 @@ class Event(EventBase):
 
 class EventQueue(EventBase):
     '''A queue of objects.  A queue can also be treated as an iterator.'''
-    __slots__ = ['__queue', '__closed']
 
     def __init__(self):
         EventBase.__init__(self)
@@ -715,7 +693,6 @@ class EventQueue(EventBase):
 
 class ThreadedEventQueue(object):
     '''An event queue designed to work with threads.'''
-    __slots__ = ['__values', 'wait_descriptor', '__signal']
 
     def __init__(self):
         # According to the documentation this is thread safe, so we don't
@@ -749,7 +726,6 @@ class ThreadedEventQueue(object):
         
 class Timer(object):
     '''A cancellable one-shot or auto-retriggering timer.'''
-    __slots__ = ['__timeout', '__callback', '__cancel', '__retrigger']
     
     def __init__(self, timeout, callback, retrigger = False):
         '''The callback will be called after the specified timeout.  If
@@ -782,6 +758,12 @@ class Timer(object):
         self.__retrigger = False
         self.__cancel.Signal()
         del self.__callback
+
+    def reset(self, timeout = None, retrigger = False):
+        '''Resets the timer.  If it hasn't fired yet then the timeout is reset
+        to the given timeout (or its original timeout by default).  ???
+        '''
+        assert False, 'Got to write this yet...'
             
             
 

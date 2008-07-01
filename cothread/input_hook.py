@@ -50,15 +50,14 @@ __all__ = [
 ]
 
 
-# Don't really know which of these is right!
-hook_function = CFUNCTYPE(c_int, c_int)
-#hook_function = PYFUNCTYPE(c_int, c_int)
+hook_function = CFUNCTYPE(c_int)
 
 
 @hook_function
-def _readline_hook(stdin):
+def _readline_hook():
     '''Runs the scheduler hook until either input is available on stdin or a
-    keyboard interrupt occurs.  Returns True iff an interrupt is caught.'''
+    keyboard interrupt occurs.'''
+    stdin = 0
     try:
         ready_list = []
         while True:
@@ -81,22 +80,12 @@ def _readline_hook(stdin):
             # Check for input on stdin
             for file, events in ready_list:
                 if file == stdin and events & coselect.POLLIN:
-                    return False
+                    return
     except KeyboardInterrupt:
-        return True
+        print 'Control C (probably) ignored'
     except:
-        # If any other kind of exception gets here then we have a real
-        # problem.  The return value will be undefined, and the scheduler
-        # will be broken.  Best to record that we're now dead, create the
-        # traceback, and disable the hook.
-        print 'Exception raised by scheduler: scheduler abandoned'
+        print 'Exception raised from scheduler'
         traceback.print_exc()
-
-        # Now disable any further hooking by resetting the hook.  We have to
-        # set it to zero, so this requires a certain amount of fakery so the
-        # type system will play properly.
-        cast(call_readline_InputHookP, POINTER(c_void_p))[0] = 0
-        return False
 
 
 def _install_readline_hook(enable_hook = True):
@@ -107,21 +96,12 @@ def _install_readline_hook(enable_hook = True):
     enable_hook parameter to False -- for example, this can be helpful if a
     background activity is causing a nuisance.'''
     
-    # The order of these two is rather important: we are effectively patching
-    # readline to use our own hook.
-    import readline
-    import call_readline
-
-    call_readline_lib = cdll.LoadLibrary(
-        os.path.abspath(call_readline.__file__))
-    global call_readline_InputHookP
-    call_readline_InputHookP = pointer(hook_function.in_dll(
-        call_readline_lib, 'call_readline_InputHook'))
-
+    PyOS_InputHookP = pointer(hook_function.in_dll(
+        pythonapi, 'PyOS_InputHook'))
     if enable_hook:
-        call_readline_InputHookP[0] = _readline_hook
+        PyOS_InputHookP[0] = _readline_hook
     else:
-        cast(call_readline_InputHookP, POINTER(c_void_p))[0] = 0
+        cast(PyOS_InputHookP, POINTER(c_void_p))[0] = 0
 
 
 def _poll_iqt(qt, poll_interval):

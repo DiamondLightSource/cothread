@@ -6,7 +6,8 @@ import pydoc
 import shutil
 import types
 
-sys.path.append(os.path.abspath('../build/lib.linux-i686-2.4'))
+sys.path.append(os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..')))
 import cothread
 import cothread.catools
 

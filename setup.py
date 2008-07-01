@@ -6,10 +6,6 @@ from setuptools import setup, Extension
 if 'version' not in globals():
     version = 'development'
 
-call_readline = Extension('cothread.call_readline',
-    sources = ['src/call_readline.c'],
-    libraries = ['readline', 'ncurses'])
-
 setup(
     name = 'cothread',
     version = version,
@@ -18,5 +14,4 @@ setup(
     author_email = 'Michael.Abbott@diamond.ac.uk',
     
     packages = ['cothread'],
-    ext_modules = [call_readline],
     setup_requires = ['dls.environment==1.0'])

@@ -11,7 +11,7 @@ all: dist make_docs
 
 clean: remove clean_docs
 
-dist: setup.py $(wildcard cothread/*.py src/*.c) 
+dist: setup.py $(wildcard cothread/*.py) 
 	$(PYTHON) setup.py bdist_egg
 	touch dist
 
@@ -19,7 +19,6 @@ remove:
 	$(PYTHON) setup.py clean
 	-rm -rf build dist *egg-info print_documentation.sh
 	-find -name '*.pyc' -exec rm {} \;
-	-find -name '*~' -exec rm {} \;
 
 install: all
 	$(PYTHON) setup.py dls_install -m --script-dir=$(SCRIPT_DIR) dist/*.egg

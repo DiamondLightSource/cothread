@@ -103,11 +103,6 @@ def poll_block(poll_list, timeout = None):
 
 class _Poller(object):
     '''Wrapper for handling poll wakeup.'''
-    __slots__ = [
-        'wakeup',           # Task wakeup object for scheduler
-        '__events',         # The events we're actually watching
-        '__ready_list',     # The events we now know to be ready
-    ]
     
     def __init__(self, event_list):
         self.wakeup = cothread._Wakeup()
@@ -159,9 +154,6 @@ def poll_list(event_list, timeout = None):
 class poll(object):
     '''Emulates select.poll(), but implements a cooperative non-blocking
     version for use with the cothread library.'''
-    __slots__ = [
-        '__watch_list'      # File selectors being watched and flags 
-    ]
     
     def __init__(self):
         self.__watch_list = {}

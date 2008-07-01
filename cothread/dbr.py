@@ -507,23 +507,23 @@ BasicDbrTypes = set([
 # Conversion from numpy character codes to DBR types.
 NumpyCharCodeToDbr = {
     # The following type codes are supported directly:
-    'B':    DBR_CHAR,       # byte
-    'h':    DBR_SHORT,      # short
-    'i':    DBR_LONG,       # intc
-    'l':    DBR_LONG,       # int_
-    'f':    DBR_FLOAT,      # single
-    'd':    DBR_DOUBLE,     # float_
+    'b':    DBR_CHAR,       # byte   = int8
+    'h':    DBR_SHORT,      # short  = int16
+    'i':    DBR_LONG,       # intc   = int32
+    'l':    DBR_LONG,       # int_   = int32
+    'f':    DBR_FLOAT,      # single = float32
+    'd':    DBR_DOUBLE,     # float_ = float64
     'S':    DBR_STRING,     # str_
     
     # The following type codes are weakly supported by pretending that
     # they're related types.
     '?':    DBR_CHAR,       # bool_
-    'b':    DBR_CHAR,       # byte
-    'p':    DBR_LONG,       # intp
-    'H':    DBR_SHORT,      # ushort
-    'I':    DBR_LONG,       # uintc
-    'L':    DBR_LONG,       # uint
-    'P':    DBR_LONG,       # uintp
+    'B':    DBR_CHAR,       # ubyte  = uint8
+    'p':    DBR_LONG,       # intp   = int32
+    'H':    DBR_SHORT,      # ushort = uint16
+    'I':    DBR_LONG,       # uintc  = uint32
+    'L':    DBR_LONG,       # uint   = uint32
+    'P':    DBR_LONG,       # uintp  = uint32
     
     # The following type codes are not supported at all:
     #   q   longlong        Q   ulonglong       g   longfloat
@@ -540,6 +540,16 @@ FORMAT_CTRL = 2
 class InvalidDatatype(Exception):
     '''Invalid datatype requested.'''
 
+def _dtype_to_dbr(dtype):
+    '''Converts a dtype into the appropriate corresponding DBR_ value, if
+    possible, otherwise raises a helpful exception.'''
+    try:
+        return NumpyCharCodeToDbr[dtype.char]
+    except:
+        raise InvalidDatatype(
+            'Datatype "%s" not supported for channel access' % dtype)
+    
+
 def type_to_dbr(datatype, format = FORMAT_RAW):
     '''Converts a datatype and format request to a dbr value, or raises an
     exception if this cannot be done.
@@ -553,11 +563,7 @@ def type_to_dbr(datatype, format = FORMAT_RAW):
       - FORMAT_CTRL: retrieve limit and control data
     '''
     if datatype not in BasicDbrTypes:
-        # See if numpy can help us out
-        try:
-            datatype = NumpyCharCodeToDbr[numpy.dtype(datatype).char]
-        except:
-            raise InvalidDatatype('Datatype not supported for channel access')
+        datatype = _dtype_to_dbr(numpy.dtype(datatype))
 
     # Now take account of the format
     if format == FORMAT_RAW:
@@ -643,7 +649,7 @@ def value_to_dbr(value):
         new_value = numpy.empty(value.shape, str_dtype)
         new_value[:] = value
         value = new_value
-    
-    datatype = NumpyCharCodeToDbr[value.dtype.char]
+
+    datatype = _dtype_to_dbr(value.dtype)
     count = len(value)
     return datatype, count, value

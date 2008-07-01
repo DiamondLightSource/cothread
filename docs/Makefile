@@ -16,5 +16,5 @@ clean:
 %.html: %.txt
 	asciidoc -o $@ $<
 
-pydoc: ../build/lib.linux-i686-2.4
+pydoc: $(wildcard cothread/*.py) 
 	./makedocs.py
