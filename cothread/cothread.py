@@ -72,7 +72,7 @@ import time
 import greenlet
 import bisect
 import traceback
-from collections import deque
+import collections 
 import thread
 
 import coselect
@@ -139,6 +139,13 @@ class _TimerQueue(object):
     def __len__(self):
         '''Returns the number of entries on the queue.'''
         return len(self.__timeouts)
+
+    def index(self, item):
+        return self.__values.index(item)
+
+    def __delitem__(self, index):
+        del self.__values[index]
+        del self.__timeouts[index]
 
 
 # Important system invariants:
@@ -362,8 +369,17 @@ class _Scheduler(object):
             # offending exception.
             wakeup.wakeup()
             raise
+        elif result == self.__WAKEUP_TIMEOUT:
+            if suspend_queue is not None:
+                # If this is a timeout then we'd better remove ourself from
+                # the suspend_queue
+                del suspend_queue[suspend_queue.index(wakeup)]
+            return True
         else:
-            return result == self.__WAKEUP_TIMEOUT
+            if until is not None:
+                # Ordinary wakeup, cancel any pending timeout
+                del self.__timer_queue[self.__timer_queue.index(wakeup)]
+            return False
             
     def wakeup(self, wakeups, reason = __WAKEUP_NORMAL):
         '''Wakes up all the given tasks.  Returns the number of tasks
@@ -383,13 +399,27 @@ class _Scheduler(object):
         '''
         # Add our poller to the appropriate poll event queues so that we'll
         # get woken.
-        for file, events in poller.event_list():
+        event_list = poller.event_list()
+        for file, events in event_list:
             # Each entry on the poll queue is a pair: a mask of events being
             # waited for, and a list of pollers to be notified.
             queue = self.__poll_queue.setdefault(file, [0, []])
             queue[0] |= events
             queue[1].append(poller)
         self.wait_until(until, wakeup = poller.wakeup)
+        # Finish off by removing any remaining entries from queues
+        for file, _ in event_list:
+            queue = self.__poll_queue.get(file, None)
+            if queue:
+                queue = queue[1]
+                try:
+                    del queue[queue.index(poller)]
+                except ValueError:
+                    pass
+                if not queue:
+                    # If the queue is now empty discard it completely.
+                    del self.__poll_queue[file]
+                
 
     def __wakeup_poll(self, poll_result):
         '''Called with the result of a system poll: a list of file descriptors
@@ -487,6 +517,10 @@ class EventBase(object):
     def __init__(self):
         # List of tasks currently waiting to be woken up.
         self.__waiters = []
+        # Number of aborted waits that need to be emulated.  This is
+        # incremented by subclasses for each _Wakeup that needs to be
+        # simulated.
+        self.__wait_abort = 0
 
     def _WaitUntil(self, timeout=None):
         '''Suspends the calling task until _Wakeup() is called.  Raises an
@@ -497,7 +531,16 @@ class EventBase(object):
             raise Timedout('Timed out waiting for event')
 
     def _Wakeup(self, wake_all = True):
-        '''Wakes one or all waiting tasks.'''
+        '''Wakes one or all waiting tasks.  Returns False if an aborted wait
+        needs to be emulated.'''
+        if self.__wait_abort and not wake_all:
+            # This is a special case: an aborted wait needs to be completed.
+            # This occurs when waiting needs to be simulated, in which case
+            # any resources consumed by the reader need to be consumed by the
+            # waker instead!
+            self.__wait_abort -= 1
+            return False
+            
         if self.__waiters:
             if wake_all:
                 # Wake up everybody who was waiting.
@@ -512,6 +555,10 @@ class EventBase(object):
                     if _scheduler.wakeup([wakeup]):
                         break
                 del self.__waiters[:n+1]
+        return True
+
+    def _AbortWait(self):
+        self.__wait_abort += 1
 
         
 
@@ -558,7 +605,9 @@ class Spawn(EventBase):
                     'raised uncaught exception'
                 traceback.print_exc()
                 self.__result = (True, None)
-        self._Wakeup()
+        if not self._Wakeup():
+            # Aborted wakeup: consume the result now
+            del self.__result
         # See wait_until() for an explanation of this return value.
         return []
 
@@ -582,7 +631,16 @@ class Spawn(EventBase):
             # make the task go away when it's finished with...
             raise result[0], result[1], result[2]
 
-
+    def AbortWait(self):
+        '''Called instead of performing a proper wait to release any resources
+        that might be consumed until the wait occurs.'''
+        if self.__result:
+            # Result has already arrived.  Consume it silently now.
+            del self.__result
+        else:
+            # Still need to wait: need to abort the next wakeup.
+            self._AbortWait()
+            
     
 class Event(EventBase):
     '''Any number of tasks can wait for an event to occur.  A single value
@@ -628,17 +686,31 @@ class Event(EventBase):
             return result
         else:
             raise result
+
+    def AbortWait(self):
+        '''Called instead of performing a proper wait to release any resources
+        that might be consumed until the wait occurs.'''
+        # If this isn't an auto_reset event then our aborted wait makes no
+        # difference.  Otherwise we either consume the value now or on the
+        # next wakeup.
+        if self.__auto_reset:
+            if self.__value:
+                self.Reset()
+            else:
+                self._AbortWait()
             
     def Signal(self, value = None):
         '''Signals the event.  Any waiting tasks are scheduled to be woken.'''
         self.__value = (True, value)
-        self._Wakeup(not self.__auto_reset)
+        if not self._Wakeup(not self.__auto_reset):
+            self.Reset()
 
     def SignalException(self, exception):
         '''Signals the event with an exception: the next call to wait will
         receive an exception instead of a normal return value.'''
         self.__value = (False, exception)
-        self._Wakeup(not self.__auto_reset)
+        if not self._Wakeup(not self.__auto_reset):
+            self.Reset()
 
     def Reset(self):
         '''Resets the event (and erases the value).'''
@@ -668,11 +740,20 @@ class EventQueue(EventBase):
         else:
             raise StopIteration
 
+    def AbortWait(self):
+        '''Called instead of performing a proper wait to release any resources
+        that might be consumed until the wait occurs.'''
+        if self.__queue:
+            self.__queue.pop(0)
+        elif not self.__closed:
+            self._AbortWait()
+        
     def Signal(self, value):
         '''Adds the given value to the tail of the queue.'''
         assert not self.__closed, 'Can\'t write to a closed queue'
         self.__queue.append(value)
-        self._Wakeup(False)
+        if not self._Wakeup(False):
+            self.__queue.pop(0)
 
     def close(self):
         '''An event queue can be closed.  This will cause waiting to raise
@@ -697,7 +778,7 @@ class ThreadedEventQueue(object):
     def __init__(self):
         # According to the documentation this is thread safe, so we don't
         # need to take any particular precautions when using this!
-        self.__values = deque()
+        self.__values = collections.deque()
         self.wait_descriptor, self.__signal = os.pipe()
 
     def Wait(self, timeout = None):
@@ -767,18 +848,25 @@ class Timer(object):
             
             
 
-def WaitForAll(event_list, timeout = None, iterator = False):
+def WaitForAll(event_list, timeout = None):
     '''Waits for all events in the event list to become ready or for the
     timeout to expire.'''
     # Make sure that the timeout is actually a deadline, then it's easy to do
     # all the waits in sequence.
     timeout = AbsTimeout(timeout)
-    result = (event.Wait(timeout) for event in event_list)
-    if not iterator:
-        # If an interator hasn't been requested then flatten the iterator
-        # now.  This ensures that the default behaviour really is to wait for
-        # everything to complete.
-        result = list(result)
+    # Unfortunately our waiting can be interrupted by an exception.  To avoid
+    # leaking memory in this case we perform simulated waits on any remaining
+    # events.  This is a good deal more complicated than
+    #       return [event.Wait(timeout) for event in event_list]
+    # which is what it ought to be!
+    event_list = list(event_list)
+    result = []
+    try:
+        for n, event in enumerate(event_list):
+            result.append(event.Wait(timeout))
+    finally:
+        for event in event_list[n+1:]:
+            event.AbortWait()
     return result
 
 

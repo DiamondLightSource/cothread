@@ -313,7 +313,7 @@ The timer can be cancelled at any time before it has triggered by calling
 +.cancel()+ on the timer object created by calling +Timer()+.
 
 
-+WaitForAll(event_list, timeout=None, iterator=False)+::
++WaitForAll(event_list, timeout=None)+::
 
 This routine waits for all events in +event_list+ to become ready: this is
 done by simply iterating through all the events in turn, waiting for them to
