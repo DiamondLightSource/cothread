@@ -3,11 +3,13 @@
 
 Testing = True
 
+from pkg_resources import require
+require('numpy')
+
 if Testing:
     import sys
     import os
     sys.path.append(os.path.abspath(os.path.join(
         os.path.dirname(__file__), '..')))
 else:
-    from pkg_resource import require
     require('cothread')
