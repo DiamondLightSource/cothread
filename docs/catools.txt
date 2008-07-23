@@ -198,7 +198,7 @@ as a scalar, otherwise as a numpy array.
 
 
 
-+camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=True)+:: 
++camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)+:: 
 
 Creates a subscription to one or more PVs, returning a subscription
 object for each PV.  If a single PV is given then a single subscription
@@ -251,9 +251,9 @@ augmented with a field +.update_count+ recording how many updates
 occurred on this value.
 
 +notify_disconnect+::
-By default (if this is +True+) then IOC disconnect events and channel access
+If this is +True+ then IOC disconnect events and channel access
 error reports will be reported by calling the callback with a +ca_nothing+
-error with +.ok+ False.  By setting this to +False+ these notifications can be
+error with +.ok+ False.  By default +False+ these notifications are
 suppressed so that only valid values will be passed to the callback routine.
 --
 

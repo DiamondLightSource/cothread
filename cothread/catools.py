@@ -324,7 +324,7 @@ class _Subscription(object):
     def __init__(self, name, callback, 
             events = DBE_VALUE,
             datatype = None, format = FORMAT_RAW, count = 0,
-            all_updates = False, notify_disconnect = True):
+            all_updates = False, notify_disconnect = False):
         '''Subscription initialisation: callback and context are used to
         frame values written to the queue;  events selects which types of
         update are notified;  datatype, format and count define the format
@@ -418,7 +418,7 @@ def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
         events = DBE_VALUE,
         datatype = None, format = FORMAT_RAW, count = 0,
-        all_updates = False, notify_disconnect = True)
+        all_updates = False, notify_disconnect = False)
 
     Creates a subscription to one or more PVs, returning a subscription
     object for each PV.  If a single PV is given then a single subscription
