@@ -119,8 +119,8 @@ If a timeout occurs then a +Timedout+ exception will be raised unless
 +throw+::
 
 This parameter determines the behaviour of +caget+ and +caput+ when an error
-occurs.  If +throw=False+ (the default) is set then an exception is raised,
-otherwise if +True+ is specified an error code value is returned for each
+occurs.  If +throw=True+ (the default) is set then an exception is raised,
+otherwise if +False+ is specified an error code value is returned for each
 failing PV.
 
 
@@ -415,8 +415,9 @@ The following fields are present in all values if +FORMAT_TIME+ or
 +
 *********************
 0:: => No alarm
-1:: =>  Alarm condition, minor severity
-2:: =>  Alarm condition, major severity.
+1:: => Alarm condition, minor severity
+2:: => Alarm condition, major severity.
+3:: => Invalid value.
 *********************
 
 +.status+:: Reason code associated with alarm severity, always present with
