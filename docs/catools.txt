@@ -29,6 +29,7 @@ control-C.
 ----------------------------
 # Library version specification required for dls libraris
 from pkg_resources import require
+require('numpy==1.1.0')
 require('cothread')
 
 import cothread
@@ -51,30 +52,75 @@ cothread.WaitForQuit()
 
 The following details are general to all cothread applications.
 
-1. The routine +pkg_resources.require()+ must be used to specify a particular
-version of the library to use, for example
+. The routine +pkg_resources.require()+ must be used to specify a particular
+version of the library to use.  The +catools+ submodule also depends on
++numpy+ and this should also be specified, thus the following lines are
+required at the start of any catools application:
 +
 ----------------------------
-require('cothread==1.6')
+from pkg_resources import require
+require('numpy==1.1.0')
+require('cothread==1.9')
 ----------------------------
 +
 or if the most recent version is ok then the version number can be omitted as
-in the example.
+in the example. 
 
-2. Of course, the libraries must be imported.  The +catools+ library is a
+. Any +EPICS_CA_+ environment variables should be set at this point, before
+importing +catools+ (see <<environment,below>>).
+
+. Of course, the libraries must be imported.  The +catools+ library is a
 sub-module of the +cothread+ library, and can be imported separately.
 
-3. The program must suspend in an event loop of some sort.  The routine
-+cothread.WaitForQuit()+ should normally be used, as otherwise the +camonitor+
-activity has no opportunity to run before the program exits!
+. If +camonitor+ is being used then the program should suspend in an event
+loop of some sort.  The routine +cothread.WaitForQuit()+ can be used, as
+otherwise the +camonitor+ activity has no opportunity to run before the
+program exits!
 
-For the latest ``bleeding edge'' (unreleased) version of the cothread library
-replace the +require('cothread')+ statement above with the following:
 
-----------------------------
-import sys
-sys.path.append('/home/mga83/epics/cothread/build/lib.linux-i686-2.4')
-----------------------------
+
+Tips and Tricks
+---------------
+
+The following notes may be helpful when using this library.
+
+[[environment]]
+Environment Variables
+~~~~~~~~~~~~~~~~~~~~~
+
+A number of environment variables affect the operation of channel access.
+These can be set using the +os.environ+ dictionary -- but note that these
+need to be set 'before' loading the +catools+ module.  The following are
+documented in the
+http://www.aps.anl.gov/epics/EpicsDocumentation/AppDevManuals/ChannelAccess/cadoc_4.htm[
+EPICS channel access developers manual].
+
++EPICS_CA_MAX_ARRAY_BYTES+:: Configures the maximum number of bytes that can be
+transferred in a single channel access message.
+
++EPICS_CA_ADDR_LIST+:: A space separated list of channel access server
+addresses. 
+
++EPICS_CA_AUTO_ADDR_LIST+:: If set to ``NO'' the automatic scanning of
+networks is disabled.
+
++EPICS_CA_CONN_TMO+:: Connection timeout, 30 seconds by default.
+
++EPICS_CA_BEACON_PERIOD+:: Beacon polling period, 15 seconds by default.
+
++EPICS_CA_SERVER_PORT+, +EPICS_CA_REPEATER_PORT+:: Set these to configure the
+ports used to connect to channel access.  By default ports 5064 and 5065 are
+used (respectively); for testing we use 6064 and 6065.
+
+Example code:
+
+---------------------------
+import os
+os.environ['EPICS_CA_MAX_ARRAY_BYTES'] = '1000000'
+
+# Note: the first import of catools must come after the environ is set up.
+from cothread.catools import *
+---------------------------
 
 
 Function Reference
