@@ -5,13 +5,17 @@
 import require
 import cothread
 from cothread import catools
-import qt
+
+try:
+    from qt import QLabel
+except ImportError:
+    from PyQt4.QtGui import QLabel
 
 cothread.iqt()
 
 
 # make a label widget (None is the parent, this is top-level widget)
-label = qt.QLabel('Hello World', None)
+label = QLabel('Hello World', None)
 label.resize(200, 50)
 # must show top-level widgets manually
 label.show()

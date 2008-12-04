@@ -104,28 +104,54 @@ def _install_readline_hook(enable_hook = True):
         cast(PyOS_InputHookP, POINTER(c_void_p))[0] = 0
 
 
-def _poll_iqt(qt, poll_interval):
+def _poll_iqt(poll_interval, qt_timer, qt_quit, qt_exec):
     while True:
-        qt.qApp.processEvents(poll_interval)
-        cothread.Sleep(poll_interval / 1000.)
+        qt_timer(poll_interval, qt_quit)
+        qt_exec()
+        cothread.Yield()
 
-
-def iqt(poll_interval = 10):
+        
+def iqt(poll_interval = 50):
     '''Installs Qt event handling hook.  The polling interval is in
     milliseconds.'''
-    import qt
-    if qt.qApp.startingUp():
-        # If the Qt application hasn't been created yet then build it now.
-        # We need to hang onto the pointer, otherwise it will go away!
-        global _qapp
-        _qapp = qt.QApplication(sys.argv)
 
-    # Ensure a quit request is made when the last Qt window is closed.
-    qt.qApp.connect(qt.qApp, qt.SIGNAL('lastWindowClosed()'), cothread.Quit)
-    # Run the Qt event loop.  Unfortunately we have to run it in polling
-    # mode: connecting up all the sockets might be feasible, but anyway,
-    # that's how it's done now.
-    cothread.Spawn(_poll_iqt, qt, poll_interval)
+    # Unfortunately the two versions of Qt that we support have subtly
+    # different interfaces, so we have to figure out which one we've got and
+    # implement the event hook accordingly.
+    global _qapp
+    try:
+        # Try for Qt4 first.
+        from PyQt4.QtCore import QCoreApplication, QTimer, SIGNAL
+        from PyQt4.QtGui import QApplication
+
+        # Qt4 startup
+        if QCoreApplication.startingUp():
+            _qapp = QApplication(sys.argv)
+
+        QCoreApplication.connect(
+            QCoreApplication.instance(),
+            SIGNAL('lastWindowClosed()'), cothread.Quit)
+            
+        # Qt4 polling
+        cothread.Spawn(
+            _poll_iqt, poll_interval,
+            QTimer.singleShot, QCoreApplication.quit, QCoreApplication.exec_)
+    except ImportError:
+        # No Qt4 found, so try for qt (version 3) instead.  If this fails then
+        # we'll just let the error propagate
+        import qt
+
+        # Qt3 startup
+        if qt.qApp.startingUp():
+            _qapp = qt.QApplication(sys.argv)
+
+        qt.qApp.connect(
+            qt.qApp, qt.SIGNAL('lastWindowClosed()'), cothread.Quit)
+            
+        # Qt3 polling
+        cothread.Spawn(
+            _poll_iqt, poll_interval,
+            qt.QTimer.singleShot, qt.qApp.quit, qt.qApp.exec_loop)
 
 
 # Automatically install the readline hook.  This is the safest thing to do.
