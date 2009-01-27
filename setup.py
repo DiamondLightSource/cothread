@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-#from distutils.core import setup, Extension
 from setuptools import setup, Extension
 
 if 'version' not in globals():
@@ -13,5 +12,4 @@ setup(
     author = 'Michael Abbott',
     author_email = 'Michael.Abbott@diamond.ac.uk',
     
-    packages = ['cothread'],
-    setup_requires = ['dls.environment==1.0'])
+    packages = ['cothread'])

@@ -1,7 +1,7 @@
-PYTHON=python2.4
-SCRIPT_DIR=/dls_sw/tools/bin
-TEST_INSTALL_DIR=/dls_sw/work/common/python/test/packages
-TEST_SCRIPT_DIR=/dls_sw/work/common/python/test/scripts
+PYTHON = python2.4
+SCRIPT_DIR = /dls_sw/tools/bin
+TEST_INSTALL_DIR = /dls_sw/work/common/python/test/packages
+TEST_SCRIPT_DIR = /dls_sw/work/common/python/test/scripts
 
 # builds a versioned python egg of the diamond namespace
 # install with easy_install
@@ -21,10 +21,12 @@ remove:
 	-find -name '*.pyc' -exec rm {} \;
 
 install: all
-	$(PYTHON) setup.py dls_install -m --script-dir=$(SCRIPT_DIR) dist/*.egg
+	$(PYTHON) setup.py easy_install -m \
+            --script-dir=$(SCRIPT_DIR) dist/*.egg
 
 test: all
-	$(PYTHON) setup.py dls_install -m --install-dir=$(TEST_INSTALL_DIR) \
+	$(PYTHON) setup.py easy_install -m \
+            --install-dir=$(TEST_INSTALL_DIR) \
             --script-dir=$(TEST_SCRIPT_DIR) dist/*.egg
 
 make_docs:

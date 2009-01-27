@@ -186,7 +186,7 @@ class _Scheduler(object):
         self = cls()
         main_task.switch(self)
 
-        # If the schedule loop raises an exception then propogate the
+        # If the schedule loop raises an exception then propagate the
         # exception up to the main thread before restarting the scheduler.
         # This has mostly the right effects: a standalone program will
         # terminate, and an interactive program will receive back control, and

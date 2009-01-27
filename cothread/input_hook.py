@@ -106,9 +106,12 @@ def _install_readline_hook(enable_hook = True):
 
 def _poll_iqt(poll_interval, qt_timer, qt_quit, qt_exec):
     while True:
-        qt_timer(poll_interval, qt_quit)
-        qt_exec()
-        cothread.Yield()
+        try:
+            qt_timer(poll_interval, qt_quit)
+            qt_exec()
+            cothread.Yield()
+        except KeyboardInterrupt:
+            print 'caught keyboard interrupt'
 
         
 def iqt(poll_interval = 50):
