@@ -105,18 +105,19 @@ def _install_readline_hook(enable_hook = True):
 
 
 def _poll_iqt(poll_interval, qt_timer, qt_quit, qt_exec):
+    qt_poll_interval = poll_interval * 1e3
     while True:
         try:
             qt_timer(poll_interval, qt_quit)
             qt_exec()
-            cothread.Yield()
+            cothread.Yield(poll_interval)
         except KeyboardInterrupt:
             print 'caught keyboard interrupt'
 
         
-def iqt(poll_interval = 50):
+def iqt(poll_interval = 0.05):
     '''Installs Qt event handling hook.  The polling interval is in
-    milliseconds.'''
+    seconds.'''
 
     # Unfortunately the two versions of Qt that we support have subtly
     # different interfaces, so we have to figure out which one we've got and

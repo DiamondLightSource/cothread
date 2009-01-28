@@ -200,11 +200,11 @@ suspends the task for at least delay seconds, +SleepUntil(time)+
 suspends until the specified time has passed (+time+ is defined as the
 value returned by +time.time()+).
 
-+Yield()+::
++Yield(timeout=0)+::
 
 Yield() suspends control so that all other potentially busy tasks can
 run.  Control is not returned to the calling task until all other
-active tasks have been processed.
+active tasks have been processed, or the timeout has expired.
 
 
 Communication between cothreads is provided by +Event+ and +EventQueue+
@@ -331,7 +331,7 @@ program so that other event loops can run.
 
 
 
-+iqt(poll_interval = 10)+::
++iqt(poll_interval = 0.05)+::
 
 If Qt is to be used then this routine must be called during initialisation to
 enable the Qt event loop.

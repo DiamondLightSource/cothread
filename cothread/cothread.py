@@ -208,6 +208,8 @@ class _Scheduler(object):
     def __init__(self):
         # List of all tasks that are currently ready to be dispatched.
         self.__ready_queue = []
+        # List of tasks waiting for ready_queue to become empty.
+        self.__yield_queue = []
         # List of tasks waiting for a timeout
         self.__timer_queue = _TimerQueue()
         # Scheduler greenlet: this will be switched to whenever any other
@@ -259,6 +261,12 @@ class _Scheduler(object):
             else:
                 # Nothing to do: block until something external happens.
                 delay = None
+            if delay != 0 and self.__yield_queue:
+                # There are yield tasks waiting for precisely this event.
+                # Cancel the delay and wake them all up.
+                self.wakeup(self.__yield_queue)
+                self.__yield_queue = []
+                delay = 0
 
             # Finally suspend until something is ready.  The poll queue
             # contains a list of all the file descriptors we're interested
@@ -320,25 +328,24 @@ class _Scheduler(object):
         self.__ready_queue.append((task, self.__WAKEUP_NORMAL))
 
 
-    def do_yield(self):
+    def do_yield(self, until):
         '''Hands control to the next task with work to do, will return as
         soon as there is time.'''
-        task = greenlet.getcurrent()
-        self.__ready_queue.append((task, self.__WAKEUP_NORMAL))
-        # See wait_until() below for explanations on why this isn't trivial.
-        if self.__greenlet.switch([]) == self.__WAKEUP_INTERRUPT:
-            raise
+        self.wait_until(until,
+            suspend_queue = self.__yield_queue, force_yield = True)
 
 
-    def wait_until(self, until, suspend_queue = None, wakeup = None):
+    def wait_until(self, until,
+            suspend_queue = None, wakeup = None, force_yield = False):
         '''The calling task is suspended.  If a deadline is given then the
         task will definitely be woken up when the deadline is reached if not
         before.  If a suspend_queue is given then the task is added to it
         (and it is the caller's responsibility to ensure the task is woken
         up, with a call to wakeup()).
             Returns True iff the wakeup is from a timeout.'''
-        # If the timeout has already expired then do nothing at all.
-        if until is not None and time.time() >= until:
+        # If the timeout has already expired then do nothing at all unless
+        # we're actually forcing a yield here.
+        if until is not None and time.time() >= until and not force_yield:
             return True
             
         # If no wakeup has been specified, create one.  This is a key
@@ -377,8 +384,19 @@ class _Scheduler(object):
             return True
         else:
             if until is not None:
-                # Ordinary wakeup, cancel any pending timeout
-                del self.__timer_queue[self.__timer_queue.index(wakeup)]
+                # Ordinary wakeup, cancel any pending timeout.
+                try:
+                    index = self.__timer_queue.index(wakeup)
+                except ValueError:
+                    # Very nasty: this can fail due to a race between this code
+                    # actually processing after a normal wakeup and the timer
+                    # also timing out.
+                    #   This catch is a quick and dirty hack.  A proper
+                    # solution will involve a different approach to cleaning
+                    # up queues.
+                    pass
+                else:
+                    del self.__timer_queue[index]
             return False
             
     def wakeup(self, wakeups, reason = __WAKEUP_NORMAL):
@@ -923,4 +941,8 @@ def Sleep(timeout):
     '''Sleep until the specified timeout has expired.'''
     _scheduler.wait_until(time.time() + timeout)
 
-Yield = _scheduler.do_yield
+def Yield(timeout = 0):
+    '''Hands control back to the scheduler.  Control is returned either after
+    the specified timeout has passed, or as soon as there are no active jobs
+    waiting to be run.'''
+    _scheduler.do_yield(Deadline(timeout))
