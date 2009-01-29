@@ -50,8 +50,7 @@ __all__ = [
 ]
 
 
-hook_function = CFUNCTYPE(c_int)
-
+hook_function = CFUNCTYPE(None)
 
 @hook_function
 def _readline_hook():
@@ -104,58 +103,115 @@ def _install_readline_hook(enable_hook = True):
         cast(PyOS_InputHookP, POINTER(c_void_p))[0] = 0
 
 
-def _poll_iqt(poll_interval, qt_timer, qt_quit, qt_exec):
-    qt_poll_interval = poll_interval * 1e3
+        
+def _poll_iqt(QT, poll_interval):
     while True:
         try:
-            qt_timer(poll_interval, qt_quit)
-            qt_exec()
+            QT.QTimer.singleShot(
+                poll_interval * 1e3, QT.QCoreApplication.quit)
+            QT.exec_()
             cothread.Yield(poll_interval)
         except KeyboardInterrupt:
             print 'caught keyboard interrupt'
 
+
+# This is used by the _run_iqt timeout() function to avoid nested returns.
+_global_timeout_depth = 0
+
+def _run_iqt(QT, poll_interval):
+    def timeout():
+        # To avoid nested returns from timeout (which effectively means we
+        # would resume the main Qt thread from within a Qt message box -- not
+        # a good idea!) we keep track of how many nested calls to timeout()
+        # there are.  Then we refuse to return until we're at the top of the
+        # stack.
+        global _global_timeout_depth
+        _global_timeout_depth += 1
+        timeout_depth = _global_timeout_depth
+
+        cothread.Yield(poll_interval)
+        while _global_timeout_depth > timeout_depth:
+            cothread.Yield(poll_interval)
+            
+        _global_timeout_depth -= 1
+
+    def at_exit():
+        QT.QCoreApplication.quit()
+        qt_done.Wait(5) # Give up after five seconds if no response
+
+    # Set up a timer so that Qt polls cothread.  All the timer needs to do
+    # is to yield control to the coroutine system.
+    timer = QT.QTimer()
+    QT.QCoreApplication.connect(timer, QT.SIGNAL('timeout()'), timeout)
+    timer.start(poll_interval * 1e3)
+
+    # To ensure we shut down cleanly a little delicacy is required before we
+    # dive into the QT exec loop.
+    #   First of all, we register an atexit method to tell Qt to quit on
+    # program exit.  This enables Qt to do most of its cleaning up, and we
+    # handshake with the Qt exit to ensure this completes.
+    qt_done = cothread.Event()
+    import atexit
+    atexit.register(at_exit)
+
+    # Hand control over to Qt -- we'll now get it back through periodic calls
+    # to timeout().
+    QT.exec_()
+    # This is a hack to hopefully eliminate the annoying message on exit:
+    #   Mutex destroy failure: Device or resource busy
+    QT.unlock()
+    qt_done.Signal()
+
         
-def iqt(poll_interval = 0.05):
+def iqt(poll_interval = 0.05, use_timer = False):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
 
-    # Unfortunately the two versions of Qt that we support have subtly
-    # different interfaces, so we have to figure out which one we've got and
-    # implement the event hook accordingly.
+    # Unfortunately there are some annoying incompatibilities between the Qt3
+    # and Qt4 interfaces.  This little class captures the fragments we need
+    # from one or the other library in a common interface.
+    class QT:
+        try:
+            from PyQt4.QtCore import QCoreApplication, QTimer, SIGNAL
+            from PyQt4.QtGui import QApplication
+
+            instance = QCoreApplication.instance
+            exec_ = QCoreApplication.exec_
+
+            @classmethod
+            def unlock(cls):    pass
+
+            # Remove the PyQt input hook, which messes us up!
+            from PyQt4 import QtCore
+            QtCore.pyqtRemoveInputHook()
+            _install_readline_hook(True)
+
+            if use_timer:
+                print >>sys.stderr, 'Experimental Qt timer enabled'
+            
+        except ImportError:
+            import qt
+            from qt import SIGNAL, QTimer, QApplication
+            QCoreApplication = qt.qApp
+
+            @classmethod
+            def instance(cls):  return cls.QCoreApplication
+
+            exec_ = QCoreApplication.exec_loop
+            unlock = QCoreApplication.unlock
+
     global _qapp
-    try:
-        # Try for Qt4 first.
-        from PyQt4.QtCore import QCoreApplication, QTimer, SIGNAL
-        from PyQt4.QtGui import QApplication
+    if QT.QCoreApplication.startingUp():
+        _qapp = QT.QApplication(sys.argv)
 
-        # Qt4 startup
-        if QCoreApplication.startingUp():
-            _qapp = QApplication(sys.argv)
-
-        QCoreApplication.connect(
-            QCoreApplication.instance(),
-            SIGNAL('lastWindowClosed()'), cothread.Quit)
-            
-        # Qt4 polling
-        cothread.Spawn(
-            _poll_iqt, poll_interval,
-            QTimer.singleShot, QCoreApplication.quit, QCoreApplication.exec_)
-    except ImportError:
-        # No Qt4 found, so try for qt (version 3) instead.  If this fails then
-        # we'll just let the error propagate
-        import qt
-
-        # Qt3 startup
-        if qt.qApp.startingUp():
-            _qapp = qt.QApplication(sys.argv)
-
-        qt.qApp.connect(
-            qt.qApp, qt.SIGNAL('lastWindowClosed()'), cothread.Quit)
-            
-        # Qt3 polling
-        cothread.Spawn(
-            _poll_iqt, poll_interval,
-            qt.QTimer.singleShot, qt.qApp.quit, qt.qApp.exec_loop)
+    QT.QCoreApplication.connect(
+        QT.instance(), QT.SIGNAL('lastWindowClosed()'), cothread.Quit)
+    
+    if use_timer:
+        cothread.Spawn(_run_iqt,  QT, poll_interval)
+    else:
+        cothread.Spawn(_poll_iqt, QT, poll_interval)
+    cothread.Yield()
 
 
 # Automatically install the readline hook.  This is the safest thing to do.

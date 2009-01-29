@@ -331,10 +331,17 @@ program so that other event loops can run.
 
 
 
-+iqt(poll_interval = 0.05)+::
++iqt(poll_interval=0.05, use_timer=False)+::
 
 If Qt is to be used then this routine must be called during initialisation to
 enable the Qt event loop.
++
+The normal Qt event look hook does not work correctly with modal dialogs
+(because they run their own message loops) -- typically either a modal window
+will be closed immediately, or else will block the interpreter.  To work
+around this, a Qt timer can be used for polling by setting `use_timer` to
+`True` in this call.  Note that this is highly experimental, and in particular
+modal dialogs do not work properly with `cothread` when using Qt4.
 
 
 
