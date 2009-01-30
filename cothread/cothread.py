@@ -207,18 +207,22 @@ class _Wakeup(object):
         
     def wakeup(self, reason):
         if self.__task:
+            # Let the scheduler know that this task has been woken, and forget
+            # about it, so we don't wake it again.
+            #    Note that it's rather important to mark this wakeup as woken
+            # *before* calling the queue cancel() functions, as otherwise
+            # their garbage collection will be confused!
+            self.__wakeup_task(self.__task, reason)
+            self.__task = None
+            
             # Each queue needs to be cancelled if it's not the wakeup reason.
             # This test also properly catches _WAKEUP_INTERRUPT, which
             # requires both queues to be cancelled.
-            if reason != _WAKEUP_TIMEOUT and self.__timers:
-                self.__timers.cancel()
             if reason != _WAKEUP_NORMAL and self.__queue:
                 self.__queue.cancel()
+            if reason != _WAKEUP_TIMEOUT and self.__timers:
+                self.__timers.cancel()
 
-            # Let the scheduler know that this task has been woken, and
-            # forget about it, so we don't wake it again.
-            self.__wakeup_task(self.__task, reason)
-            self.__task = None
             # Also drop our reference to the queue to avoid overextending
             # object lifetime.
             self.__queue = None
@@ -348,31 +352,23 @@ class _Scheduler(object):
                 self.__yield_queue.wake(True)
                 delay = 0
 
-            # Finally suspend until something is ready.  The poll queue
-            # contains a list of all the file descriptors we're interested
-            # in.  First extract the (descriptor, events) pairs, do the
-            # suspend, and finally wake up any interested tasks.
-            poll_list = [
-                (file, queue[0])
-                for file, queue in self.__poll_queue.items()]
-            self.__wakeup_poll(self.__poll_suspend(poll_list, delay))
+            # Finally suspend until something is ready.
+            self.__wakeup_poll(self.__poll_suspend(delay))
 
-                
-    def __poll_suspend(self, *poll_args):
+    def __poll_suspend(self, delay):
         '''Suspends the scheduler until the appropriate ready condition is
         reached.  Returns lists of ready file descriptors and events.'''
 
-        # Take this opportunity to garbage collect the poll queue
-#        print 'time to gc poll_queue'
-        
+        poll_list, self.__poll_queue = \
+            coselect._compute_poll_list(self.__poll_queue)
         if self.__poll_callback is None:
             # If we're not being polled from outside, run our own poll.
-            return self._poll_block(*poll_args)
+            return self._poll_block(poll_list, delay)
         else:
             # If the scheduler loop was invoked from outside then return
             # control back to the caller: it will provide the select
             # operation we need.
-            return self.__poll_callback.switch(*poll_args)
+            return self.__poll_callback.switch(poll_list, delay)
 
     def poll_scheduler(self, ready_list):
         '''This is called when the scheduler needs to be controlled from
@@ -451,46 +447,26 @@ class _Scheduler(object):
         # returned to __select().  This last case expects a list of ready
         # descriptors to be returned, so we have to be compatible with this!
         result = self.__greenlet.switch([])
-        if result == _WAKEUP_TIMEOUT:
-            return True
-        elif result == _WAKEUP_INTERRUPT:
+        if result == _WAKEUP_INTERRUPT:
             # We get here if main is suspended and the scheduler decides
             # to die.  Make sure our wakeup is cancelled, and then
             # re-raise the offending exception.
             wakeup.wakeup(result)
             raise
         else:
-            # Normal return.
-            return False
+            return result == _WAKEUP_TIMEOUT
             
     def poll_until(self, poller, until):
         '''Cooperative poll: the calling task is suspended until one of
         the specified waitable objects becomes ready or the timeout expires.
         '''
         # Add our poller to the appropriate poll event queues so that we'll
-        # get woken.
-        event_list = poller.event_list()
-        for file, events in event_list:
-            # Each entry on the poll queue is a pair: a mask of events being
-            # waited for, and a list of pollers to be notified.
-            queue = self.__poll_queue.setdefault(file, [0, []])
-            queue[0] |= events
-            queue[1].append(poller)
-
+        # get woken.  Note that we don't need to worry about coming off the
+        # queue: this'll be managed in _compute_poll_list later on
+        for file in poller.events:
+            self.__poll_queue.setdefault(file, []).append(poller)
         poller.wakeup = self.__Wakeup(None, until)
         self.wait_until(until, wakeup = poller.wakeup)
-        # Finish off by removing any remaining entries from queues
-        for file, _ in event_list:
-            queue = self.__poll_queue.get(file, None)
-            if queue:
-                queue = queue[1]
-                try:
-                    del queue[queue.index(poller)]
-                except ValueError:
-                    pass
-                if not queue:
-                    # If the queue is now empty discard it completely.
-                    del self.__poll_queue[file]
 
 
     def __Wakeup(self, queue, until):
@@ -500,7 +476,8 @@ class _Scheduler(object):
             return _Wakeup(self.__wakeup_task, queue, self.__timer_queue)
 
     def __wakeup_task(self, task, reason):
-        self.__ready_queue.append((task, reason))
+        if reason != _WAKEUP_INTERRUPT:
+            self.__ready_queue.append((task, reason))
                 
     def __wakeup_poll(self, poll_result):
         '''Called with the result of a system poll: a list of file descriptors
@@ -525,28 +502,9 @@ class _Scheduler(object):
         # one interested listener, but ensure that the event remains
         # monitored.
         for file, events in poll_result:
-            new_events = 0
-            new_pollers = []
-            for poller in self.__poll_queue[file][1]:
-                # Find out which events the waiting process is interested in
-                consumed, wakeup = poller.notify_wakeup(file, events)
+            for poller in self.__poll_queue[file]:
                 # Consume any events taken by the woken process
-                events &= ~consumed
-                if wakeup:
-                    # If a task says that it's still waiting for an event on
-                    # this file (evidently the events mask we gave it wasn't
-                    # interesting enough) it's going need to go back on the
-                    # queue.
-                    #     We could allow the task to wake up and do this
-                    # processing then instead, but it comes out a little
-                    # neater here.
-                    new_pollers.append(poller)
-                    new_events |= wakeup
-            if new_pollers:
-                # Oh dear, somebody's still interested.
-                self.__poll_queue[file] = [new_events, new_pollers]
-            else:
-                del self.__poll_queue[file]
+                events &= ~poller.notify_wakeup(file, events)
 
 
 class Timedout(Exception):

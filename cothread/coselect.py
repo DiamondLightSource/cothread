@@ -100,39 +100,55 @@ def poll_block(poll_list, timeout = None):
         return []
 
 
+def _compute_poll_list(poll_queue):
+    '''Computes a list of (file, event_mask) pairs of all descriptor events
+    of interest, according to the given poll_queue, which is itself a
+    dictionary mapping descriptors to lists of pollers.
+        Returns the list together with a new dictionary with all inactive, ie
+    woken, pollers removed.'''
+    poll_list = []
+    new_poll_queue = {}
+    for file, pollers in poll_queue.items():
+        active = [poller
+            for poller in pollers
+            if not poller.wakeup.woken()]
+        if active:
+            event_mask = 0
+            for poller in active:
+                event_mask |= poller.events[file]
+            poll_list.append((file, event_mask))
+            new_poll_queue[file] = active
+    return poll_list, new_poll_queue
+
 
 class _Poller(object):
     '''Wrapper for handling poll wakeup.'''
     
     def __init__(self, event_list):
-        self.__events = {}
+        # .events is a dictionary mapping each descriptor we're interested in
+        # to the bit mask of interesting events.
+        self.events = {}
         self.__ready_list = {}
         for file, events in event_list:
             file = PyObject_AsFileDescriptor(file)
-            self.__events[file] = self.__events.get(file, 0) | events
+            self.events[file] = self.events.get(file, 0) | events
 
     def notify_wakeup(self, file, events):
         '''This is called from the scheduler as each file becomes ready.  We
         add the file to our list of ready descriptors and wake ourself up.
-        We return two masks: a mask of events that we've consumed, and a mask
-        of events that we're still interested in.'''
+        We return a mask of the events that we've consumed.'''
         # Mask out only the events we're really interested in.
-        events &= self.__events[file] | POLLEXTRA
+        events &= self.events[file] | POLLEXTRA
         if events:
             # We're interested!  Record the event flag and wake our task.
             self.__ready_list[file] = self.__ready_list.get(file, 0) | events
             self.wakeup.wakeup(cothread._WAKEUP_NORMAL)
-            return (events & ~POLLEXTRA, 0)
-        elif self.wakeup.woken():
-            # Doesn't matter, we're already awake!  Allegedly we're not
-            # interested in any of the listed events...
-            return (0, 0)
-        else:
-            # Tell the notifier to call us another time.
-            return (0, self.__events[file])
+        # Return the events we've actually consumed here.  The extra events
+        # don't count, as everybody gets those.
+        return events & ~POLLEXTRA
 
     def event_list(self):
-        return self.__events.items()
+        return self.events.items()
 
     def ready_list(self):
         return self.__ready_list.items()
