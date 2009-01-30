@@ -155,7 +155,7 @@ class _WakeupQueue(object):
         self.__waiters = []
         # Every time a timeout occurs a waiter is left behind on the timer
         # queue.  We keep count of these as "garbage", and at the appropriate
-        # time we can garbage collect what the queue.
+        # time we can garbage collect the queue.
         self.__garbage = 0
 
     def __len__(self):
@@ -186,7 +186,7 @@ class _WakeupQueue(object):
         # A cancelled wait becomes garbage on the waiting queue.  We keep
         # count of how much garbage there is -- once the queue has more
         # garbage than waiters it's probably time to rebuild the queue and
-        # keep only those waiters who haven't been woken yet.
+        # keep only those waiters which haven't been woken yet.
         self.__garbage += 1
         if 2 * self.__garbage > len(self):
             self.__waiters = [task
@@ -197,7 +197,7 @@ class _WakeupQueue(object):
 
 class _Wakeup(object):
     '''A _Wakeup object is used when a task is to be suspended on one or more
-    queues.  On wakeup the original task is returned, but only once: this is
+    queues.  On wakeup the original task is woken, but only once: this is
     used to ensure that entries on other queues are effectively cancelled.'''
     def __init__(self, wakeup_task, queue, timers):
         self.__task = greenlet.getcurrent()
@@ -216,7 +216,7 @@ class _Wakeup(object):
             self.__task = None
             
             # Each queue needs to be cancelled if it's not the wakeup reason.
-            # This test also properly catches _WAKEUP_INTERRUPT, which
+            # This test also properly deals with _WAKEUP_INTERRUPT, which
             # requires both queues to be cancelled.
             if reason != _WAKEUP_NORMAL and self.__queue:
                 self.__queue.cancel()
@@ -318,6 +318,10 @@ class _Scheduler(object):
         # Wake up all the expired timers on entry.  These go to the end of
         # the ready queue.
         self.__timer_queue.wake_expired()
+        # If the ready queue is still empty, now's the time to run the yield
+        # queue.
+        if not self.__ready_queue:
+            self.__yield_queue.wake(True)
         
         # Pick up the ready queue and process every task in it.  When each
         # task is resumed it is passed a flag indicating whether it has been
@@ -337,7 +341,7 @@ class _Scheduler(object):
             self.__tick()
             
             # Now see how long we have to wait for the next tick
-            if self.__ready_queue:
+            if self.__ready_queue or self.__yield_queue:
                 # There are ready tasks: don't wait
                 delay = 0
             elif self.__timer_queue:
@@ -346,11 +350,6 @@ class _Scheduler(object):
             else:
                 # Nothing to do: block until something external happens.
                 delay = None
-            if delay != 0 and self.__yield_queue:
-                # There are yield tasks waiting for precisely this event.
-                # Cancel the delay and wake them all up.
-                self.__yield_queue.wake(True)
-                delay = 0
 
             # Finally suspend until something is ready.
             self.__wakeup_poll(self.__poll_suspend(delay))
