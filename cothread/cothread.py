@@ -107,45 +107,133 @@ class _TimerQueue(object):
 
     # The queue is implemented using the bisect function to insert objects
     # into the queue without having to resort the list.  This is cheap and
-    # cheerful to implement and runs fast enough, but makes cancellable
-    # timers a bit more tedious.
+    # cheerful to implement and runs fast enough.
     
     def __init__(self):
-        # Keep the priorities separate from the values so that we don't have
-        # to worry how values behave under comparison!
-        self.__values = []
-        self.__timeouts = []
+        # The queue is a list of (timeout, task) pairs -- it's important that
+        # the timeout is first so that bisect searching of the queue works
+        # properly.
+        self.__queue = []
+        self.__garbage = 0
         
-    def put(self, value, timeout):
+    def put(self, task, timeout):
         '''Adds value to the queue with the specified timeout.'''
-        index = bisect.bisect(self.__timeouts, timeout)
-        self.__values.insert(index, value)
-        self.__timeouts.insert(index, timeout)
+        index = bisect.bisect(self.__queue, (timeout, None))
+        self.__queue.insert(index, (timeout, task))
 
     def timeout(self):
-        '''Returns the timeout of the queue.  Only valid if queue is not
-        empty.'''
-        return self.__timeouts[0]
+        '''Returns the timeout of the queue.  Only valid if queue not empty.'''
+        return self.__queue[0][0]
 
-    def get_expired(self):
-        '''Returns all of the objects in the queue with which have timed out
-        relative to the given timeout.'''
-        index = bisect.bisect_right(self.__timeouts, time.time())
-        result = self.__values[:index]
-        del self.__values[:index]
-        del self.__timeouts[:index]
-        return result
+    def wake_expired(self):
+        index = bisect.bisect_right(self.__queue, (time.time(), None))
+        expired = self.__queue[:index]
+        del self.__queue[:index]
+
+        for _, task in expired:
+            if not task.wakeup(_WAKEUP_TIMEOUT):
+                self.__garbage -= 1
+        assert 0 <= self.__garbage <= len(self)
 
     def __len__(self):
         '''Returns the number of entries on the queue.'''
-        return len(self.__timeouts)
+        return len(self.__queue)
 
-    def index(self, item):
-        return self.__values.index(item)
+    def cancel(self):
+        '''This is called to cancel a timeout.  We add this to our garbage
+        count, triggering a garbage collect if appropriate.'''
+        self.__garbage += 1
+        if 2 * self.__garbage > len(self):
+            self.__queue = [entry
+                for entry in self.__queue
+                if not entry[1].woken()]
+            self.__garbage = 0
 
-    def __delitem__(self, index):
-        del self.__values[index]
-        del self.__timeouts[index]
+
+class _WakeupQueue(object):
+    def __init__(self):
+        self.__waiters = []
+        # Every time a timeout occurs a waiter is left behind on the timer
+        # queue.  We keep count of these as "garbage", and at the appropriate
+        # time we can garbage collect what the queue.
+        self.__garbage = 0
+
+    def __len__(self):
+        return len(self.__waiters)
+
+    def append(self, waiter):
+        self.__waiters.append(waiter)
+
+    def wake(self, wake_all=False):
+        if self.__waiters:
+            if wake_all:
+                for task in self.__waiters:
+                    task.wakeup(_WAKEUP_NORMAL)
+                self.__waiters = []
+                self.__garbage = 0
+            else:
+                # Wake the first task that actually wakes, mark the rest as
+                # junk.
+                for n, task in enumerate(self.__waiters):
+                    if task.wakeup(_WAKEUP_NORMAL):
+                        break
+                    else:
+                        self.__garbage -= 1
+                del self.__waiters[:n+1]
+        assert 0 <= self.__garbage <= len(self)
+
+    def cancel(self):
+        # A cancelled wait becomes garbage on the waiting queue.  We keep
+        # count of how much garbage there is -- once the queue has more
+        # garbage than waiters it's probably time to rebuild the queue and
+        # keep only those waiters who haven't been woken yet.
+        self.__garbage += 1
+        if 2 * self.__garbage > len(self):
+            self.__waiters = [task
+                for task in self.__waiters
+                if not task.woken()]
+            self.__garbage = 0
+        
+
+class _Wakeup(object):
+    '''A _Wakeup object is used when a task is to be suspended on one or more
+    queues.  On wakeup the original task is returned, but only once: this is
+    used to ensure that entries on other queues are effectively cancelled.'''
+    def __init__(self, wakeup_task, queue, timers):
+        self.__task = greenlet.getcurrent()
+        self.__wakeup_task = wakeup_task
+        self.__queue = queue
+        self.__timers = timers
+        
+    def wakeup(self, reason):
+        if self.__task:
+            # Each queue needs to be cancelled if it's not the wakeup reason.
+            # This test also properly catches _WAKEUP_INTERRUPT, which
+            # requires both queues to be cancelled.
+            if reason != _WAKEUP_TIMEOUT and self.__timers:
+                self.__timers.cancel()
+            if reason != _WAKEUP_NORMAL and self.__queue:
+                self.__queue.cancel()
+
+            # Let the scheduler know that this task has been woken, and
+            # forget about it, so we don't wake it again.
+            self.__wakeup_task(self.__task, reason)
+            self.__task = None
+            # Also drop our reference to the queue to avoid overextending
+            # object lifetime.
+            self.__queue = None
+            return True
+        else:
+            return False
+        
+    def woken(self):
+        return self.__task is None
+
+
+# Task wakeup reasons
+_WAKEUP_NORMAL = 0     # Normal wakeup
+_WAKEUP_TIMEOUT = 1    # Wakeup on timeout
+_WAKEUP_INTERRUPT = 2  # Special: transfer scheduler exception to main
 
 
 # Important system invariants:
@@ -157,12 +245,6 @@ class _TimerQueue(object):
 
 class _Scheduler(object):
     '''Coroutine activity scheduler.'''
-
-    # Task wakeup reasons
-    __WAKEUP_NORMAL = 0     # Normal wakeup
-    __WAKEUP_TIMEOUT = 1    # Wakeup on timeout
-    __WAKEUP_INTERRUPT = 2  # Special: transfer scheduler exception to main
-    
 
     @classmethod
     def create(cls):
@@ -203,13 +285,13 @@ class _Scheduler(object):
                         break
                 # All task wakeup entry points will interpret this as a 
                 # request to re-raise the exception.
-                main_task.switch(self.__WAKEUP_INTERRUPT)
+                main_task.switch(_WAKEUP_INTERRUPT)
         
     def __init__(self):
         # List of all tasks that are currently ready to be dispatched.
         self.__ready_queue = []
-        # List of tasks waiting for ready_queue to become empty.
-        self.__yield_queue = []
+        # List of tasks waiting for ready_queue to become empty
+        self.__yield_queue = _WakeupQueue()
         # List of tasks waiting for a timeout
         self.__timer_queue = _TimerQueue()
         # Scheduler greenlet: this will be switched to whenever any other
@@ -231,7 +313,7 @@ class _Scheduler(object):
         all timers that have expired.'''
         # Wake up all the expired timers on entry.  These go to the end of
         # the ready queue.
-        self.wakeup(self.__timer_queue.get_expired(), self.__WAKEUP_TIMEOUT)
+        self.__timer_queue.wake_expired()
         
         # Pick up the ready queue and process every task in it.  When each
         # task is resumed it is passed a flag indicating whether it has been
@@ -243,7 +325,6 @@ class _Scheduler(object):
         for task, reason in ready_queue:
             assert not task.dead
             task.switch(reason)
-
             
     def __schedule_loop(self):
         '''This runs a scheduler loop without returning.'''
@@ -264,8 +345,7 @@ class _Scheduler(object):
             if delay != 0 and self.__yield_queue:
                 # There are yield tasks waiting for precisely this event.
                 # Cancel the delay and wake them all up.
-                self.wakeup(self.__yield_queue)
-                self.__yield_queue = []
+                self.__yield_queue.wake(True)
                 delay = 0
 
             # Finally suspend until something is ready.  The poll queue
@@ -281,6 +361,10 @@ class _Scheduler(object):
     def __poll_suspend(self, *poll_args):
         '''Suspends the scheduler until the appropriate ready condition is
         reached.  Returns lists of ready file descriptors and events.'''
+
+        # Take this opportunity to garbage collect the poll queue
+#        print 'time to gc poll_queue'
+        
         if self.__poll_callback is None:
             # If we're not being polled from outside, run our own poll.
             return self._poll_block(*poll_args)
@@ -289,7 +373,6 @@ class _Scheduler(object):
             # control back to the caller: it will provide the select
             # operation we need.
             return self.__poll_callback.switch(*poll_args)
-
 
     def poll_scheduler(self, ready_list):
         '''This is called when the scheduler needs to be controlled from
@@ -314,7 +397,7 @@ class _Scheduler(object):
         result = self.__greenlet.switch(ready_list)
         self.__poll_callback = None
         
-        if result == self.__WAKEUP_INTERRUPT:
+        if result == _WAKEUP_INTERRUPT:
             # This case arises if we are main and the scheduler just died.
             raise
         else:
@@ -325,15 +408,13 @@ class _Scheduler(object):
         '''Spawns a new task: function is spawned as a new background task
         as a child of the scheduler task.'''
         task = greenlet.greenlet(function, self.__greenlet)
-        self.__ready_queue.append((task, self.__WAKEUP_NORMAL))
-
+        self.__ready_queue.append((task, _WAKEUP_NORMAL))
 
     def do_yield(self, until):
         '''Hands control to the next task with work to do, will return as
         soon as there is time.'''
         self.wait_until(until,
             suspend_queue = self.__yield_queue, force_yield = True)
-
 
     def wait_until(self, until,
             suspend_queue = None, wakeup = None, force_yield = False):
@@ -352,7 +433,7 @@ class _Scheduler(object):
         # component for ensuring consistent behaviour of the system: the
         # wakeup object ensures each task is only woken up exactly once.
         if wakeup is None:
-            wakeup = _Wakeup()
+            wakeup = self.__Wakeup(suspend_queue, until)
             
         # If a timeout or a suspension queue has been specified, add
         # ourselves as appropriate.  Failing either of these it's up to the
@@ -370,47 +451,18 @@ class _Scheduler(object):
         # returned to __select().  This last case expects a list of ready
         # descriptors to be returned, so we have to be compatible with this!
         result = self.__greenlet.switch([])
-        if result == self.__WAKEUP_INTERRUPT:
-            # We get here if main is suspended and the scheduler decides to
-            # die.  Make sure our wakeup is cancelled, and then re-raise the
-            # offending exception.
-            wakeup.wakeup()
-            raise
-        elif result == self.__WAKEUP_TIMEOUT:
-            if suspend_queue is not None:
-                # If this is a timeout then we'd better remove ourself from
-                # the suspend_queue
-                del suspend_queue[suspend_queue.index(wakeup)]
+        if result == _WAKEUP_TIMEOUT:
             return True
+        elif result == _WAKEUP_INTERRUPT:
+            # We get here if main is suspended and the scheduler decides
+            # to die.  Make sure our wakeup is cancelled, and then
+            # re-raise the offending exception.
+            wakeup.wakeup(result)
+            raise
         else:
-            if until is not None:
-                # Ordinary wakeup, cancel any pending timeout.
-                try:
-                    index = self.__timer_queue.index(wakeup)
-                except ValueError:
-                    # Very nasty: this can fail due to a race between this code
-                    # actually processing after a normal wakeup and the timer
-                    # also timing out.
-                    #   This catch is a quick and dirty hack.  A proper
-                    # solution will involve a different approach to cleaning
-                    # up queues.
-                    pass
-                else:
-                    del self.__timer_queue[index]
+            # Normal return.
             return False
             
-    def wakeup(self, wakeups, reason = __WAKEUP_NORMAL):
-        '''Wakes up all the given tasks.  Returns the number of tasks
-        actually woken.'''
-        wakeup_count = 0
-        for wakeup in wakeups:
-            task = wakeup.wakeup()
-            if task is not None:
-                self.__ready_queue.append((task, reason))
-                wakeup_count += 1
-        return wakeup_count
-
-                
     def poll_until(self, poller, until):
         '''Cooperative poll: the calling task is suspended until one of
         the specified waitable objects becomes ready or the timeout expires.
@@ -424,6 +476,8 @@ class _Scheduler(object):
             queue = self.__poll_queue.setdefault(file, [0, []])
             queue[0] |= events
             queue[1].append(poller)
+
+        poller.wakeup = self.__Wakeup(None, until)
         self.wait_until(until, wakeup = poller.wakeup)
         # Finish off by removing any remaining entries from queues
         for file, _ in event_list:
@@ -437,8 +491,17 @@ class _Scheduler(object):
                 if not queue:
                     # If the queue is now empty discard it completely.
                     del self.__poll_queue[file]
-                
 
+
+    def __Wakeup(self, queue, until):
+        if until is None:
+            return _Wakeup(self.__wakeup_task, queue, None)
+        else:
+            return _Wakeup(self.__wakeup_task, queue, self.__timer_queue)
+
+    def __wakeup_task(self, task, reason):
+        self.__ready_queue.append((task, reason))
+                
     def __wakeup_poll(self, poll_result):
         '''Called with the result of a system poll: a list of file descriptors
         and wakeup reasons.  Each waiting task is informed.'''
@@ -486,21 +549,6 @@ class _Scheduler(object):
                 del self.__poll_queue[file]
 
 
-class _Wakeup(object):
-    '''A _Wakeup object is used when a task is to be suspended on one or more
-    queues.  On wakeup the original task is returned, but only once: this is
-    used to ensure that entries on other queues are effectively cancelled.'''
-    def __init__(self):
-        self.__task = greenlet.getcurrent()
-    def wakeup(self):
-        task = self.__task
-        self.__task = None
-        return task
-    def woken(self):
-        return self.__task is None
-
-
-
 class Timedout(Exception):
     '''Waiting for event timed out.'''
 
@@ -534,7 +582,7 @@ class EventBase(object):
 
     def __init__(self):
         # List of tasks currently waiting to be woken up.
-        self.__waiters = []
+        self.__wait_queue = _WakeupQueue()
         # Number of aborted waits that need to be emulated.  This is
         # incremented by subclasses for each _Wakeup that needs to be
         # simulated.
@@ -545,7 +593,7 @@ class EventBase(object):
         exception if a timeout occurs first.'''
         # The scheduler tells us whether we were resumed on a timeout or on a
         # normal schedule event.
-        if _scheduler.wait_until(Deadline(timeout), self.__waiters):
+        if _scheduler.wait_until(Deadline(timeout), self.__wait_queue):
             raise Timedout('Timed out waiting for event')
 
     def _Wakeup(self, wake_all = True):
@@ -558,22 +606,9 @@ class EventBase(object):
             # waker instead!
             self.__wait_abort -= 1
             return False
-            
-        if self.__waiters:
-            if wake_all:
-                # Wake up everybody who was waiting.
-                _scheduler.wakeup(self.__waiters)
-                self.__waiters = []
-            else:
-                # Wake up the task at the head of the queue: everybody else
-                # will have to wait their turn.  There is a certain delicacy
-                # to this: we have to keep going until somebody actually
-                # wakes!
-                for n, wakeup in enumerate(self.__waiters):
-                    if _scheduler.wakeup([wakeup]):
-                        break
-                del self.__waiters[:n+1]
-        return True
+        else:
+            self.__wait_queue.wake(wake_all)
+            return True
 
     def _AbortWait(self):
         self.__wait_abort += 1

@@ -131,7 +131,7 @@ def _run_iqt(QT, poll_interval):
 
         cothread.Yield(poll_interval)
         while _global_timeout_depth > timeout_depth:
-            cothread.Yield(poll_interval)
+            cothread.Sleep(poll_interval)
             
         _global_timeout_depth -= 1
 

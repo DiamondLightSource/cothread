@@ -105,7 +105,6 @@ class _Poller(object):
     '''Wrapper for handling poll wakeup.'''
     
     def __init__(self, event_list):
-        self.wakeup = cothread._Wakeup()
         self.__events = {}
         self.__ready_list = {}
         for file, events in event_list:
@@ -122,7 +121,7 @@ class _Poller(object):
         if events:
             # We're interested!  Record the event flag and wake our task.
             self.__ready_list[file] = self.__ready_list.get(file, 0) | events
-            cothread._scheduler.wakeup([self.wakeup])
+            self.wakeup.wakeup(cothread._WAKEUP_NORMAL)
             return (events & ~POLLEXTRA, 0)
         elif self.wakeup.woken():
             # Doesn't matter, we're already awake!  Allegedly we're not

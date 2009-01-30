@@ -3,9 +3,8 @@
 
 import sys
 
-from numpy import *
-
 import require
+from numpy import *
 from cothread.cothread import *
 from cothread.catools import *
 
