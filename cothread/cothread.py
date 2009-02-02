@@ -357,7 +357,6 @@ class _Scheduler(object):
     def __poll_suspend(self, delay):
         '''Suspends the scheduler until the appropriate ready condition is
         reached.  Returns lists of ready file descriptors and events.'''
-
         poll_list, self.__poll_queue = \
             coselect._compute_poll_list(self.__poll_queue)
         if self.__poll_callback is None:

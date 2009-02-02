@@ -58,6 +58,12 @@ def _readline_hook():
     keyboard interrupt occurs.'''
     stdin = 0
     try:
+        # Before we hand control to the scheduler, check for input already on
+        # stdin.  We give this case priority in case the user has backed up
+        # keypresses so that they can take precedence.
+        if select.select([stdin], [], [], 0)[0]:
+            return
+
         ready_list = []
         while True:
             # Let the scheduler run.  We tell it which sockets are ready, and
@@ -83,7 +89,7 @@ def _readline_hook():
     except KeyboardInterrupt:
         print 'Control C (probably) ignored'
     except:
-        print 'Exception raised from scheduler'
+        print 'Exception caught by readline hook'
         traceback.print_exc()
 
 
