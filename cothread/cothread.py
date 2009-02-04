@@ -420,7 +420,7 @@ class _Scheduler(object):
             Returns True iff the wakeup is from a timeout.'''
         # If the timeout has already expired then do nothing at all unless
         # we're actually forcing a yield here.
-        if until is not None and time.time() >= until and not force_yield:
+        if until is not None and not force_yield and time.time() >= until:
             return True
             
         # If no wakeup has been specified, create one.  This is a key
@@ -461,10 +461,14 @@ class _Scheduler(object):
         # Add our poller to the appropriate poll event queues so that we'll
         # get woken.  Note that we don't need to worry about coming off the
         # queue: this'll be managed in _compute_poll_list later on
+        poller.wakeup = self.__Wakeup(None, until)
         for file in poller.events:
             self.__poll_queue.setdefault(file, []).append(poller)
-        poller.wakeup = self.__Wakeup(None, until)
-        self.wait_until(until, wakeup = poller.wakeup)
+        # It's vital to yield during this call, even if we have actually
+        # timed out -- otherwise the wakeup we've just added to the poll
+        # queue will get processed when it's no longer valid (oops).
+        reason = self.wait_until(until,
+            wakeup = poller.wakeup, force_yield = True)
 
 
     def __Wakeup(self, queue, until):

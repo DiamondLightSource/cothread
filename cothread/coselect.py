@@ -29,6 +29,7 @@
 '''Support for cooperative select functions.  Replaces the functionality of
 the standard select module.'''
 
+import time
 import select as _select
 import ctypes
 import cothread
@@ -161,9 +162,14 @@ def poll_list(event_list, timeout = None):
     signals a selected event (or any event from HUP, ERR, NVAL) or until
     the timeout (in seconds) occurs.'''
     until = cothread.Deadline(timeout)
-    poller = _Poller(event_list)
-    cothread._scheduler.poll_until(poller, until)
-    return poller.ready_list()
+    if until is not None and time.time() >= until:
+        # If timed out then probe the devices directly anyway.  This bypasses
+        # the cothread scheduler.
+        return poll_block(event_list, 0)
+    else:
+        poller = _Poller(event_list)
+        cothread._scheduler.poll_until(poller, until)
+        return poller.ready_list()
 
 
 class poll(object):
