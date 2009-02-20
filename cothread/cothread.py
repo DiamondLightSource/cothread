@@ -164,7 +164,7 @@ class _WakeupQueue(object):
     def append(self, waiter):
         self.__waiters.append(waiter)
 
-    def wake(self, wake_all=False):
+    def wake(self, wake_all):
         if self.__waiters:
             if wake_all:
                 for task in self.__waiters:
@@ -407,22 +407,15 @@ class _Scheduler(object):
     def do_yield(self, until):
         '''Hands control to the next task with work to do, will return as
         soon as there is time.'''
-        self.wait_until(until,
-            suspend_queue = self.__yield_queue, force_yield = True)
+        self.wait_until(until, self.__yield_queue, None)
 
-    def wait_until(self, until,
-            suspend_queue = None, wakeup = None, force_yield = False):
+    def wait_until(self, until, suspend_queue, wakeup):
         '''The calling task is suspended.  If a deadline is given then the
         task will definitely be woken up when the deadline is reached if not
         before.  If a suspend_queue is given then the task is added to it
         (and it is the caller's responsibility to ensure the task is woken
         up, with a call to wakeup()).
             Returns True iff the wakeup is from a timeout.'''
-        # If the timeout has already expired then do nothing at all unless
-        # we're actually forcing a yield here.
-        if until is not None and not force_yield and time.time() >= until:
-            return True
-            
         # If no wakeup has been specified, create one.  This is a key
         # component for ensuring consistent behaviour of the system: the
         # wakeup object ensures each task is only woken up exactly once.
@@ -467,8 +460,7 @@ class _Scheduler(object):
         # It's vital to yield during this call, even if we have actually
         # timed out -- otherwise the wakeup we've just added to the poll
         # queue will get processed when it's no longer valid (oops).
-        reason = self.wait_until(until,
-            wakeup = poller.wakeup, force_yield = True)
+        reason = self.wait_until(until, None, poller.wakeup)
 
 
     def __Wakeup(self, queue, until):
@@ -548,15 +540,17 @@ class EventBase(object):
         # simulated.
         self.__wait_abort = 0
 
-    def _WaitUntil(self, timeout=None):
+    def _WaitUntil(self, timeout):
         '''Suspends the calling task until _Wakeup() is called.  Raises an
         exception if a timeout occurs first.'''
         # The scheduler tells us whether we were resumed on a timeout or on a
         # normal schedule event.
-        if _scheduler.wait_until(Deadline(timeout), self.__wait_queue):
-            raise Timedout('Timed out waiting for event')
+        deadline = Deadline(timeout)
+        if deadline is None or time.time() < deadline:
+            if _scheduler.wait_until(deadline, self.__wait_queue, None):
+                raise Timedout('Timed out waiting for event')
 
-    def _Wakeup(self, wake_all = True):
+    def _Wakeup(self, wake_all):
         '''Wakes one or all waiting tasks.  Returns False if an aborted wait
         needs to be emulated.'''
         if self.__wait_abort and not wake_all:
@@ -618,7 +612,7 @@ class Spawn(EventBase):
                     'raised uncaught exception'
                 traceback.print_exc()
                 self.__result = (True, None)
-        if not self._Wakeup():
+        if not self._Wakeup(True):
             # Aborted wakeup: consume the result now
             del self.__result
         # See wait_until() for an explanation of this return value.
@@ -930,11 +924,12 @@ _scheduler_thread_id = thread.get_ident()
 def SleepUntil(deadline):
     '''Sleep until the specified deadline.  Note that if the deadline has
     already passed then no yield of control will occur.'''
-    _scheduler.wait_until(deadline)
+    if time.time() < deadline:
+        _scheduler.wait_until(deadline, None, None)
 
 def Sleep(timeout):
     '''Sleep until the specified timeout has expired.'''
-    _scheduler.wait_until(time.time() + timeout)
+    SleepUntil(Deadline(timeout))
 
 def Yield(timeout = 0):
     '''Hands control back to the scheduler.  Control is returned either after
