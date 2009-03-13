@@ -50,11 +50,6 @@ __all__ = [
     'POLLERR',          # Error condition
     'POLLHUP',          # Hangup: socket has disconnected
     'POLLNVAL',         # Invalid request, not open.
-    'POLLRDNORM',
-    'POLLRDBAND',
-    'POLLWRNORM',
-    'POLLWRBAND',
-    'POLLMSG',
 
     'POLLEXTRA',        # If any of these are set there is a socket problem
 ]
@@ -71,17 +66,21 @@ POLLOUT    = _select.POLLOUT
 POLLERR    = _select.POLLERR
 POLLHUP    = _select.POLLHUP
 POLLNVAL   = _select.POLLNVAL
-POLLRDNORM = _select.POLLRDNORM
-POLLRDBAND = _select.POLLRDBAND
-POLLWRNORM = _select.POLLWRNORM
-POLLWRBAND = _select.POLLWRBAND
-POLLMSG    = _select.POLLMSG
 
 # These three flags are always treated as of interest and are never consumed.
 POLLEXTRA = POLLERR | POLLHUP | POLLNVAL
 
+# The following extra symbols define poll names that aren't present on all
+# platforms, so we only export them if they exist.
+_poll_extra = [
+    'POLLRDNORM', 'POLLRDBAND', 'POLLWRNORM', 'POLLWRBAND', 'POLLMSG']
+for _name in _poll_extra:
+    if hasattr(_select, _name):
+        globals()[_name] = getattr(_select, _name)
+        __all__.append(_name)
 
-def poll_block(poll_list, timeout = None):
+
+def poll_block_poll(poll_list, timeout = None):
     '''A simple wrapper for the poll method to provide actually directly
     useful functionality.  This will block non-cooperatively, so should only
     be used in a scheduler loop.
@@ -100,6 +99,72 @@ def poll_block(poll_list, timeout = None):
         # then resumed!
         return []
 
+
+def poll_block_select(poll_list, timeout = None):
+    '''This reimplements the functionality of poll_block but using select
+    instead.  This is intended to be used
+        1. where poll is not available
+        2. on OSX where poll is broken, does not work on all file descriptors,
+           in particular not on stdin.
+    '''
+    flag_mapping = (POLLIN, POLLOUT, POLLPRI)
+
+    # Generate list of arguments for select from poll arguments.
+    selects = ([], [], [])
+    for file, events in poll_list:
+        for wtd, event in zip(selects, flag_mapping):
+            if events & event:
+                wtd.append(file)
+
+    result = {}
+    try:
+        selected = _select.select(*selects + (timeout,))
+    except _select.error:
+        # Oh dear.  *Something* is wrong, but I don't know which file handle
+        # is broken.  This is not good: going to have to probe each file in
+        # turn to find out.
+        for file, events in poll_list:
+            selects = ([], [], [])
+            for wtd, event in zip(selects, flag_mapping):
+                if events & event:
+                    wtd.append(file)
+            try:
+                selected = _select.select(*selects + (0,))
+            except _select.error:
+                # Still don't really know what's wrong, but it's a safe bet
+                # the problem is the file handle.
+                result[file] = POLLNVAL
+            else:
+                for wtd, event in zip(selected, flag_mapping):
+                    if file in wtd:
+                        result[file] = result.get(file, 0) | event
+    else:
+        # Map select result into poll list result.
+        for file, events in poll_list:
+            for wtd, event in zip(selected, flag_mapping):
+                if file in wtd:
+                    result[file] = result.get(file, 0) | event
+                    
+    return result.items()
+
+    
+if hasattr(_select, 'poll'):
+    import platform
+    if platform.system() == 'Darwin':
+        # Unfortunately it would appear that Apple's implementation of the
+        # poll() system call is incomplete: it return POLLNVAL for devices!
+        # Apparently kqueue and poll fail on anything in /dev (I suppose they
+        # work on ordinary files and sockets?)
+        #   So if this is your platform, sorry, we have to use select.
+        poll_block = poll_block_select
+    else:
+        # This is the preferred case (if you're on Windows, well I've *no*
+        # idea what's going to happen ... and frankly, I don't care).
+        poll_block = poll_block_poll
+else:
+    # If poll not available use select instead
+    poll_block = poll_block_select
+    
 
 def _compute_poll_list(poll_queue):
     '''Computes a list of (file, event_mask) pairs of all descriptor events
@@ -164,7 +229,8 @@ def poll_list(event_list, timeout = None):
     until = cothread.Deadline(timeout)
     if until is not None and time.time() >= until:
         # If timed out then probe the devices directly anyway.  This bypasses
-        # the cothread scheduler.
+        # the cothread scheduler ensuring we actually look at the devices (if
+        # we hand over to the scheduler we'll time out first).
         return poll_block(event_list, 0)
     else:
         poller = _Poller(event_list)

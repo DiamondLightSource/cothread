@@ -496,7 +496,7 @@ class _Scheduler(object):
         # one interested listener, but ensure that the event remains
         # monitored.
         for file, events in poll_result:
-            for poller in self.__poll_queue[file]:
+            for poller in self.__poll_queue.get(file, []):
                 # Consume any events taken by the woken process
                 events &= ~poller.notify_wakeup(file, events)
 
