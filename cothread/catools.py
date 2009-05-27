@@ -29,7 +29,7 @@
 
 '''Pure Python ctypes interface to EPICS libca Channel Access library
 
-Supports three methods:
+Supports the following methods:
 
     caget(pvs, ...)
         Returns a single snapshot of the current value of each PV.
@@ -39,6 +39,9 @@ Supports three methods:
 
     camonitor(pvs, callback, ...)
         Receive notification each time any of the listed PVs changes.
+
+    connect(pvs, ...)
+        Can be used to establish PV connection before using the PV.
 
 See the documentation for the individual functions for more details on using
 them.'''
@@ -57,6 +60,7 @@ __all__ = [
     'caput',            # Write PVs to channel access
     'caget',            # Read PVs from channel access
     'camonitor',        # Monitor PVs over channel access
+    'connect',          # Establish PV connection
 
     # Basic DBR request codes: any one of these can be used as part of a
     # datatype request.  
@@ -561,7 +565,7 @@ def caget(pvs, **kargs):
         timeout = 5, datatype = None,
         format = FORMAT_RAW, count = 0, throw = True)
 
-    Retrieves the value from one or more PVs.  If a single pv is given then
+    Retrieves the value from one or more PVs.  If a single PV is given then
     a single value is returned, otherwise a list of values is returned.
 
     Every value returned has the following fields:
@@ -771,6 +775,53 @@ def caput(pvs, values, **kargs):
         return caput_array(pvs, values, **kargs)
 
 
+
+# ----------------------------------------------------------------------------
+#   connect
+
+@maybe_throw
+def connect_one(pv, wait = True, timeout = 5):
+    channel = _channel_cache[pv]
+    if wait:
+        channel.Wait(timeout)
+    return ca_nothing(pv)
+    
+
+def connect_array(pvs, **kargs):
+    return cothread.WaitForAll([
+        cothread.Spawn(connect_one, pv, raise_on_wait = True, **kargs)
+        for pv in pvs])
+    
+
+def connect(pvs, **kargs):
+    '''connect(pvs, wait = True, timeout = 5, throw = True)
+
+    Establishes a connection to one or more PVs.  A single PV or a list of PVs
+    can be given.  This does not normally need to be called, as the ca...()
+    routines will establish their own connections as required, but after a
+    successful connection we can guarantee that caput(..., wait=False) will
+    complete immediately without suspension.
+
+    The following arguments affect the behaviour of connect as follows:
+
+    wait
+        Normally the connect routine will not return until the requested
+        connection is established.  If wait=False is set then a connection
+        request will be queued and connect will unconditionally succeed.
+
+    timeout
+        How long to wait for the connection to be established.
+
+    throw
+        Normally an exception will be raised if the channel cannot be
+        connected to.  If this is set to False then instead for each failing
+        PV a sentinel value with .ok == False is returned.
+    '''
+    if isinstance(pvs, str):
+        return connect_one(pvs, **kargs)
+    else:
+        return connect_array(pvs, **kargs)
+    
 
 # ----------------------------------------------------------------------------
 #   Final module initialisation

@@ -9,8 +9,8 @@ link:index.html[Index Page].
 Overview
 --------
 
-The +catools+ library provides three functions for access to EPICS ``process
-variables'' over channel access:
+The +catools+ library provides the following functions for access to EPICS
+``process variables'' over channel access:
 
 +caget(pvs, ...)+::
 Returns a single snapshot of the current value of each PV.
@@ -20,6 +20,10 @@ Writes values to one or more PVs.
 
 +camonitor(pvs, callback, ...)+::
 Receive notification each time any of the listed PVs changes.
+
++connect(pvs, ...)+::
+Can be used to establish a connection to a list of PVs before calling the
+other routines.  This routine is optional.
 
 To use these functions a certain amount of setup work is required.  The
 following code illustrates a simple application which reads a value from one
@@ -233,8 +237,8 @@ See documentation for <<Augmented, Augmented Values>> below.
 
 +timeout+, +throw+::
 Documented in <<Common, Common Notes>> above.  If a value cannot be retrieved
-and +throw=False+ is set then for each failing PV an empty value with +.ok ==
-False+ is returned.
+and +throw=False+ is set then for each failing PV an empty value with
++.ok==False+ is returned. 
 --
 +
 The format of values returned depends on the number of values requested
@@ -302,6 +306,33 @@ error reports will be reported by calling the callback with a +ca_nothing+
 error with +.ok+ False.  By default +False+ these notifications are
 suppressed so that only valid values will be passed to the callback routine.
 --
+
+
++connect(pvs, wait=True, timeout=5, throw=True)+::
+
+Establishes a connection to one or more PVs.  A single PV or a list of PVs
+can be given.  This does not normally need to be called, as the +ca...()+
+routines will establish their own connections as required, but after a
+successful connection we can guarantee that +caput(..., wait=False)+ will
+complete immediately without suspension.
++
+It is possible to test whether a channel has successfully connected by calling
++connect(pv, wait=True, timeout=0, throw=False)+ and testing the result.
++
+The various arguments control the behaviour of +connect+ as follows:
++
+--
++wait+::
+Normally the connect routine will not return until the requested
+connection is established.  If +wait=False+ is set then a connection
+request will be queued and connect will unconditionally succeed.
+
++timeout+, +throw+::
+Documented in <<Common, Common Notes>> above.  If a value cannot be retrieved
+and +throw=False+ is set then for each failing PV an empty value with
++.ok==False+ is returned. 
+--
+
 
 
 [[Values]]

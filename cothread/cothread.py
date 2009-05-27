@@ -543,12 +543,13 @@ class EventBase(object):
     def _WaitUntil(self, timeout):
         '''Suspends the calling task until _Wakeup() is called.  Raises an
         exception if a timeout occurs first.'''
-        # The scheduler tells us whether we were resumed on a timeout or on a
-        # normal schedule event.
         deadline = Deadline(timeout)
-        if deadline is None or time.time() < deadline:
-            if _scheduler.wait_until(deadline, self.__wait_queue, None):
-                raise Timedout('Timed out waiting for event')
+        # If the deadline has already expired don't call into the scheduler:
+        # as a matter of policy, we don't lose control in this case.
+        # Otherwise the scheduler will tell us if we've timed out.
+        if (deadline is not None and time.time() >= deadline) or \
+                _scheduler.wait_until(deadline, self.__wait_queue, None):
+            raise Timedout('Timed out waiting for event')
 
     def _Wakeup(self, wake_all):
         '''Wakes one or all waiting tasks.  Returns False if an aborted wait
@@ -924,7 +925,7 @@ _scheduler_thread_id = thread.get_ident()
 def SleepUntil(deadline):
     '''Sleep until the specified deadline.  Note that if the deadline has
     already passed then no yield of control will occur.'''
-    if time.time() < deadline:
+    if deadline is None or time.time() < deadline:
         _scheduler.wait_until(deadline, None, None)
 
 def Sleep(timeout):
