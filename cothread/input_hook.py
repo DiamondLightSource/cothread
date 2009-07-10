@@ -169,7 +169,7 @@ def _run_iqt(QT, poll_interval):
     qt_done.Signal()
 
         
-def iqt(poll_interval = 0.05, use_timer = False):
+def iqt(poll_interval = 0.05, use_timer = False, argv = sys.argv):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
 
@@ -207,8 +207,9 @@ def iqt(poll_interval = 0.05, use_timer = False):
             unlock = QCoreApplication.unlock
 
     global _qapp
-    if QT.QCoreApplication.startingUp():
-        _qapp = QT.QApplication(sys.argv)
+    assert QT.QCoreApplication.startingUp(), \
+        'Must use iqt() to create initial QApplication object.'
+    _qapp = QT.QApplication(argv)
 
     QT.QCoreApplication.connect(
         QT.instance(), QT.SIGNAL('lastWindowClosed()'), cothread.Quit)
@@ -218,6 +219,8 @@ def iqt(poll_interval = 0.05, use_timer = False):
     else:
         cothread.Spawn(_poll_iqt, QT, poll_interval)
     cothread.Yield()
+
+    return _qapp
 
 
 # Automatically install the readline hook.  This is the safest thing to do.

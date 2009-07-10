@@ -460,7 +460,7 @@ class _Scheduler(object):
         # It's vital to yield during this call, even if we have actually
         # timed out -- otherwise the wakeup we've just added to the poll
         # queue will get processed when it's no longer valid (oops).
-        reason = self.wait_until(until, None, poller.wakeup)
+        self.wait_until(until, None, poller.wakeup)
 
 
     def __Wakeup(self, queue, until):

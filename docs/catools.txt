@@ -213,9 +213,14 @@ is possible to write:
 +
 ----------------------------
 if not caput(pv, value, throw=False):
-    process caput error
+    # process caput error
 ----------------------------
-
++
+If all the PVs listed in +pvs+ have already been connected, through a
+successful call to any +catools+ method, then the library guarantees that the
+puts for each PV will occur strictly in sequence.  For any PVs which need a
+connection to be established the order of execution of puts is completely
+undefined.
 
 
 
@@ -314,7 +319,8 @@ Establishes a connection to one or more PVs.  A single PV or a list of PVs
 can be given.  This does not normally need to be called, as the +ca...()+
 routines will establish their own connections as required, but after a
 successful connection we can guarantee that +caput(..., wait=False)+ will
-complete immediately without suspension.
+complete immediately without suspension and that +caput(pvs, values)+ will
+execute in order if all PVs in +pvs+ have been successfully connected.
 +
 It is possible to test whether a channel has successfully connected by calling
 +connect(pv, wait=True, timeout=0, throw=False)+ and testing the result.

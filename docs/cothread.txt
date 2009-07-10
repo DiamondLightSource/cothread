@@ -50,8 +50,8 @@ require('cothread==1.6')    # or just require('cothread')
 # Import the cothread library in each module that uses it.
 import cothread
 
-# Enable Qt processing
-cothread.iqt()
+# Enable Qt processing, hang onto application instance if needed.
+qtapp = cothread.iqt()
 
 # Do the real work of the module, including spawning any background tasks.
 ...
@@ -75,6 +75,7 @@ it is an easy mistake to place them at the head of each Python module.
 library needs to be informed: this is done by calling +iqt()+ before any work
 is done with Qt.  This call ensures that Qt processing will occur while the
 cothread scheduler is idle, and effectively turns Qt into another cothread.
+The Qt application instance is created by this call and returned.
 
 3. Finally the main cothread (the thread of control used to start and run the
 program) must not exit until the program has finished.  If all the desired
@@ -115,7 +116,8 @@ The +coselect+ module adds the following suspension points:
 
 +select+, +poll+, +poll_list+:: All of these routines suspend the caller until
 at least one file descriptor in a monitored list is ready.  The caller will be
-suspended even if the ready condition is already met.
+suspended even if the ready condition is already met unless the timeout has
+already expired.
 
 In the +catools+ module the following routines can cause suspension (note
 that +camonitor+ is the only routine guaranteed not to suspend):
@@ -124,9 +126,28 @@ that +camonitor+ is the only routine guaranteed not to suspend):
 channel access data has arrived (or a timeout occurs), the only exception
 being if an expired timeout is specified.  
 
-+caput+:: This routine does not always suspend the caller: the circumstances
-in which suspension does and does not occur are reasonably complex, and on the
-whole it's safer to treat this routine as unpredictable in this regard.
++caput+:: This routine will normally cause the caller to suspend.  To avoid
+suspension, only put to one PV, use +wait=False+, and ensure that the channel
+is already connected -- this will be the case if it has already been
+successfully used in any +catools+ method.
+
+
+Order of Execution
+~~~~~~~~~~~~~~~~~~
+
+It is possible to be fairly precise about the order in which certain processes
+will occur.
+
+* Cothreads started by +Spawn+ will initially be processed in the order in
+which they were created with no other cothreads intervening.
+
+* Cothreads waiting on an event will be woken strictly in the sequence in
+which waiting takes place, just so long as no timeout occurs.  Cothreads woken
+by timeouts generally execute after all all processing is complete.
+
+This ordering of processing together with the fact that cothreads are only
+suspended when control needs to be lost means that certain guarantees about
+ordering of processing can be made, in particular see +catools.caput+.
 
 
 Callbacks and Timers
@@ -334,7 +355,7 @@ program so that other event loops can run.
 +iqt(poll_interval=0.05, use_timer=False)+::
 
 If Qt is to be used then this routine must be called during initialisation to
-enable the Qt event loop.
+enable the Qt event loop.  The Qt application instance is returned.
 +
 The normal Qt event look hook does not work correctly with modal dialogs
 (because they run their own message loops) -- typically either a modal window
