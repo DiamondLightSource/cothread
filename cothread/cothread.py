@@ -870,6 +870,7 @@ def WaitForAll(event_list, timeout = None):
     event_list = list(event_list)
     result = []
     try:
+        n = -1      # In case event_list is empty!
         for n, event in enumerate(event_list):
             result.append(event.Wait(timeout))
     finally:
