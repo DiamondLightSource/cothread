@@ -49,11 +49,14 @@ them.'''
 import sys
 import atexit
 import traceback
+import ctypes
 
 import cothread
-from cadef import *
-from dbr import *
+import cadef
+import dbr
 
+from dbr import *
+from cadef import *
 
 __all__ = [
     # The core functions.
@@ -61,29 +64,7 @@ __all__ = [
     'caget',            # Read PVs from channel access
     'camonitor',        # Monitor PVs over channel access
     'connect',          # Establish PV connection
-
-    # Basic DBR request codes: any one of these can be used as part of a
-    # datatype request.  
-    'DBR_STRING',       # 40 character strings
-    'DBR_SHORT',        # 16 bit signed       
-    'DBR_FLOAT',        # 32 bit float        
-    'DBR_ENUM',         # 16 bit unsigned     
-    'DBR_CHAR',         # 8 bit unsigned      
-    'DBR_LONG',         # 32 bit signed       
-    'DBR_DOUBLE',       # 64 bit float        
-
-    # Data type format requests
-    'FORMAT_RAW',       # Request the underlying data only
-    'FORMAT_TIME',      # Request alarm status and timestamp
-    'FORMAT_CTRL',      # Request graphic and control fields
-
-    # Event type notification codes for camonitor
-    'DBE_VALUE',        # Notify normal value changes  
-    'DBE_LOG',          # Notify archival value changes
-    'DBE_ALARM',        # Notify alarm state changes
-
-    'ca_extra_fields',  # List of all possible augmented field names
-]
+] + dbr.__all__ + cadef.__all__
 
 
 
@@ -92,14 +73,14 @@ class ca_nothing(Exception):
     as a failure indicator from caget, and may be raised as an exception to
     report a data error on caget or caput with wait.'''
     
-    def __init__(self, name, errorcode = ECA_NORMAL):
+    def __init__(self, name, errorcode = cadef.ECA_NORMAL):
         '''Initialise with PV name and associated errorcode.'''
-        self.ok = errorcode == ECA_NORMAL
+        self.ok = errorcode == cadef.ECA_NORMAL
         self.name = name
         self.errorcode = errorcode
 
     def __str__(self):
-        return ca_message(self.errorcode)
+        return '%s: %s' % (self.name, cadef.ca_message(self.errorcode))
 
     def __nonzero__(self):
         return self.ok
@@ -122,12 +103,12 @@ def maybe_throw(function):
                 return function(pv, *args, **kargs)
             except ca_nothing, error:
                 return error
-            except CAException, error:
+            except cadef.CAException, error:
                 return ca_nothing(pv, error.status)
-            except Disconnected, error:
-                return ca_nothing(pv, ECA_DISCONN)
+            except cadef.Disconnected, error:
+                return ca_nothing(pv, cadef.ECA_DISCONN)
             except cothread.Timedout:
-                return ca_nothing(pv, ECA_TIMEOUT)
+                return ca_nothing(pv, cadef.ECA_TIMEOUT)
 
     # Make sure the wrapped function looks like its original self.
     throw_wrapper.__name__ = function.__name__
@@ -150,16 +131,16 @@ class Channel(object):
         '_as_parameter_'    # Associated channel access channel handle
     ]
     
-    @connection_handler
+    @cadef.connection_handler
     def on_ca_connect(args):
         '''This routine is called every time the connection status of the
         channel changes.  This is called directly from channel access, which
         means that user callbacks should not be called directly.'''
         
-        self = ca_puser(args.chid)
+        self = cadef.ca_puser(args.chid)
         op = args.op
-        assert op in [CA_OP_CONN_UP, CA_OP_CONN_DOWN]
-        connected = op == CA_OP_CONN_UP
+        assert op in [cadef.CA_OP_CONN_UP, cadef.CA_OP_CONN_DOWN]
+        connected = op == cadef.CA_OP_CONN_UP
 
         if connected:
             self.__connected.Signal()
@@ -177,7 +158,7 @@ class Channel(object):
         self.__connected = cothread.Event(auto_reset = False)
         
         chid = ctypes.c_void_p()
-        ca_create_channel(
+        cadef.ca_create_channel(
             name, self.on_ca_connect, ctypes.py_object(self),
             0, ctypes.byref(chid))
         # Setting this allows a channel object to autoconvert into the chid
@@ -189,7 +170,7 @@ class Channel(object):
         # Note that Channel objects are normally only deleted on process
         # shutdown, so perhaps this call is redundant.
         if hasattr(self, '_as_parameter_'):
-            ca_clear_channel(self)
+            cadef.ca_clear_channel(self)
 
     def _purge(self):
         '''Forcible purge of channel.  As well as closing the channels,
@@ -197,7 +178,7 @@ class Channel(object):
         closed.'''
         for subscription in list(self.__subscriptions):
             subscription.close()
-        ca_clear_channel(self)
+        cadef.ca_clear_channel(self)
         del self._as_parameter_
 
     def _add_subscription(self, subscription):
@@ -267,16 +248,16 @@ class _Subscription(object):
     __OPEN    = 1       # Normally active
     __CLOSED  = 2       # Closed but not yet deleted
     
-    @event_handler
+    @cadef.event_handler
     def __on_event(args):
         '''This is called each time the subscribed value changes.  As this is
         called asynchronously, a signal must be queued for later dispatching
         to the monitoring user.'''
         self = args.usr
 
-        if args.status == ECA_NORMAL:
+        if args.status == cadef.ECA_NORMAL:
             # Good data: extract value from the dbr.
-            self.__signal(dbr_to_value(
+            self.__signal(dbr.dbr_to_value(
                 args.raw_dbr, args.type, args.count, self.channel.name))
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, but only if
@@ -305,7 +286,7 @@ class _Subscription(object):
         channel changes.  Note that this is also called asynchronously.'''
         if not connected and self.notify_disconnect:
             # Channel has become disconnected: tell the subscriber.
-            self.__signal(ca_nothing(self.channel.name, ECA_DISCONN))
+            self.__signal(ca_nothing(self.channel.name, cadef.ECA_DISCONN))
 
     def __del__(self):
         '''On object deletion ensure that the associated subscription is
@@ -318,7 +299,7 @@ class _Subscription(object):
         not even callbacks currently queued for execution.'''
         if self.__state == self.__OPEN:
             self.channel._remove_subscription(self)
-            ca_clear_subscription(self)
+            cadef.ca_clear_subscription(self)
             del self._as_parameter_
             del self.channel
             del self.__value
@@ -362,16 +343,16 @@ class _Subscription(object):
             # datatype associated with the connected channel.
             # First wait for the channel to connect
             self.channel.Wait()
-            datatype = ca_field_type(self.channel)
+            datatype = cadef.ca_field_type(self.channel)
         # Can now convert the datatype request into the subscription datatype.
-        datatype = type_to_dbr(datatype, format)
+        datatype = dbr.type_to_dbr(datatype, format)
 
         # Finally create the subscription with all the requested properties
         # and hang onto the returned event id as our implicit ctypes
         # parameter.
         if self.__state == self.__OPENING:
             event_id = ctypes.c_void_p()
-            ca_create_subscription(
+            cadef.ca_create_subscription(
                 datatype, count, self.channel, events,
                 self.__on_event, ctypes.py_object(self),
                 ctypes.byref(event_id))
@@ -492,7 +473,7 @@ def camonitor(pvs, callback, **kargs):
 #   caget
 
 
-@event_handler
+@cadef.event_handler
 def _caget_event_handler(args):
     '''This will be called when a caget request completes, either with a
     brand new data value or with failure.  The result is communicated back
@@ -504,8 +485,8 @@ def _caget_event_handler(args):
     pv, done = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
     
-    if args.status == ECA_NORMAL:
-        done.Signal(dbr_to_value(args.raw_dbr, args.type, args.count, pv))
+    if args.status == cadef.ECA_NORMAL:
+        done.Signal(dbr.dbr_to_value(args.raw_dbr, args.type, args.count, pv))
     else:
         done.SignalException(ca_nothing(pv, args.status))
 
@@ -527,13 +508,13 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     # If no element count has been specified, ask for the entire set provided
     # by the channel.
     if count == 0:
-        count = ca_element_count(channel)
+        count = cadef.ca_element_count(channel)
     else:
-        count = min(count, ca_element_count(channel))
+        count = min(count, cadef.ca_element_count(channel))
 
     # If no datatype has been specified, use the channel's default
     if datatype is None:
-        datatype = ca_field_type(channel)
+        datatype = cadef.ca_field_type(channel)
 
     # Assemble the callback context.  Note that we need to explicitly
     # increment the reference count so that the context survives until the
@@ -544,8 +525,8 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     
     # Perform the actual put as a non-blocking operation: we wait to be
     # informed of completion, or time out.
-    ca_array_get_callback(
-        type_to_dbr(datatype, format), count, channel,
+    cadef.ca_array_get_callback(
+        dbr.type_to_dbr(datatype, format), count, channel,
         _caget_event_handler, ctypes.py_object(context))
     return done.Wait(timeout)
 
@@ -659,7 +640,7 @@ def caget(pvs, **kargs):
 # ----------------------------------------------------------------------------
 #   caput
 
-@event_handler
+@cadef.event_handler
 def _caput_event_handler(args):
     '''Event handler for caput with callback completion.  Returns status
     code to caller.'''
@@ -669,7 +650,7 @@ def _caput_event_handler(args):
     pv, done = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
     
-    if args.status == ECA_NORMAL:
+    if args.status == cadef.ECA_NORMAL:
         done.Signal()
     else:
         done.SignalException(ca_nothing(pv, args.status))
@@ -686,7 +667,7 @@ def caput_one(pv, value, timeout=5, wait=False):
     channel.Wait(timeout)
 
     # Assemble the data in the appropriate format.
-    datatype, count, dbr_array = value_to_dbr(value)
+    datatype, count, dbr_array = dbr.value_to_dbr(value)
     if wait:
         # Assemble the callback context and give it an extra reference count
         # to keep it alive until the callback handler sees it.
@@ -696,13 +677,13 @@ def caput_one(pv, value, timeout=5, wait=False):
         
         # caput with callback requested: need to wait for response from
         # server before returning.
-        ca_array_put_callback(
+        cadef.ca_array_put_callback(
             datatype, count, channel, dbr_array.ctypes.data,
             _caput_event_handler, ctypes.py_object(context))
         done.Wait(timeout)
     else:
         # Asynchronous caput, just do it now.
-        ca_array_put(datatype, count, channel, dbr_array.ctypes.data)
+        cadef.ca_array_put(datatype, count, channel, dbr_array.ctypes.data)
         
     # Return a success code for compatibility with throw=False code.
     return ca_nothing(pv)
@@ -838,15 +819,15 @@ def _catools_atexit():
     #    One reason that it's rather important to do this properly is that we
     # can't safely do *any* ca_ calls once ca_context_destroy() is called!
     _channel_cache.purge()
-    ca_context_destroy(ca_current_context())
+    cadef.ca_context_destroy(cadef.ca_current_context())
 
-ca_context_create(0)
+cadef.ca_context_create(0)
 
 
 @cothread.Spawn
 def _PollChannelAccess():
     while True:
-        ca_pend_event(1e-9)
+        cadef.ca_pend_event(1e-9)
         cothread.Sleep(1e-2)
 
 
@@ -856,5 +837,5 @@ if False:
     def catools_exception(args):
         '''print ca exception message'''
         print >> sys.stderr, 'catools_exception:', \
-            args.ctx, ca_message(args.stat)
-    ca_add_exception_event(catools_exception, 0)
+            args.ctx, cadef.ca_message(args.stat)
+    cadef.ca_add_exception_event(catools_exception, 0)

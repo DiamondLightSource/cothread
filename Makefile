@@ -34,3 +34,7 @@ make_docs:
 
 clean_docs:
 	make -C docs clean
+
+
+runtests:
+	make -C tests

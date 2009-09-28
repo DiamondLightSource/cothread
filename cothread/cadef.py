@@ -40,12 +40,18 @@ This module is a thin wrapper over the cadef.h file to be found in
 
 import ctypes
 
+__all__ = [
+    # Event type notification codes for camonitor
+    'DBE_VALUE',        # Notify normal value changes  
+    'DBE_LOG',          # Notify archival value changes
+    'DBE_ALARM',        # Notify alarm state changes
+]
+
 
 # channel access
 # note 3.14.8.2 some threading problems when multiple with same name found
 libca = ctypes.cdll.LoadLibrary(
     '/dls_sw/epics/R3.14.8.2/base/lib/linux-x86/libca.so')
-
 
 
 # -----------------------------------------------------------------------------

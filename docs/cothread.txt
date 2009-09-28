@@ -45,7 +45,7 @@ followed in the top level application:
 ----------------------------
 # First the version of cothread library must be specified
 from pkg_resources import require
-require('cothread==1.6')    # or just require('cothread')
+require('cothread==1.15')    # or just require('cothread')
 
 # Import the cothread library in each module that uses it.
 import cothread
@@ -60,12 +60,12 @@ qtapp = cothread.iqt()
 cothread.WaitForQuit()
 ----------------------------
 
-1. +require('cothread==1.6')+.  This statement is required by the way Diamond
+1. +require(\'cothread==1.15\')+.  This statement is required by the way Diamond
 Controls modules are managed: it is necessary to specify precisely _which_
 version of a module is to be used.  This means that API changes can be made in
 future releases without breaking existing code.  
 +
-Alternatively +require('cothread')+ can be used to request the most recent
+Alternatively +require(\'cothread\')+ can be used to request the most recent
 installed version.
 +
 Note that the +require+ statements should only occur once in each application:

@@ -353,7 +353,7 @@ error code on failure.
 
 The following fields are common to both types of value.  This means that is is
 always safe to test +value.ok+ for a value returned by +caget+ or +caput+ or
-deliverd by +camonitor+.
+delivered by +camonitor+.
 
 +.ok+::
 Set to +True+ if the data is good, +False+ if there was an error.  For

@@ -37,17 +37,22 @@ import time
 
 
 __all__ = [
-    # DBR type request codes.  Only these ones can be used from outside.
-    'DBR_STRING',   'DBR_SHORT',    'DBR_FLOAT',    'DBR_ENUM',
-    'DBR_CHAR',     'DBR_LONG',     'DBR_DOUBLE',
-    # Format types
-    'FORMAT_RAW',   'FORMAT_TIME',  'FORMAT_CTRL',
-    # Published functions
-    'type_to_dbr',  # Convert data type request into DBR datatype
-    'dbr_to_value', # Convert dbr value into user value (array or scalar)
-    'value_to_dbr', # Convert Python value into dbr format
+    # Basic DBR request codes: any one of these can be used as part of a
+    # datatype request.  
+    'DBR_STRING',       # 40 character strings
+    'DBR_SHORT',        # 16 bit signed       
+    'DBR_FLOAT',        # 32 bit float        
+    'DBR_ENUM',         # 16 bit unsigned     
+    'DBR_CHAR',         # 8 bit unsigned      
+    'DBR_LONG',         # 32 bit signed       
+    'DBR_DOUBLE',       # 64 bit float        
 
-    'ca_extra_fields',
+    # Data type format requests
+    'FORMAT_RAW',       # Request the underlying data only
+    'FORMAT_TIME',      # Request alarm status and timestamp
+    'FORMAT_CTRL',      # Request graphic and control fields
+
+    'ca_extra_fields',  # List of all possible augmented field names
 ]
 
 # List of all the field names that can be added to an augmented field.
@@ -603,7 +608,7 @@ def dbr_to_value(raw_dbr, datatype, count, name):
             result = ctypes.string_at(result)
         result = raw_dbr.scalar(result)
     else:
-        # Build a fresh dbr_array to receive a copy of the raw data in the
+        # Build a fresh ca_array to receive a copy of the raw data in the
         # dbr.  We have to take a copy, because the dbr is transient, and it
         # is helpful to use a numpy array as a container, because of the
         # support it provides.
