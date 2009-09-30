@@ -149,8 +149,8 @@ EPICS_epoch = int(time.mktime((1990, 1, 1, 0, 0, 0, 0, 0, 0)))
     
 class ca_timestamp(ctypes.Structure):
     _fields_ = [
-        ('secs',                ctypes.c_long),
-        ('nsec',                ctypes.c_long)]
+        ('secs',    ctypes.c_uint32),
+        ('nsec',    ctypes.c_uint32)]
         
         
 # ----------------------------------------------------------------------------
@@ -211,7 +211,7 @@ class dbr_short(ctypes.Structure):
     dtype = numpy.int16
     scalar = ca_int
     copy_attributes = copy_attributes_none
-    _fields_ = [('raw_value', ctypes.c_short * 1)]
+    _fields_ = [('raw_value', ctypes.c_int16 * 1)]
     
 class dbr_float(ctypes.Structure):
     dtype = numpy.float32
@@ -223,19 +223,19 @@ class dbr_enum(ctypes.Structure):
     dtype = numpy.uint16
     scalar = ca_int
     copy_attributes = copy_attributes_none
-    _fields_ = [('raw_value', ctypes.c_ushort * 1)]
+    _fields_ = [('raw_value', ctypes.c_uint16 * 1)]
     
 class dbr_char(ctypes.Structure):
     dtype = numpy.uint8
     scalar = ca_int
     copy_attributes = copy_attributes_none
-    _fields_ = [('raw_value', ctypes.c_byte * 1)]
+    _fields_ = [('raw_value', ctypes.c_uint8 * 1)]
     
 class dbr_long(ctypes.Structure):
     dtype = numpy.int32
     scalar = ca_int
     copy_attributes = copy_attributes_none
-    _fields_ = [('raw_value', ctypes.c_long * 1)]
+    _fields_ = [('raw_value', ctypes.c_int32 * 1)]
     
 class dbr_double(ctypes.Structure):
     dtype = numpy.float64
@@ -250,8 +250,8 @@ class dbr_time_string(ctypes.Structure):
     scalar = ca_str
     copy_attributes = copy_attributes_time
     _fields_ = [
-        ('status',    ctypes.c_short),
-        ('severity',  ctypes.c_short),
+        ('status',    ctypes.c_int16),
+        ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
         ('raw_value', (ctypes.c_byte * MAX_STRING_SIZE) * 1)]
 
@@ -260,19 +260,19 @@ class dbr_time_short(ctypes.Structure):
     scalar = ca_int
     copy_attributes = copy_attributes_time
     _fields_ = [
-        ('status',    ctypes.c_short),
-        ('severity',  ctypes.c_short),
+        ('status',    ctypes.c_int16),
+        ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
-        ('RISC_pad',  ctypes.c_short),
-        ('raw_value', ctypes.c_short * 1)]
+        ('RISC_pad',  ctypes.c_int16),
+        ('raw_value', ctypes.c_int16 * 1)]
     
 class dbr_time_float(ctypes.Structure):
     dtype = numpy.float32
     scalar = ca_float
     copy_attributes = copy_attributes_time
     _fields_ = [
-        ('status',    ctypes.c_short),
-        ('severity',  ctypes.c_short),
+        ('status',    ctypes.c_int16),
+        ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
         ('raw_value', ctypes.c_float * 1)]
     
@@ -281,43 +281,43 @@ class dbr_time_enum(ctypes.Structure):
     scalar = ca_int
     copy_attributes = copy_attributes_time
     _fields_ = [
-        ('status',    ctypes.c_short),
-        ('severity',  ctypes.c_short),
+        ('status',    ctypes.c_int16),
+        ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
-        ('RISC_pad',  ctypes.c_short),
-        ('raw_value', ctypes.c_ushort * 1)]
+        ('RISC_pad',  ctypes.c_int16),
+        ('raw_value', ctypes.c_uint16 * 1)]
     
 class dbr_time_char(ctypes.Structure):
     dtype = numpy.uint8
     scalar = ca_int
     copy_attributes = copy_attributes_time
     _fields_ = [
-        ('status',    ctypes.c_short),
-        ('severity',  ctypes.c_short),
+        ('status',    ctypes.c_int16),
+        ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
-        ('RISC_pad0', ctypes.c_short),
-        ('RISC_pad1', ctypes.c_byte),
-        ('raw_value', ctypes.c_byte * 1)]
+        ('RISC_pad0', ctypes.c_int16),
+        ('RISC_pad1', ctypes.c_uint8),
+        ('raw_value', ctypes.c_uint8 * 1)]
     
 class dbr_time_long(ctypes.Structure):
     dtype = numpy.int32
     scalar = ca_int
     copy_attributes = copy_attributes_time
     _fields_ = [
-        ('status',    ctypes.c_short),
-        ('severity',  ctypes.c_short),
+        ('status',    ctypes.c_int16),
+        ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
-        ('raw_value', ctypes.c_long * 1)]
+        ('raw_value', ctypes.c_int32 * 1)]
     
 class dbr_time_double(ctypes.Structure):
     dtype = numpy.float64
     scalar = ca_float
     copy_attributes = copy_attributes_time
     _fields_ = [
-        ('status',    ctypes.c_short),
-        ('severity',  ctypes.c_short),
+        ('status',    ctypes.c_int16),
+        ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
-        ('RISC_pad',  ctypes.c_long),
+        ('RISC_pad',  ctypes.c_int32),
         ('raw_value', ctypes.c_double * 1)]
 
 # DBR types with full control and graphical fields
@@ -327,28 +327,28 @@ class dbr_ctrl_short(ctypes.Structure):
     scalar = ca_int
     copy_attributes = copy_attributes_ctrl
     _fields_ = [
-        ('status',              ctypes.c_short),
-        ('severity',            ctypes.c_short),
+        ('status',              ctypes.c_int16),
+        ('severity',            ctypes.c_int16),
         ('units',               ctypes.c_char * MAX_UNITS_SIZE),
-        ('upper_disp_limit',    ctypes.c_short),
-        ('lower_disp_limit',    ctypes.c_short),
-        ('upper_alarm_limit',   ctypes.c_short),
-        ('upper_warning_limit', ctypes.c_short),
-        ('lower_warning_limit', ctypes.c_short),
-        ('lower_alarm_limit',   ctypes.c_short),
-        ('upper_ctrl_limit',    ctypes.c_short),
-        ('lower_ctrl_limit',    ctypes.c_short),
-        ('raw_value',           ctypes.c_short * 1)]
+        ('upper_disp_limit',    ctypes.c_int16),
+        ('lower_disp_limit',    ctypes.c_int16),
+        ('upper_alarm_limit',   ctypes.c_int16),
+        ('upper_warning_limit', ctypes.c_int16),
+        ('lower_warning_limit', ctypes.c_int16),
+        ('lower_alarm_limit',   ctypes.c_int16),
+        ('upper_ctrl_limit',    ctypes.c_int16),
+        ('lower_ctrl_limit',    ctypes.c_int16),
+        ('raw_value',           ctypes.c_int16 * 1)]
     
 class dbr_ctrl_float(ctypes.Structure):
     dtype = numpy.float32
     scalar = ca_float
     copy_attributes = copy_attributes_ctrl
     _fields_ = [
-        ('status',              ctypes.c_short),
-        ('severity',            ctypes.c_short),
-        ('precision',           ctypes.c_short),
-        ('RISC_pad',            ctypes.c_short),
+        ('status',              ctypes.c_int16),
+        ('severity',            ctypes.c_int16),
+        ('precision',           ctypes.c_int16),
+        ('RISC_pad',            ctypes.c_int16),
         ('units',               ctypes.c_char * MAX_UNITS_SIZE),
         ('upper_disp_limit',    ctypes.c_float),
         ('lower_disp_limit',    ctypes.c_float),
@@ -364,11 +364,11 @@ class dbr_ctrl_enum(ctypes.Structure):
     dtype = numpy.uint16
     scalar = ca_int
     _fields_ = [
-        ('status',   ctypes.c_short),
-        ('severity', ctypes.c_short),
-        ('no_str',   ctypes.c_short),
+        ('status',   ctypes.c_int16),
+        ('severity', ctypes.c_int16),
+        ('no_str',   ctypes.c_int16),
         ('raw_strs', (ctypes.c_char * MAX_ENUM_STRING_SIZE) * MAX_ENUM_STATES),
-        ('raw_value', ctypes.c_ushort * 1)]
+        ('raw_value', ctypes.c_uint16 * 1)]
     
     def copy_attributes(self, other):
         other.status = self.status
@@ -380,47 +380,47 @@ class dbr_ctrl_char(ctypes.Structure):
     scalar = ca_int
     copy_attributes = copy_attributes_ctrl
     _fields_ = [
-        ('status',              ctypes.c_short),
-        ('severity',            ctypes.c_short),
+        ('status',              ctypes.c_int16),
+        ('severity',            ctypes.c_int16),
         ('units',               ctypes.c_char * MAX_UNITS_SIZE),
-        ('upper_disp_limit',    ctypes.c_byte),
-        ('lower_disp_limit',    ctypes.c_byte),
-        ('upper_alarm_limit',   ctypes.c_byte),
-        ('upper_warning_limit', ctypes.c_byte),
-        ('lower_warning_limit', ctypes.c_byte),
-        ('lower_alarm_limit',   ctypes.c_byte),
-        ('upper_ctrl_limit',    ctypes.c_byte),
-        ('lower_ctrl_limit',    ctypes.c_byte),
-        ('RISC_pad',            ctypes.c_byte),
-        ('raw_value',           ctypes.c_byte * 1)]
+        ('upper_disp_limit',    ctypes.c_uint8),
+        ('lower_disp_limit',    ctypes.c_uint8),
+        ('upper_alarm_limit',   ctypes.c_uint8),
+        ('upper_warning_limit', ctypes.c_uint8),
+        ('lower_warning_limit', ctypes.c_uint8),
+        ('lower_alarm_limit',   ctypes.c_uint8),
+        ('upper_ctrl_limit',    ctypes.c_uint8),
+        ('lower_ctrl_limit',    ctypes.c_uint8),
+        ('RISC_pad',            ctypes.c_uint8),
+        ('raw_value',           ctypes.c_uint8 * 1)]
     
 class dbr_ctrl_long(ctypes.Structure):
     dtype = numpy.int32
     scalar = ca_int
     copy_attributes = copy_attributes_ctrl
     _fields_ = [
-        ('status',              ctypes.c_short),
-        ('severity',            ctypes.c_short),
+        ('status',              ctypes.c_int16),
+        ('severity',            ctypes.c_int16),
         ('units',               ctypes.c_char * MAX_UNITS_SIZE),
-        ('upper_disp_limit',    ctypes.c_long),
-        ('lower_disp_limit',    ctypes.c_long),
-        ('upper_alarm_limit',   ctypes.c_long),
-        ('upper_warning_limit', ctypes.c_long),
-        ('lower_warning_limit', ctypes.c_long),
-        ('lower_alarm_limit',   ctypes.c_long),
-        ('upper_ctrl_limit',    ctypes.c_long),
-        ('lower_ctrl_limit',    ctypes.c_long),
-        ('raw_value',           ctypes.c_long * 1)]
+        ('upper_disp_limit',    ctypes.c_int32),
+        ('lower_disp_limit',    ctypes.c_int32),
+        ('upper_alarm_limit',   ctypes.c_int32),
+        ('upper_warning_limit', ctypes.c_int32),
+        ('lower_warning_limit', ctypes.c_int32),
+        ('lower_alarm_limit',   ctypes.c_int32),
+        ('upper_ctrl_limit',    ctypes.c_int32),
+        ('lower_ctrl_limit',    ctypes.c_int32),
+        ('raw_value',           ctypes.c_int32 * 1)]
     
 class dbr_ctrl_double(ctypes.Structure):
     dtype = numpy.float64
     scalar = ca_float
     copy_attributes = copy_attributes_ctrl
     _fields_ = [
-        ('status',              ctypes.c_short),
-        ('severity',            ctypes.c_short),
-        ('precision',           ctypes.c_short),
-        ('RISC_pad0',           ctypes.c_short),
+        ('status',              ctypes.c_int16),
+        ('severity',            ctypes.c_int16),
+        ('precision',           ctypes.c_int16),
+        ('RISC_pad0',           ctypes.c_int16),
         ('units',               ctypes.c_char * MAX_UNITS_SIZE),
         ('upper_disp_limit',    ctypes.c_double),
         ('lower_disp_limit',    ctypes.c_double),
@@ -431,16 +431,6 @@ class dbr_ctrl_double(ctypes.Structure):
         ('upper_ctrl_limit',    ctypes.c_double),
         ('lower_ctrl_limit',    ctypes.c_double),
         ('raw_value',           ctypes.c_double * 1)]
-
-    
-# No idea what this is for, and at the moment we provide no support for it!
-class dbr_stsack_string(ctypes.Structure):
-    _fields_ = [
-        ('status', ctypes.c_ushort),
-        ('severity', ctypes.c_ushort),
-        ('ackt', ctypes.c_ushort),
-        ('acks', ctypes.c_ushort),
-        ('raw_value', ctypes.c_byte * MAX_STRING_SIZE)]
 
 
     
@@ -469,8 +459,6 @@ DBR_CTRL_CHAR = 32
 DBR_CTRL_LONG = 33
 DBR_CTRL_DOUBLE = 34
 
-DBR_STSACK_STRING = 37
-
 
 # Lookup table to convert support DBR type codes into the corresponding DBR
 # datatype.
@@ -497,8 +485,6 @@ DbrCodeToType = {
     DBR_CTRL_CHAR : dbr_ctrl_char,
     DBR_CTRL_LONG : dbr_ctrl_long,
     DBR_CTRL_DOUBLE : dbr_ctrl_double,
-
-    DBR_STSACK_STRING : dbr_stsack_string,
 }
 
 

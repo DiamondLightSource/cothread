@@ -150,9 +150,9 @@ ECA_UNRESPTMO = 480
 class event_handler_args(ctypes.Structure):
     _fields_ = [
         ('usr',     ctypes.py_object),  # Associated private data
-        ('chid',    ctypes.c_int),      # Channel ID for this request
-        ('type',    ctypes.c_int),      # DBR type of data returned
-        ('count',   ctypes.c_int),      # Number of data points returned
+        ('chid',    ctypes.c_void_p),   # Channel ID for this request
+        ('type',    ctypes.c_long),     # DBR type of data returned
+        ('count',   ctypes.c_long),     # Number of data points returned
         ('raw_dbr', ctypes.c_void_p),   # Pointer to raw dbr array
         ('status',  ctypes.c_int)]      # ECA_ status code of operation
 event_handler = ctypes.CFUNCTYPE(None, event_handler_args)
@@ -164,14 +164,14 @@ class exception_handler_args(ctypes.Structure):
     _fields_ = [
         ('usr',     ctypes.c_void_p),   # Associated private data
         ('chid',    ctypes.c_void_p),   # Channel ID or NULL
-        ('type',    ctypes.c_int),      # Data type requested
-        ('count',   ctypes.c_int),      # Number of data points requested
+        ('type',    ctypes.c_long),     # Data type requested
+        ('count',   ctypes.c_long),     # Number of data points requested
         ('addr',    ctypes.c_void_p),   # User address for GET operation
-        ('stat',    ctypes.c_int),      # Channel access status code
-        ('op',      ctypes.c_int),      # CA_OP_ operation code
+        ('stat',    ctypes.c_long),     # Channel access status code
+        ('op',      ctypes.c_long),     # CA_OP_ operation code
         ('ctx',     ctypes.c_char_p),   # Context information string
         ('pFile',   ctypes.c_char_p),   # Location in source: file name
-        ('lineNo',  ctypes.c_int)]      #             ... and line number
+        ('lineNo',  ctypes.c_uint)]     #             ... and line number
 exception_handler = ctypes.CFUNCTYPE(None, exception_handler_args)
 
 
@@ -179,17 +179,8 @@ exception_handler = ctypes.CFUNCTYPE(None, exception_handler_args)
 class ca_connection_handler_args(ctypes.Structure):
     _fields_ = [
         ('chid',    ctypes.c_void_p),
-        ('op',      ctypes.c_int)]
+        ('op',      ctypes.c_long)]
 connection_handler = ctypes.CFUNCTYPE(None, ca_connection_handler_args)
-
-
-# File descriptor handler for handling select.  Called as
-#   handler(context, fd, opened)
-#       context     Caller's context
-#       fd          File handler being added or removed
-#       opened      True => new file added, False => file being deleted
-# This mirrors the CAFDHANDLER type and is passed to ca_add_fd_registration.
-fd_handler = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_int, ctypes.c_int)
 
 
 
@@ -465,4 +456,3 @@ ca_pend_event.argtypes = [ctypes.c_double]
 # Flushes all requests to server, but returns immediately without processing
 # incoming data.
 ca_flush_io = libca.ca_flush_io
-
