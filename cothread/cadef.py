@@ -45,6 +45,7 @@ __all__ = [
     'DBE_VALUE',        # Notify normal value changes  
     'DBE_LOG',          # Notify archival value changes
     'DBE_ALARM',        # Notify alarm state changes
+    'DBE_PROPERTY',     # Notify property change events (3.14.11 and later)
 ]
 
 
@@ -62,6 +63,7 @@ libca = ctypes.cdll.LoadLibrary(
 DBE_VALUE   = 1
 DBE_LOG     = 2
 DBE_ALARM   = 4
+DBE_PROPERTY = 8
 
 # Connection state as passed to connection handler
 CA_OP_CONN_UP        = 6

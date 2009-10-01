@@ -291,6 +291,7 @@ bit-wise or of any the following are possible:
 +DBE_VALUE+;;       Notify normal value changes
 +DBE_LOG+;;         Notify archive value changes
 +DBE_ALARM+;;       Notify alarm state changes
++DBE_PROPERTY+;;    Notify property changes (on 3.14.11 and later servers)
 
 +datatype+, +format+, +count+::
 See documentation for <<Augmented, Augmented Values>> below.
