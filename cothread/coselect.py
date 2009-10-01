@@ -152,7 +152,7 @@ if hasattr(_select, 'poll'):
     import platform
     if platform.system() == 'Darwin':
         # Unfortunately it would appear that Apple's implementation of the
-        # poll() system call is incomplete: it return POLLNVAL for devices!
+        # poll() system call is incomplete: it returns POLLNVAL for devices!
         # Apparently kqueue and poll fail on anything in /dev (I suppose they
         # work on ordinary files and sockets?)
         #   So if this is your platform, sorry, we have to use select.

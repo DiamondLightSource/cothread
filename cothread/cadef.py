@@ -58,85 +58,20 @@ libca = ctypes.cdll.LoadLibrary(
 #   Enumeration and error code definitions.
 
 
-# Operation codes use to identify CA operations, return in exception handler
-# to identify failing operation
-CA_OP_GET            = 0
-CA_OP_PUT            = 1
-CA_OP_CREATE_CHANNEL = 2
-CA_OP_ADD_EVENT      = 3
-CA_OP_CLEAR_EVENT    = 4
-CA_OP_OTHER          = 5
-# Connection state as passed to connection halder
-CA_OP_CONN_UP        = 6
-CA_OP_CONN_DOWN      = 7
-
-# Flags used to identify notificaton events to request for subscription.
+# Flags used to identify notification events to request for subscription.
 DBE_VALUE   = 1
 DBE_LOG     = 2
 DBE_ALARM   = 4
 
-# Status codes as returned by virtually all ca_ routines
+# Connection state as passed to connection handler
+CA_OP_CONN_UP        = 6
+CA_OP_CONN_DOWN      = 7
+
+# Status codes as returned by virtually all ca_ routines.  We only specially
+# handle normal return, timeout, or disconnection.
 ECA_NORMAL = 1
-ECA_MAXIOC = 10
-ECA_UKNHOST = 18
-ECA_UKNSERV = 26
-ECA_SOCK = 34
-ECA_CONN = 40
-ECA_ALLOCMEM = 48
-ECA_UKNCHAN = 56
-ECA_UKNFIELD = 64
-ECA_TOLARGE = 72
 ECA_TIMEOUT = 80
-ECA_NOSUPPORT = 88
-ECA_STRTOBIG = 96
-ECA_DISCONNCHID = 106
-ECA_BADTYPE = 114
-ECA_CHIDNOTFND = 123
-ECA_CHIDRETRY = 131
-ECA_INTERNAL = 142
-ECA_DBLCLFAIL = 144
-ECA_GETFAIL = 152
-ECA_PUTFAIL = 160
-ECA_ADDFAIL = 168
-ECA_BADCOUNT = 176
-ECA_BADSTR = 186
 ECA_DISCONN = 192
-ECA_DBLCHNL = 200
-ECA_EVDISALLOW = 210
-ECA_BUILDGET = 216
-ECA_NEEDSFP = 224
-ECA_OVEVFAIL = 232
-ECA_BADMONID = 242
-ECA_NEWADDR = 248
-ECA_NEWCONN = 259
-ECA_NOCACTX = 264
-ECA_DEFUNCT = 278
-ECA_EMPTYSTR = 280
-ECA_NOREPEATER = 288
-ECA_NOCHANMSG = 296
-ECA_DLCKREST = 304
-ECA_SERVBEHIND = 312
-ECA_NOCAST = 320
-ECA_BADMASK = 330
-ECA_IODONE = 339
-ECA_IOINPROGRESS = 347
-ECA_BADSYNCGRP = 354
-ECA_PUTCBINPROG = 362
-ECA_NORDACCESS = 368
-ECA_NOWTACCESS = 376
-ECA_ANACHRONISM = 386
-ECA_NOSEARCHADDR = 392
-ECA_NOCONVERT = 400
-ECA_BADCHID = 410
-ECA_BADFUNCPTR = 418
-ECA_ISATTACHED = 424
-ECA_UNAVAILINSERV = 432
-ECA_CHANDESTROY = 440
-ECA_BADPRIORITY = 450
-ECA_NOTTHREADED = 458
-ECA_16KARRAYCLIENT = 464
-ECA_CONNSEQTMO = 472
-ECA_UNRESPTMO = 480
 
 
 # -----------------------------------------------------------------------------
@@ -274,33 +209,6 @@ ca_add_exception_event = libca.ca_add_exception_event
 ca_add_exception_event.errcheck = expect_ECA_NORMAL
 
 
-#   @fd_handler
-#   def handler(context, fd, connected): ...
-#
-#   ca_add_fd_registration(handler, context)
-#
-# Adds function to be called when files are created or deleted.
-ca_add_fd_registration = libca.ca_add_fd_registration
-ca_add_fd_registration.errcheck = expect_ECA_NORMAL
-
-
-#   name = ca_name(channel_id)
-#
-# Returns the name associated with the given channel id.
-ca_name = libca.ca_name
-ca_name.restype = ctypes.c_char_p
-
-
-#   state = ca_state(channel_id)
-#
-# Returns the state of the given channel, one of the following values:
-cs_never_conn = 0           # IOC not found
-cs_prev_conn  = 1           # IOC found but now disconnected
-cs_conn       = 2           # IOC connected
-cs_closed     = 3           # Channel deleted by user
-ca_state = libca.ca_state
-
-
 #   chtype = ca_field_type(channel_id)
 #
 # Returns the native data type (a dbf_ code) of the data associated with the
@@ -431,12 +339,6 @@ ca_current_context = libca.ca_current_context
 ca_current_context.restype = ctypes.c_void_p
 
 
-#   status = ca_attach_context(context)
-#
-# Attach this thread to the given context.
-ca_attach_context = libca.ca_attach_context
-
-
 #   ca_context_destroy()
 #
 # To be called at exit.
@@ -449,10 +351,3 @@ ca_context_destroy = libca.ca_context_destroy
 # specified timeout (in seconds) expires.
 ca_pend_event = libca.ca_pend_event
 ca_pend_event.argtypes = [ctypes.c_double]
-
-
-#   status = ca_flush_io()
-#
-# Flushes all requests to server, but returns immediately without processing
-# incoming data.
-ca_flush_io = libca.ca_flush_io
