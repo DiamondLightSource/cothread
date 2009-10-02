@@ -64,7 +64,7 @@ required at the start of any catools application:
 ----------------------------
 from pkg_resources import require
 require('numpy==1.1.0')
-require('cothread==1.9')
+require('cothread==1.15')
 ----------------------------
 +
 or if the most recent version is ok then the version number can be omitted as
@@ -179,7 +179,7 @@ failing PV.
 Functions
 ~~~~~~~~~
 
-+caput(pvs, values, repeat_value=False, timeout=5, wait=False, throw=True)+::
++caput(pvs, values, repeat_value=False, timeout=5, wait=False, str_as_array=False, throw=True)+::
 
 Writes values to one or more PVs.  If +pvs+ is a single string then +values+
 is treated as a single value to be written to the named process variable,
@@ -194,6 +194,11 @@ The arguments control the behavour of caput as follows:
 +repeat_value+::
 When writing a value to a list of PVs ensures that +values+ is treated as a
 single value to be written to each PV.
+
++str_as_array+::
+If +str_as_array=True+ is specified then any value written as a string will be
+automatically converted to an array of +DBR_CHAR+.  This is useful when
+writing to records which use this convention to implement long strings.
 
 +wait+::
 If +wait=True+ is specified then channel access put with callback is
@@ -224,7 +229,7 @@ undefined.
 
 
 
-+caget(pvs, timeout=5, datatype=None, format=FORMAT_RAW, count=0, throw=True)+::
++caget(pvs, timeout=5, datatype=None, format=FORMAT_RAW, count=0, as_string=False, throw=True)+::
 
 Retrieves a value from one or more PVs.  If +pvs+ is a single string then
 a single value is returned, otherwise a list of values is returned.  Each
@@ -237,7 +242,7 @@ If +.ok+ is +False+ then the +.errorcode+ field is set to the appropriate
 The various arguments control the behaviour of +caget+ as follows:
 +
 --
-+datatype+, +format+, +count+::
++datatype+, +format+, +count+, +as_string+::
 See documentation for <<Augmented, Augmented Values>> below.
 
 +timeout+, +throw+::
@@ -253,7 +258,7 @@ as a scalar, otherwise as a numpy array.
 
 
 
-+camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)+:: 
++camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, as_string=False, all_updates=False, notify_disconnect=False)+:: 
 
 Creates a subscription to one or more PVs, returning a subscription
 object for each PV.  If a single PV is given then a single subscription
@@ -293,7 +298,7 @@ bit-wise or of any the following are possible:
 +DBE_ALARM+;;       Notify alarm state changes
 +DBE_PROPERTY+;;    Notify property changes (on 3.14.11 and later servers)
 
-+datatype+, +format+, +count+::
++datatype+, +format+, +count+, +as_string+::
 See documentation for <<Augmented, Augmented Values>> below.
 
 +all_updates+::
@@ -380,13 +385,13 @@ requested -- an array is only used when the data length is >1.
 In almost all circumstances an augmented value will behave exactly like a
 normal value, but there are a few cases where differences in behaviour are
 observed (these are mostly bugs).  If this occurs the augumentation can be
-stripped from an augmented value +value+ by writing +\+value+ -- this returns
+stripped from an augmented value +value+ by writing ++value+ -- this returns
 the underlying value.
 
 The type of augmented values is determined both by parameters passed to
 +caget+ and +camonitor+ and by the underlying datatype.  Both of these
-functions share parameters +datatype+, +format+ and +count+ which can be used
-to force the type of the data returned:
+functions share parameters +datatype+, +format+, +count+ and +as_string+ which
+can be used to force the type of the data returned:
 
 
 +datatype+::
@@ -401,7 +406,8 @@ can be any of the following:
 +DBR_STRING+;;  Strings are up to 39 characters long -- this is a constraint
 set by EPICS.
 +DBR_CHAR+, +DBR_SHORT+, +DBR_LONG+;;  These are all signed integer types,
-with 8, 16 and 32 bit values respectively.
+with 8, 16 and 32 bit values respectively.  The parameter +as_string+ can be
+set to convert arrays of +DBR_CHAR+ to strings.
 +DBR_FLOAT+, +DBR_DOUBLE+;; Floating point values with 32 and 64 bit values,
 respectively.
 +DBR_ENUM+;; A 16 bit unsigned integer value representing an index into an
@@ -459,6 +465,14 @@ will be an index into +.enums+.
 +count+::
 If specified this can be used to limit the number of waveform points
 retrieved from the server, otherwise the entire waveform is always returned.
+
++as_string+::
+If this is set to +True+ and if the data is returned as type +DBR_CHAR+ then
+the returned data is converted from an array of characters into a Python
+string.  If the datatype is anything else this option has no effect.
++
+This is useful for reading fields which implement long strings as arrays of
++DBR_CHAR+.
 
 
 Fields

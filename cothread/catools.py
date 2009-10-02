@@ -234,6 +234,7 @@ class _Subscription(object):
     __slots__ = [
         'name',             # Name of the PV subscribed to
         'callback',         # The user callback function
+        'as_string',        # Automatic type conversion of data to strings
         'channel',          # The associated channel object
         '__state',          # Whether the subscription is active
         '_as_parameter_',   # Associated channel access subscription handle
@@ -258,7 +259,8 @@ class _Subscription(object):
         if args.status == cadef.ECA_NORMAL:
             # Good data: extract value from the dbr.
             self.__signal(dbr.dbr_to_value(
-                args.raw_dbr, args.type, args.count, self.channel.name))
+                args.raw_dbr, args.type, args.count, self.channel.name,
+                self.as_string))
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, but only if
             # they've requested disconnect nofication.
@@ -308,15 +310,16 @@ class _Subscription(object):
 
     def __init__(self, name, callback, 
             events = DBE_VALUE,
-            datatype = None, format = FORMAT_RAW, count = 0,
+            datatype = None, format = FORMAT_RAW, count = 0, as_string = False,
             all_updates = False, notify_disconnect = False):
         '''Subscription initialisation: callback and context are used to
         frame values written to the queue;  events selects which types of
-        update are notified;  datatype, format and count define the format
-        of returned data.'''
+        update are notified;  datatype, format, count and as_string define
+        the format of returned data.'''
 
         self.name = name
         self.callback = callback
+        self.as_string = as_string
         self.all_updates = all_updates
         self.notify_disconnect = notify_disconnect
         self.__update_count = 0
@@ -402,7 +405,7 @@ cothread.Spawn(_Subscription._callback_dispatcher)
 def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
         events = DBE_VALUE,
-        datatype = None, format = FORMAT_RAW, count = 0,
+        datatype = None, format = FORMAT_RAW, count = 0, as_string = False,
         all_updates = False, notify_disconnect = False)
 
     Creates a subscription to one or more PVs, returning a subscription
@@ -460,6 +463,10 @@ def camonitor(pvs, callback, **kargs):
         If this is True then IOC disconnect events will be reported by
         calling the callback with a ca_nothing error with .ok False,
         otherwise only valid values will be passed to the callback routine.
+
+    as_string
+        If this is True then arrays of DBR_CHAR are automatically converted
+        into strings.  Other datatypes are returned unchanged.
     '''
     if isinstance(pvs, str):
         return _Subscription(pvs, callback, **kargs)
@@ -482,17 +489,19 @@ def _caget_event_handler(args):
     # We are called exactly once, so can consume the context right now.  Note
     # that we have to do some manual reference counting on the user context,
     # as this is a python object that is invisible to the C api.
-    pv, done = args.usr
+    pv, as_string, done = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
     
     if args.status == cadef.ECA_NORMAL:
-        done.Signal(dbr.dbr_to_value(args.raw_dbr, args.type, args.count, pv))
+        done.Signal(dbr.dbr_to_value(
+            args.raw_dbr, args.type, args.count, pv, as_string))
     else:
         done.SignalException(ca_nothing(pv, args.status))
 
 
 @maybe_throw
-def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
+def caget_one(pv,
+        timeout=5, datatype=None, format=FORMAT_RAW, count=0, as_string=False):
     '''Retrieves a value from a single PV in the requested format.  Blocks
     until the request is complete, raises an exception if any problems
     occur.'''
@@ -520,7 +529,7 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     # increment the reference count so that the context survives until the
     # callback routine gets to see it.
     done = cothread.Event()
-    context = (pv, done)
+    context = (pv, as_string, done)
     ctypes.pythonapi.Py_IncRef(context)
     
     # Perform the actual put as a non-blocking operation: we wait to be
@@ -544,7 +553,7 @@ def caget_array(pvs, **kargs):
 def caget(pvs, **kargs):
     '''caget(pvs,
         timeout = 5, datatype = None,
-        format = FORMAT_RAW, count = 0, throw = True)
+        format = FORMAT_RAW, count = 0, as_string = False, throw = True)
 
     Retrieves the value from one or more PVs.  If a single PV is given then
     a single value is returned, otherwise a list of values is returned.
@@ -621,6 +630,10 @@ def caget(pvs, **kargs):
         If specified this can be used to limit the number of waveform values
         retrieved from the server.
 
+    as_string
+        If this is True then arrays of DBR_CHAR are automatically converted
+        into strings.  Other datatypes are returned unchanged.
+
     throw
         Normally an exception will be raised if the channel cannot be
         connected to or if there is a data error.  If this is set to False
@@ -657,7 +670,7 @@ def _caput_event_handler(args):
     
 
 @maybe_throw
-def caput_one(pv, value, timeout=5, wait=False):
+def caput_one(pv, value, timeout=5, wait=False, str_as_array=False):
     '''Writes a value to a single pv, waiting for callback on completion if
     requested.'''
     
@@ -666,8 +679,9 @@ def caput_one(pv, value, timeout=5, wait=False):
     channel = _channel_cache[pv]
     channel.Wait(timeout)
 
-    # Assemble the data in the appropriate format.
-    datatype, count, dbr_array = dbr.value_to_dbr(value)
+    # Note: the unused value returned below needs to be retained so that
+    # dbr_array, a pointer to C memory, has the right lifetime.
+    datatype, count, dbr_array, value = dbr.value_to_dbr(value, str_as_array)
     if wait:
         # Assemble the callback context and give it an extra reference count
         # to keep it alive until the callback handler sees it.
@@ -678,12 +692,12 @@ def caput_one(pv, value, timeout=5, wait=False):
         # caput with callback requested: need to wait for response from
         # server before returning.
         cadef.ca_array_put_callback(
-            datatype, count, channel, dbr_array.ctypes.data,
+            datatype, count, channel, dbr_array,
             _caput_event_handler, ctypes.py_object(context))
         done.Wait(timeout)
     else:
         # Asynchronous caput, just do it now.
-        cadef.ca_array_put(datatype, count, channel, dbr_array.ctypes.data)
+        cadef.ca_array_put(datatype, count, channel, dbr_array)
         
     # Return a success code for compatibility with throw=False code.
     return ca_nothing(pv)
@@ -711,7 +725,8 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
     
 def caput(pvs, values, **kargs):
     '''caput(pvs, values,
-        repeat_value = False, timeout = 5, wait = False, throw = True)
+        repeat_value = False, timeout = 5, wait = False,
+        str_as_array = False, throw = True)
 
     Writes values to one or more PVs.  If multiple PVs are given together
     with multiple values then both lists or arrays should match in length,
@@ -736,6 +751,10 @@ def caput(pvs, values, **kargs):
         If wait=True is specified then channel access put with callback is
         invoked, and the caput operation will wait until the server
         acknowledges successful completion before returning.
+
+    str_as_array
+        If this is True and if the values being written are strings then they
+        are converted into arrays of DBR_CHAR before being written.
 
     throw
         Normally an exception will be raised if the channel cannot be

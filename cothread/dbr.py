@@ -575,7 +575,7 @@ def type_to_dbr(datatype, format = FORMAT_RAW):
         raise InvalidDatatype('Format not recognised')
 
 
-def dbr_to_value(raw_dbr, datatype, count, name):
+def dbr_to_value(raw_dbr, datatype, count, name, as_string):
     '''Convert a raw DBR structure into a packaged Python value.  All values
     are returned as augmented types.'''
 
@@ -586,7 +586,13 @@ def dbr_to_value(raw_dbr, datatype, count, name):
     dbr_type = DbrCodeToType[datatype]
     raw_dbr = ctypes.cast(raw_dbr, ctypes.POINTER(dbr_type))[0]
 
-    if count == 1:
+    if as_string  and  raw_dbr.dtype is numpy.uint8:
+        # Special case hack for long strings returned as DBR_CHAR arrays.
+        # Need string_at() twice to ensure string is size limited *and* null
+        # terminated.
+        result = ca_str(ctypes.string_at(
+            ctypes.string_at(raw_dbr.raw_value, count)))
+    elif count == 1:
         # Single scalar values can be created directly from the raw value
         result = raw_dbr.raw_value[0]
         if dbr_type.dtype is str_dtype:
@@ -621,26 +627,32 @@ def dbr_to_value(raw_dbr, datatype, count, name):
     return result
 
 
-def value_to_dbr(value):
+def value_to_dbr(value, str_as_array):
     '''Takes an ordinary Python value and converts it into a value in dbr
     format suitable for sending to channel access.  Returns the target
-    datatype and the number of elements as well as a pointer to the raw
-    data.'''
+    datatype and the number of elements together with a pointer to the raw
+    data and (for lifetime management) the object containing the data.'''
 
-    # First convert the data directly into an array.  This will help in
-    # subsequent processing: this does most of the type coercion.
-    value = numpy.require(value, requirements = 'C')
-    if value.shape == ():
-        value.shape = (1,)
-    assert value.ndim == 1, 'Can\'t put multidimensional arrays!'
+    if str_as_array and isinstance(value, str):
+        # In this case convert value from a string to a char array to support
+        # writing long strings.
+        count = len(value) + 1
+        value = ctypes.create_string_buffer(value)
+        return DBR_CHAR, count, ctypes.byref(value), value
+    else:
+        # First convert the data directly into an array.  This will help in
+        # subsequent processing: this does most of the type coercion.
+        value = numpy.require(value, requirements = 'C')
+        if value.shape == ():
+            value.shape = (1,)
+        assert value.ndim == 1, 'Can\'t put multidimensional arrays!'
 
-    if value.dtype.char == 'S' and value.itemsize != MAX_STRING_SIZE:
-        # Need special processing to hack the array so that characters are
-        # actually 40 characters long.
-        new_value = numpy.empty(value.shape, str_dtype)
-        new_value[:] = value
-        value = new_value
+        if value.dtype.char == 'S' and value.itemsize != MAX_STRING_SIZE:
+            # Need special processing to hack the array so that strings are
+            # actually 40 characters long.
+            new_value = numpy.empty(value.shape, str_dtype)
+            new_value[:] = value
+            value = new_value
 
-    datatype = _dtype_to_dbr(value.dtype)
-    count = len(value)
-    return datatype, count, value
+        datatype = _dtype_to_dbr(value.dtype)
+        return datatype, len(value), value.ctypes.data, value
