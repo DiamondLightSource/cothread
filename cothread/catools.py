@@ -514,11 +514,9 @@ def caget_one(pv,
     channel = _channel_cache[pv]
     channel.Wait(timeout)
 
-    # If no element count has been specified, ask for the entire set provided
-    # by the channel.
-    if count == 0:
-        count = cadef.ca_element_count(channel)
-    else:
+    # If an element count has been specified, make sure it fits within the
+    # channel, otherwise ask for everything by default.
+    if count > 0:
         count = min(count, cadef.ca_element_count(channel))
 
     # If no datatype has been specified, use the channel's default
