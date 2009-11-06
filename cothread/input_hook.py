@@ -54,43 +54,8 @@ hook_function = CFUNCTYPE(None)
 
 @hook_function
 def _readline_hook():
-    '''Runs the scheduler hook until either input is available on stdin or a
-    keyboard interrupt occurs.'''
-    stdin = 0
-    try:
-        # Before we hand control to the scheduler, check for input already on
-        # stdin.  We give this case priority in case the user has backed up
-        # keypresses so that they can take precedence.
-        if select.select([stdin], [], [], 0)[0]:
-            return
-
-        ready_list = []
-        while True:
-            # Let the scheduler run.  We tell it which sockets are ready, and
-            # it returns with a new list of sockets to watch.  We add our own
-            # stdin socket to the set.
-            poll_list, timeout = _scheduler.poll_scheduler(ready_list)
-            # Oh blast: we have to do some hacking here to add stdin to the
-            # poll_list.
-            for i in range(len(poll_list)):
-                if poll_list[i][0] == stdin:
-                    poll_list[i] = (stdin, poll_list[i][1] | coselect.POLLIN)
-                    break
-            else:
-                poll_list.append((stdin, coselect.POLLIN))
-                
-            # Wait until either stdin or the scheduler are ready.
-            ready_list = _scheduler._poll_block(poll_list, timeout)
-
-            # Check for input on stdin
-            for file, events in ready_list:
-                if file == stdin and events & coselect.POLLIN:
-                    return
-    except KeyboardInterrupt:
-        print 'Control C (probably) ignored'
-    except:
-        print 'Exception caught by readline hook'
-        traceback.print_exc()
+    '''Runs other cothreads until input is available.'''
+    coselect.poll_list([(0, coselect.POLLIN)])
 
 
 def _install_readline_hook(enable_hook = True):
