@@ -671,7 +671,7 @@ def _caput_event_handler(args):
     
 
 @maybe_throw
-def caput_one(pv, value, timeout=5, wait=False, datatype=None):
+def caput_one(pv, value, datatype=None, wait=False, timeout=5):
     '''Writes a value to a single pv, waiting for callback on completion if
     requested.'''
     
@@ -727,8 +727,8 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
     
 def caput(pvs, values, **kargs):
     '''caput(pvs, values,
-        repeat_value = False, timeout = 5, wait = False,
-        datatype = None, throw = True)
+        repeat_value = False, datatype = None, wait = False,
+        timeout = 5, throw = True)
 
     Writes values to one or more PVs.  If multiple PVs are given together
     with multiple values then both lists or arrays should match in length,
@@ -783,12 +783,48 @@ def caput(pvs, values, **kargs):
 # ----------------------------------------------------------------------------
 #   connect
 
+class ca_info(object):
+    state_strings = [
+        'never connected', 'previously connected', 'connected', 'closed']
+    datatype_strings = [
+        'string', 'short', 'float', 'enum', 'char', 'long', 'double',
+        'no access']
+    
+    def __init__(self, pv, channel):
+        self.ok = True
+        self.name = pv
+        self.state = cadef.ca_state(channel)
+        self.host  = cadef.ca_host_name(channel)
+        self.read  = cadef.ca_read_access(channel)
+        self.write = cadef.ca_write_access(channel)
+        if self.state == cadef.cs_conn:
+            self.count    = cadef.ca_element_count(channel)
+            self.datatype = cadef.ca_field_type(channel)
+        else:
+            self.count = 0
+            self.datatype = 7       # DBF_NO_ACCESS
+
+    def __str__(self):
+        return '''%s:
+    State: %s
+    Host: %s
+    Access: %s, %s
+    Data type: %s
+    Count: %d''' % (
+        self.name, self.state_strings[self.state], self.host,
+        self.read, self.write, self.datatype_strings[self.datatype],
+        self.count)
+
+
 @maybe_throw
-def connect_one(pv, wait = True, timeout = 5):
+def connect_one(pv, cainfo = False, wait = True, timeout = 5):
     channel = _channel_cache[pv]
     if wait:
         channel.Wait(timeout)
-    return ca_nothing(pv)
+    if cainfo:
+        return ca_info(pv, channel)
+    else:
+        return ca_nothing(pv)
     
 
 def connect_array(pvs, **kargs):
@@ -798,7 +834,7 @@ def connect_array(pvs, **kargs):
     
 
 def connect(pvs, **kargs):
-    '''connect(pvs, wait = True, timeout = 5, throw = True)
+    '''connect(pvs, cainfo=False, wait=True, timeout=5, throw=True)
 
     Establishes a connection to one or more PVs.  A single PV or a list of PVs
     can be given.  This does not normally need to be called, as the ca...()
@@ -806,7 +842,26 @@ def connect(pvs, **kargs):
     successful connection we can guarantee that caput(..., wait=False) will
     complete immediately without suspension.
 
+    This routine can safely be called repeatedly without any extra side
+    effects.
+
     The following arguments affect the behaviour of connect as follows:
+
+    cainfo
+        By default a simple ca_nothing value is returned, but if this flag is
+        set then a ca_info structure is returned recording the following
+        information about the connection:
+        
+        .ok         True iff the channel was successfully connected 
+        .name       Name of PV
+        .state      State of channel as an integer.  Look up
+                    .state_strings[.state] for textual description.
+        .host       Host name and port of server providing this PV
+        .read       True iff read access to this PV
+        .write      True iff write access to this PV
+        .count      Data count of this channel
+        .datatype   Underlying channel datatype as DBR_ value.  Look up
+                    .datatype_strings[.datatype] for description.
 
     wait
         Normally the connect routine will not return until the requested
@@ -825,7 +880,8 @@ def connect(pvs, **kargs):
         return connect_one(pvs, **kargs)
     else:
         return connect_array(pvs, **kargs)
-    
+
+
 
 # ----------------------------------------------------------------------------
 #   Final module initialisation

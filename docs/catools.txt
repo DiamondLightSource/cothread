@@ -31,7 +31,7 @@ PV, writes to another PV, and monitors a third until terminated with
 control-C.
 
 ----------------------------
-# Library version specification required for dls libraris
+# Library version specification required for dls libraries
 from pkg_resources import require
 require('numpy==1.1.0')
 require('cothread')
@@ -131,27 +131,28 @@ Function Reference
 ------------------
 
 The +catools+ API consists of the three functions +caput+, +caget+ and
-+camonitor+.  The functions +caget+ and +camonitor+ return or deliver
-``augmented'' values which are documented in more detail in the section
-<<Values, Working with Values>> below.
++camonitor+ together with an auxilliary +connect+ function.  The functions
++caget+ and +camonitor+ return or deliver ``augmented'' values which are
+documented in more detail in the section <<Values, Working with Values>>
+below.
 
 
 [[Common]]
 Common Notes
 ~~~~~~~~~~~~
 
-All three arguments take an argument +pvs+ which can specify the name of a
+All four functions take an argument +pvs+ which can specify the name of a
 single PV or can be a list of PVs.  In all cases the returned result has the
 same ``shape'' as the +pvs+ argument, in other words, if +pvs+ is a single
 string then a single value (error code, value, or subscription) is returned,
 and if +pvs+ is a list then a list of exactly the same length is returned.
 
-In general there are advantages to calling +caput+ or +caget+ on a list of
-PVs, as in this case the channel access delays will occur in parallel.
+In general there are advantages to calling +caput+, +caget+ or +connect+ on a
+list of PVs, as in this case the channel access delays will occur in parallel.
 
-Several arguments are common among at least two functions: +throw+ determines
-how errors are handled, +timeout+ determines timeouts, and finally +datatype+,
-+format+ and +count+ determine data formats and are documented in <<Augmented,
+Several arguments are common amongst several: +throw+ determines how errors
+are handled, +timeout+ determines timeouts, and finally +datatype+, +format+
+and +count+ determine data formats and are documented in <<Augmented,
 Augmented Values>>.
 
 +timeout+::
@@ -179,7 +180,7 @@ failing PV.
 Functions
 ~~~~~~~~~
 
-+caput(pvs, values, repeat_value=False, timeout=5, wait=False, str_as_array=False, throw=True)+::
++caput(pvs, values, repeat_value=False, datatype=None, wait=False, timeout=5, throw=True)+::
 
 Writes values to one or more PVs.  If +pvs+ is a single string then +values+
 is treated as a single value to be written to the named process variable,
@@ -293,11 +294,14 @@ The parameters modify the behaviour as follows:
 +events+::
 This identifies the type of update which will be notified.  A
 bit-wise or of any the following are possible:
-
-+DBE_VALUE+;;       Notify normal value changes
-+DBE_LOG+;;         Notify archive value changes
-+DBE_ALARM+;;       Notify alarm state changes
-+DBE_PROPERTY+;;    Notify property changes (on 3.14.11 and later servers)
++
+[frame="none", grid="none", cols="15%,85%"]
+|====
+|+DBE_VALUE+    | Notify normal value changes
+|+DBE_LOG+      | Notify archive value changes
+|+DBE_ALARM+    | Notify alarm state changes
+|+DBE_PROPERTY+ | Notify property changes (on 3.14.11 and later servers)
+|====
 
 +datatype+, +format+, +count+::
 See documentation for <<Augmented, Augmented Values>> below.
@@ -320,9 +324,10 @@ suppressed so that only valid values will be passed to the callback routine.
 --
 
 
-+connect(pvs, wait=True, timeout=5, throw=True)+::
++connect(pvs, cainfo=False, wait=True, timeout=5, throw=True)+::
 
-Establishes a connection to one or more PVs.  A single PV or a list of PVs
+Establishes a connection to one or more PVs, optionally returning detailed
+information about the connection.  A single PV or a list of PVs
 can be given.  This does not normally need to be called, as the +ca...()+
 routines will establish their own connections as required, but after a
 successful connection we can guarantee that +caput(..., wait=False)+ will
@@ -330,7 +335,9 @@ complete immediately without suspension and that +caput(pvs, values)+ will
 execute in order if all PVs in +pvs+ have been successfully connected.
 +
 It is possible to test whether a channel has successfully connected by calling
-+connect(pv, wait=True, timeout=0, throw=False)+ and testing the result.
++connect(pv, wait=True, timeout=0, throw=False)+ and testing the result.  More
+detailed information about a PV can be obtained by calling +connect(pv,
+cainfo=True)+.
 +
 The various arguments control the behaviour of +connect+ as follows:
 +
@@ -340,11 +347,35 @@ Normally the connect routine will not return until the requested
 connection is established.  If +wait=False+ is set then a connection
 request will be queued and connect will unconditionally succeed.
 
++cainfo+::
++
+By default a simple +ca_nothing+ value is returned, but if +cainfo=True+ is
+set then a +ca_info+ structure is returned recording the following information
+about the connection:
++
+[frame="none", grid="none", cols="10%,90%"]
+|====
+|+.ok+      | True iff the channel was successfully connected 
+|+.name+    | Name of PV
+|+.state+   | State of channel as an integer.  Look up
++.state_strings[.state]+ for textual description.
+|+.host+    | Host name and port of server providing this PV
+|+.read+    | True iff read access to this PV
+|+.write+   | True iff write access to this PV
+|+.count+   | Data count of this channel
+|+.datatype+ | Underlying channel datatype as +DBR_+ value.  Look up
++.datatype_strings[.datatype]+ for description.
+|====
++
+The +str()+ representation of this structure can be printed to produce output
+similar to that produced by the +cainfo+ command line tool.
+
 +timeout+, +throw+::
 Documented in <<Common, Common Notes>> above.  If a value cannot be retrieved
 and +throw=False+ is set then for each failing PV an empty value with
 +.ok==False+ is returned. 
 --
+
 
 
 
@@ -391,8 +422,8 @@ the underlying value.
 
 The type of augmented values is determined both by parameters passed to
 +caget+ and +camonitor+ and by the underlying datatype.  Both of these
-functions share parameters +datatype+, +format+, +count+ and +as_string+ which
-can be used to force the type of the data returned:
+functions share parameters +datatype+, +format+ and +count+ which can be used
+to control the type of the data returned:
 
 
 +datatype+::
@@ -408,7 +439,8 @@ format.  +datatype+ can be any of the following:
 2.  A +DBR_+ value, one of the following:
 
 +DBR_STRING+;;  Strings are up to 39 characters long -- this is a constraint
-set by EPICS.
+set by EPICS.  For longer strings the data type +DBR_CHAR_STR+ can be used if
+the IOC can deliver strings as arrays of char.
 +DBR_CHAR+, +DBR_SHORT+, +DBR_LONG+;;  These are all signed integer types,
 with 8, 16 and 32 bit values respectively.  The parameter +as_string+ can be
 set to convert arrays of +DBR_CHAR+ to strings.
@@ -460,10 +492,10 @@ together with .+alarm+, +.status+ and +.severity+ fields.  The value in
 +.timestamp+ is in +time()+ format (seconds in Unix UTC epoch).
 
 +FORMAT_CTRL+::
-The data is augmented by channel access ``control'' fields.  
-
-The set of fields returned in +FORMAT_CTRL+ depends on the underlying datatype
-as follows:
++
+--
+The data is augmented by channel access ``control'' fields.  The set of fields
+returned depends on the underlying datatype as follows:
 
 +DBR_SHORT+, +DBR_CHAR+, +DBR_LONG+;;
 The alarm +.status+ and +.severity+ fields together with +.units+
@@ -486,18 +518,12 @@ will be an index into +.enums+.
 +_CTRL+ format is not supported for this field type, and
 +FORMAT_TIME+ data is returned instead.
 --
+--
 
 +count+::
 If specified this can be used to limit the number of waveform points
 retrieved from the server, otherwise the entire waveform is always returned.
 
-+as_string+::
-If this is set to +True+ and if the data is returned as type +DBR_CHAR+ then
-the returned data is converted from an array of characters into a Python
-string.  If the datatype is anything else this option has no effect.
-+
-This is useful for reading fields which implement long strings as arrays of
-+DBR_CHAR+.
 
 
 Fields
@@ -536,12 +562,13 @@ The following fields are present in all values if +FORMAT_TIME+ or
 
 +.severity+:: EPICS alarm severity, normally one of the values listed below.
 +
-*********************
-0:: => No alarm
-1:: => Alarm condition, minor severity
-2:: => Alarm condition, major severity.
-3:: => Invalid value.
-*********************
+[frame="none", grid="none", cols="2%,98%"]
+|============
+|0 |=> No alarm
+|1 |=> Alarm condition, minor severity
+|2 |=> Alarm condition, major severity.
+|3 |=> Invalid value.
+|============
 
 +.status+:: Reason code associated with alarm severity, always present with
 +.severity+ code.
@@ -555,16 +582,16 @@ specified.  Values of type +DBR_ENUM+ or +DBR_STRING+ are not numeric.
 +.upper_disp_limit+, +.lower_disp_limit+:: Suggested display limits for
 numerical values.  
 
-+.upper_alarm_limit+, +.lower_alarm_limit+, +.upper_warning_limit+, +.lower_warning_limit+, +.upper_ctrl_limit+, +.lower_ctrl_limit+:: \
-These are all mystery EPICS numeric limits.  If somebody knows what they mean,
-please update this documentation accordingly!  
++.upper_alarm_limit+, +.lower_alarm_limit+, +.upper_warning_limit+, +.lower_warning_limit+, +.upper_ctrl_limit+, +.lower_ctrl_limit+::
+Various EPICS numeric limits.
 
 +.precision+:: For floating point values only, the specified display precision
 (or 0 if not specified).  Present if value is a floating point type.
 
 The following field is only present in +DBR_ENUM+ values.
 
-+.enums+:: For enumeration values only, an array of enumeration strings.
++.enums+:: For enumeration values only, an array of enumeration strings
+indexable by enumeration value.
 
 
 [[ca_nothing]]
@@ -594,7 +621,8 @@ Name of the PV which generated this error..
 +.errorcode+::
 Channel access error code.  The following values are worth noting:
 
-+ECA_SUCCESS+;;  Success error code.  In this case +.ok+ is +True+.
++ECA_SUCCESS+;;  Success error code.  In this case +.ok+ is +True+.  Returned
+by successful +caput+ and +connect+ calls.
 
 +ECA_DISCONN+;;  Channel disconnected.  This is used by +canotify+ to report
 channel disconnect events.

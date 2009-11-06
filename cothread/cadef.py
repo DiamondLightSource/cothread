@@ -353,3 +353,30 @@ ca_context_destroy = libca.ca_context_destroy
 # specified timeout (in seconds) expires.
 ca_pend_event = libca.ca_pend_event
 ca_pend_event.argtypes = [ctypes.c_double]
+
+
+#   state = ca_state(channel_id)
+#
+# Returns an enumeration indicating the state of the channel.
+cs_never_conn = 0
+cs_prev_conn = 1
+cs_conn = 2
+cs_closed = 3
+ca_state = libca.ca_state
+
+
+#   host = ca_host_name(channel_id)
+#
+# Returns the host name of the connected server
+ca_host_name = libca.ca_host_name
+ca_host_name.restype = ctypes.c_char_p
+
+
+#   read = ca_read_access(channel_id)
+#   write = ca_write_access(channel_id)
+#
+# Returns whether the channel can be read or written by this client.
+ca_read_access = libca.ca_read_access
+ca_read_access.restype = bool
+ca_write_access = libca.ca_write_access
+ca_write_access.restype = bool
