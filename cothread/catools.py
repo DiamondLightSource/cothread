@@ -85,6 +85,11 @@ class ca_nothing(Exception):
     def __nonzero__(self):
         return self.ok
 
+    def __iter__(self):
+        '''This is *not* supposed to be an iterable object, but the base class
+        appears to have a different opinion.  So enforce this.'''
+        raise TypeError('iteration over non-sequence')
+
 
 def maybe_throw(function):
     '''Function decorator for optionally catching exceptions.  Exceptions
