@@ -195,10 +195,11 @@ The arguments control the behavour of caput as follows:
 When writing a value to a list of PVs ensures that +values+ is treated as a
 single value to be written to each PV.
 
-+str_as_array+::
-If +str_as_array=True+ is specified then any value written as a string will be
-automatically converted to an array of +DBR_CHAR+.  This is useful when
-writing to records which use this convention to implement long strings.
++datatype+::
+See documentation for <<Augmented, Augmented Values>> below.  Used to force
+transmitted data to the requested format, or select special alarm
+acknowledgement handling.  Note that only standard Python type conversion will
+be done, in particular conversion to and from strings is 'not' automatic!
 
 +wait+::
 If +wait=True+ is specified then channel access put with callback is
@@ -229,7 +230,7 @@ undefined.
 
 
 
-+caget(pvs, timeout=5, datatype=None, format=FORMAT_RAW, count=0, as_string=False, throw=True)+::
++caget(pvs, timeout=5, datatype=None, format=FORMAT_RAW, count=0, throw=True)+::
 
 Retrieves a value from one or more PVs.  If +pvs+ is a single string then
 a single value is returned, otherwise a list of values is returned.  Each
@@ -242,7 +243,7 @@ If +.ok+ is +False+ then the +.errorcode+ field is set to the appropriate
 The various arguments control the behaviour of +caget+ as follows:
 +
 --
-+datatype+, +format+, +count+, +as_string+::
++datatype+, +format+, +count+::
 See documentation for <<Augmented, Augmented Values>> below.
 
 +timeout+, +throw+::
@@ -258,7 +259,7 @@ as a scalar, otherwise as a numpy array.
 
 
 
-+camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, as_string=False, all_updates=False, notify_disconnect=False)+:: 
++camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)+:: 
 
 Creates a subscription to one or more PVs, returning a subscription
 object for each PV.  If a single PV is given then a single subscription
@@ -298,7 +299,7 @@ bit-wise or of any the following are possible:
 +DBE_ALARM+;;       Notify alarm state changes
 +DBE_PROPERTY+;;    Notify property changes (on 3.14.11 and later servers)
 
-+datatype+, +format+, +count+, +as_string+::
++datatype+, +format+, +count+::
 See documentation for <<Augmented, Augmented Values>> below.
 
 +all_updates+::
@@ -395,8 +396,11 @@ can be used to force the type of the data returned:
 
 
 +datatype+::
-This controls the format of the data that will be requested.  This
-can be any of the following:
++
+--
+For +caget+ and +camonitor+ this controls the format of the data that will be
+requested, while for +caput+ the data will be coerced into the requested
+format.  +datatype+ can be any of the following:
 
 1.  +None+ (the default).  In this case the ``native'' datatype provided
     by the channel will be returned.
@@ -420,6 +424,27 @@ array of strings.  The associated strings can be retrieved by using
     +DBR_STRING+ respectively.
 
 4.  Any +numpy+ +dtype+ compatible with any of the above values.
+
+5.  The special value +DBR_CHAR_STR+.  This is used to request a char
+    array which is then converted to a Python string on receipt.  It
+    is not sensible to specify +count+ with this option.
+
+6. For +caget+ and +camonitor+ two further special values are supported.  In
+    both of these cases +format+ is ignored:
++
+--
++DBR_STSACK_STRING+;; Returns the current value as a string together with
+extra fields +.status+, +.severity+, +.ackt+, +.acks+. 
++DBR_CLASS_NAME+;; Returns the name of the ``enclosing interface'', typically
+the record type, and typically the same as the +.RTYP+ field.
+
+For +caput+ also two further values are supported:
+
++DBR_PUT_ACKT+, +DBR_PUT_ACKS+;;  These are used for global alarm
+acknowledgement, where +_ACKT+ configures whether alarms need to be
+acknowleged and +_ACKS+ acknowledges alarms of a particular severity.
+--
+--
 
 +format+::
 This controls how much auxilliary information will be returned with

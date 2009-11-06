@@ -40,13 +40,20 @@ __all__ = [
     # Basic DBR request codes: any one of these can be used as part of a
     # datatype request.  
     'DBR_STRING',       # 40 character strings
-    'DBR_SHORT',        # 16 bit signed       
-    'DBR_FLOAT',        # 32 bit float        
-    'DBR_ENUM',         # 16 bit unsigned     
-    'DBR_CHAR',         # 8 bit unsigned      
-    'DBR_LONG',         # 32 bit signed       
-    'DBR_DOUBLE',       # 64 bit float        
+    'DBR_SHORT',        # 16 bit signed
+    'DBR_FLOAT',        # 32 bit float
+    'DBR_ENUM',         # 16 bit unsigned
+    'DBR_CHAR',         # 8 bit unsigned
+    'DBR_LONG',         # 32 bit signed
+    'DBR_DOUBLE',       # 64 bit float
 
+    'DBR_CHAR_STR',     # Long strings as char arrays
+
+    'DBR_PUT_ACKT',     # Configure global alarm acknowledgement
+    'DBR_PUT_ACKS',     # Acknowledge global alarm
+    'DBR_STSACK_STRING', # Returns status ack structure
+    'DBR_CLASS_NAME',   # Returns record type (same as .RTYP?)
+    
     # Data type format requests
     'FORMAT_RAW',       # Request the underlying data only
     'FORMAT_TIME',      # Request alarm status and timestamp
@@ -433,6 +440,21 @@ class dbr_ctrl_double(ctypes.Structure):
         ('raw_value',           ctypes.c_double * 1)]
 
 
+class dbr_stsack_string(ctypes.Structure):
+    dtype = str_dtype
+    scalar = ca_str
+    _fields_ = [
+        ('status',              ctypes.c_int16),
+        ('severity',            ctypes.c_int16),
+        ('ackt',                ctypes.c_int16),
+        ('acks',                ctypes.c_int16),
+        ('raw_value',           (ctypes.c_byte * MAX_STRING_SIZE) * 1)]
+    def copy_attributes(self, other):
+        other.status = self.status
+        other.severity = self.severity
+        other.ackt = self.ackt
+        other.acks = self.acks
+
     
 # DBR request codes.  These correspond precisely to the types above, as
 # identified in the DbrCodeToType lookup table below.
@@ -458,6 +480,14 @@ DBR_CTRL_ENUM = 31
 DBR_CTRL_CHAR = 32
 DBR_CTRL_LONG = 33
 DBR_CTRL_DOUBLE = 34
+
+DBR_PUT_ACKT = 35       # Configure global alarm acknowledgement
+DBR_PUT_ACKS = 36       # Acknowledge global alarm
+DBR_STSACK_STRING = 37
+DBR_CLASS_NAME = 38
+
+# Special value for DBR_CHAR as str special processing.
+DBR_CHAR_STR = 999
 
 
 # Lookup table to convert support DBR type codes into the corresponding DBR
@@ -485,6 +515,9 @@ DbrCodeToType = {
     DBR_CTRL_CHAR : dbr_ctrl_char,
     DBR_CTRL_LONG : dbr_ctrl_long,
     DBR_CTRL_DOUBLE : dbr_ctrl_double,
+
+    DBR_STSACK_STRING : dbr_stsack_string,
+    DBR_CLASS_NAME : dbr_string,
 }
 
 
@@ -518,6 +551,8 @@ NumpyCharCodeToDbr = {
     #   O   object_         U   unicode_        V   void
 }
 
+
+
 # A couple of data types can only be supported on 32-bit platforms
 if numpy.int_().itemsize == 4:
     NumpyCharCodeToDbr.update({'l': DBR_LONG, 'L': DBR_LONG})   # int_, uint
@@ -541,9 +576,20 @@ def _dtype_to_dbr(dtype):
     except:
         raise InvalidDatatype(
             'Datatype "%s" not supported for channel access' % dtype)
-    
 
-def type_to_dbr(datatype, format = FORMAT_RAW):
+def _datatype_to_dtype(datatype):
+    '''Converts a user specified data type into a numpy dtype value.'''
+    if datatype in BasicDbrTypes:
+        return DbrCodeToType[datatype].dtype
+    else:
+        try:
+            return numpy.dtype(datatype)
+        except:
+            raise InvalidDatatype(
+                'Datatype "%s" cannot be used for channel access' % datatype)
+
+
+def type_to_dbr(datatype, format):
     '''Converts a datatype and format request to a dbr value, or raises an
     exception if this cannot be done.
 
@@ -556,6 +602,10 @@ def type_to_dbr(datatype, format = FORMAT_RAW):
       - FORMAT_CTRL: retrieve limit and control data
     '''
     if datatype not in BasicDbrTypes:
+        if datatype == DBR_CHAR_STR:
+            datatype = DBR_CHAR     # Retrieve this type using char array
+        elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
+            return datatype         # format is meaningless in this case
         datatype = _dtype_to_dbr(numpy.dtype(datatype))
 
     # Now take account of the format
@@ -588,7 +638,7 @@ def dbr_to_value(raw_dbr, datatype, count, name, as_string):
     dbr_type = DbrCodeToType[datatype]
     raw_dbr = ctypes.cast(raw_dbr, ctypes.POINTER(dbr_type))[0]
 
-    if as_string  and  raw_dbr.dtype is numpy.uint8:
+    if as_string and raw_dbr.dtype is numpy.uint8:
         # Special case hack for long strings returned as DBR_CHAR arrays.
         # Need string_at() twice to ensure string is size limited *and* null
         # terminated.
@@ -629,32 +679,56 @@ def dbr_to_value(raw_dbr, datatype, count, name, as_string):
     return result
 
 
-def value_to_dbr(value, str_as_array):
+def value_to_dbr(value, datatype):
     '''Takes an ordinary Python value and converts it into a value in dbr
     format suitable for sending to channel access.  Returns the target
     datatype and the number of elements together with a pointer to the raw
     data and (for lifetime management) the object containing the data.'''
 
-    if str_as_array and isinstance(value, str):
-        # In this case convert value from a string to a char array to support
-        # writing long strings.
-        count = len(value) + 1
-        value = ctypes.create_string_buffer(value)
-        return DBR_CHAR, count, ctypes.byref(value), value
-    else:
-        # First convert the data directly into an array.  This will help in
-        # subsequent processing: this does most of the type coercion.
-        value = numpy.require(value, requirements = 'C')
-        if value.shape == ():
-            value.shape = (1,)
-        assert value.ndim == 1, 'Can\'t put multidimensional arrays!'
+    if datatype is not None:
+        if datatype == DBR_CHAR_STR:
+            # DBR_CHAR_STR is handled specially: strings are converted to char
+            # arrays.
+            value = str(value)      # Ensure the value to write is a string
+            count = len(value) + 1
+            value = ctypes.create_string_buffer(value)
+            return DBR_CHAR, count, ctypes.byref(value), value
+        elif datatype in [DBR_PUT_ACKT, DBR_PUT_ACKS]:
+            # For DBR_PUT_ACKT and DBR_PUT_ACKS we return an integer
+            value = ctypes.c_int32(value)
+            return datatype, 1, ctypes.byref(value), value
+        else:
+            datatype = _datatype_to_dtype(datatype)
 
-        if value.dtype.char == 'S' and value.itemsize != MAX_STRING_SIZE:
-            # Need special processing to hack the array so that strings are
-            # actually 40 characters long.
-            new_value = numpy.empty(value.shape, str_dtype)
-            new_value[:] = value
-            value = new_value
+    # First convert the data directly into an array.  This will help in
+    # subsequent processing: this does most of the type coercion.
+    value = numpy.require(value, requirements = 'C', dtype = datatype)
+    if value.shape == ():
+        value.shape = (1,)
+    assert value.ndim == 1, 'Can\'t put multidimensional arrays!'
 
-        datatype = _dtype_to_dbr(value.dtype)
-        return datatype, len(value), value.ctypes.data, value
+    if value.dtype.char == 'S' and value.itemsize != MAX_STRING_SIZE:
+        # Need special processing to hack the array so that strings are
+        # actually 40 characters long.
+        new_value = numpy.empty(value.shape, str_dtype)
+        new_value[:] = value
+        value = new_value
+
+    try:
+        dbrtype = _dtype_to_dbr(value.dtype)
+    except:
+        # One more special case.  caput() of a list of integers on a 64-bit
+        # system will fail at this point because they were automatically
+        # converted to 64-bit integers.  Catch this special case and fix it
+        # up by silently converting to 32-bit integers.  Not really the right
+        # thing to do (as data can be quietly lost), but the alternative
+        # isn't nice to use either.
+        #     If the user explicitly specified int then let the exception
+        # through: I'm afraid int isn't supported by ca on 64-bit!
+        if datatype is None and value.dtype.char == 'l':
+            value = numpy.require(value, dtype = numpy.int32)
+            dbrtype = DBR_LONG
+        else:
+            raise
+
+    return dbrtype, len(value), value.ctypes.data, value

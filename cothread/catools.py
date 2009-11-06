@@ -315,7 +315,7 @@ class _Subscription(object):
 
     def __init__(self, name, callback, 
             events = DBE_VALUE,
-            datatype = None, format = FORMAT_RAW, count = 0, as_string = False,
+            datatype = None, format = FORMAT_RAW, count = 0,
             all_updates = False, notify_disconnect = False):
         '''Subscription initialisation: callback and context are used to
         frame values written to the queue;  events selects which types of
@@ -324,7 +324,7 @@ class _Subscription(object):
 
         self.name = name
         self.callback = callback
-        self.as_string = as_string
+        self.as_string = datatype == DBR_CHAR_STR
         self.all_updates = all_updates
         self.notify_disconnect = notify_disconnect
         self.__update_count = 0
@@ -410,7 +410,7 @@ cothread.Spawn(_Subscription._callback_dispatcher)
 def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
         events = DBE_VALUE,
-        datatype = None, format = FORMAT_RAW, count = 0, as_string = False,
+        datatype = None, format = FORMAT_RAW, count = 0,
         all_updates = False, notify_disconnect = False)
 
     Creates a subscription to one or more PVs, returning a subscription
@@ -448,6 +448,7 @@ def camonitor(pvs, callback, **kargs):
         DBE_VALUE       Notify normal value changes
         DBE_LOG         Notify archive value changes
         DBE_ALARM       Notify alarm state changes
+        DBE_PROPERTY    Notify property changes
             
     datatype
     format
@@ -468,10 +469,6 @@ def camonitor(pvs, callback, **kargs):
         If this is True then IOC disconnect events will be reported by
         calling the callback with a ca_nothing error with .ok False,
         otherwise only valid values will be passed to the callback routine.
-
-    as_string
-        If this is True then arrays of DBR_CHAR are automatically converted
-        into strings.  Other datatypes are returned unchanged.
     '''
     if isinstance(pvs, str):
         return _Subscription(pvs, callback, **kargs)
@@ -505,8 +502,7 @@ def _caget_event_handler(args):
 
 
 @maybe_throw
-def caget_one(pv,
-        timeout=5, datatype=None, format=FORMAT_RAW, count=0, as_string=False):
+def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     '''Retrieves a value from a single PV in the requested format.  Blocks
     until the request is complete, raises an exception if any problems
     occur.'''
@@ -532,7 +528,7 @@ def caget_one(pv,
     # increment the reference count so that the context survives until the
     # callback routine gets to see it.
     done = cothread.Event()
-    context = (pv, as_string, done)
+    context = (pv, datatype == DBR_CHAR_STR, done)
     ctypes.pythonapi.Py_IncRef(context)
     
     # Perform the actual put as a non-blocking operation: we wait to be
@@ -556,7 +552,7 @@ def caget_array(pvs, **kargs):
 def caget(pvs, **kargs):
     '''caget(pvs,
         timeout = 5, datatype = None,
-        format = FORMAT_RAW, count = 0, as_string = False, throw = True)
+        format = FORMAT_RAW, count = 0, throw = True)
 
     Retrieves the value from one or more PVs.  If a single PV is given then
     a single value is returned, otherwise a list of values is returned.
@@ -594,6 +590,12 @@ def caget(pvs, **kargs):
             int, float or str.
 
         4.  Any numpy dtype compatible with any of the above values.
+
+        5.  The special value DBR_CHAR_STR.  This is used to request a char
+            array which is then converted to a Python string on receipt.  It
+            is not sensible to specify count with this option.
+
+        6.  One of the special values DBR_STSACK_STRING or DBR_CLASS_NAME.
 
     format
         This controls how much auxilliary information will be returned with
@@ -633,10 +635,6 @@ def caget(pvs, **kargs):
         If specified this can be used to limit the number of waveform values
         retrieved from the server.
 
-    as_string
-        If this is True then arrays of DBR_CHAR are automatically converted
-        into strings.  Other datatypes are returned unchanged.
-
     throw
         Normally an exception will be raised if the channel cannot be
         connected to or if there is a data error.  If this is set to False
@@ -673,7 +671,7 @@ def _caput_event_handler(args):
     
 
 @maybe_throw
-def caput_one(pv, value, timeout=5, wait=False, str_as_array=False):
+def caput_one(pv, value, timeout=5, wait=False, datatype=None):
     '''Writes a value to a single pv, waiting for callback on completion if
     requested.'''
     
@@ -683,8 +681,9 @@ def caput_one(pv, value, timeout=5, wait=False, str_as_array=False):
     channel.Wait(timeout)
 
     # Note: the unused value returned below needs to be retained so that
-    # dbr_array, a pointer to C memory, has the right lifetime.
-    datatype, count, dbr_array, value = dbr.value_to_dbr(value, str_as_array)
+    # dbr_array, a pointer to C memory, has the right lifetime: it has to
+    # survive until ca_array_put[_callback] has been called.
+    dbrtype, count, dbr_array, value = dbr.value_to_dbr(value, datatype)
     if wait:
         # Assemble the callback context and give it an extra reference count
         # to keep it alive until the callback handler sees it.
@@ -695,12 +694,12 @@ def caput_one(pv, value, timeout=5, wait=False, str_as_array=False):
         # caput with callback requested: need to wait for response from
         # server before returning.
         cadef.ca_array_put_callback(
-            datatype, count, channel, dbr_array,
+            dbrtype, count, channel, dbr_array,
             _caput_event_handler, ctypes.py_object(context))
         done.Wait(timeout)
     else:
         # Asynchronous caput, just do it now.
-        cadef.ca_array_put(datatype, count, channel, dbr_array)
+        cadef.ca_array_put(dbrtype, count, channel, dbr_array)
         
     # Return a success code for compatibility with throw=False code.
     return ca_nothing(pv)
@@ -729,7 +728,7 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
 def caput(pvs, values, **kargs):
     '''caput(pvs, values,
         repeat_value = False, timeout = 5, wait = False,
-        str_as_array = False, throw = True)
+        datatype = None, throw = True)
 
     Writes values to one or more PVs.  If multiple PVs are given together
     with multiple values then both lists or arrays should match in length,
@@ -755,9 +754,11 @@ def caput(pvs, values, **kargs):
         invoked, and the caput operation will wait until the server
         acknowledges successful completion before returning.
 
-    str_as_array
-        If this is True and if the values being written are strings then they
-        are converted into arrays of DBR_CHAR before being written.
+    datatype
+        If a datatype is specified then the values being written will be
+        coerced to the specified datatype before been transmitted.  As well
+        as standard datatypes (see caget), DBR_PUT_ACKT or DBR_PUT_ACKS can
+        be specified.
 
     throw
         Normally an exception will be raised if the channel cannot be
