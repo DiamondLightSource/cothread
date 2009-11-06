@@ -501,7 +501,6 @@ NumpyCharCodeToDbr = {
     'b':    DBR_CHAR,       # byte   = int8
     'h':    DBR_SHORT,      # short  = int16
     'i':    DBR_LONG,       # intc   = int32
-    'l':    DBR_LONG,       # int_   = int32
     'f':    DBR_FLOAT,      # single = float32
     'd':    DBR_DOUBLE,     # float_ = float64
     'S':    DBR_STRING,     # str_
@@ -510,17 +509,20 @@ NumpyCharCodeToDbr = {
     # they're related types.
     '?':    DBR_CHAR,       # bool_
     'B':    DBR_CHAR,       # ubyte  = uint8
-    'p':    DBR_LONG,       # intp   = int32
     'H':    DBR_SHORT,      # ushort = uint16
     'I':    DBR_LONG,       # uintc  = uint32
-    'L':    DBR_LONG,       # uint   = uint32
-    'P':    DBR_LONG,       # uintp  = uint32
     
     # The following type codes are not supported at all:
     #   q   longlong        Q   ulonglong       g   longfloat
     #   F   csingle         D   complex_        G   clongfloat
     #   O   object_         U   unicode_        V   void
 }
+
+# A couple of data types can only be supported on 32-bit platforms
+if numpy.int_().itemsize == 4:
+    NumpyCharCodeToDbr.update({'l': DBR_LONG, 'L': DBR_LONG})   # int_, uint
+if numpy.intp().itemsize == 4:
+    NumpyCharCodeToDbr.update({'p': DBR_LONG, 'P': DBR_LONG})   # intp, uintp
 
 
 # Format codes for type_to_dbr function.
