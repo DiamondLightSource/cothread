@@ -1,4 +1,4 @@
-#!/bin/env python2.4
+#!/bin/env dls-python2.4
 
 # Simple tool for viewing the chain of PV dependencies.
 
@@ -17,54 +17,65 @@ def values(*fields):
 def links(*fields):
     return [(field, True) for field in fields]
 
-# Special hack: list of DTYP values where we don't follow the links
-INP_DTYP_no_follow = set([
-    'Libera',
-    'ReadFileWaveform',
-])
-def check_inp(dtyp):
-    return dtyp not in INP_DTYP_no_follow
-input_rec  = [('INP', check_inp)]
-
-
 def inp_range(last):
     return links(*[
         'INP%s' % c
         for c in map(chr, range(ord('A'), ord(last)+1))])
 
-output_rec = values('DOL')
+def calc_rec(*fields):
+    return values(*fields) + inp_range('L')
+
+output_rec = links('DOL')
+input_rec  = links('INP')
 
 record_types = {
-    'aao'       : output_rec,
-    'ao'        : output_rec,
-    'bo'        : output_rec,
-    'fanout'    : output_rec,
-    'longout'   : output_rec,
-    'mbbo'      : output_rec,
-    'stringout' : output_rec,
-    'ai'        : input_rec,
-    'bi'        : input_rec,
-    'compress'  : input_rec,
-    'longin'    : input_rec,
-    'mbbi'      : input_rec,
-    'mbbiDirect': input_rec,
-    'mbboDirect': input_rec,
-    'stringin'  : input_rec,
-    'subArray'  : input_rec,
-    'waveform'  : input_rec,
-    'genSub'    : inp_range('U'),
-    'calc'      : values('CALC') + inp_range('L'),
-#    'sub': ['calc'],
-#    'seq': ['seq'],
-    'sel'       : values('SELN') + inp_range('L'),
-    'motor'     : values('OUT', 'MSTA'),
-    'calcout'   : values('CALC', 'OUT') + inp_range('L'),
-#    'seq'       : 
+    'aai':          input_rec,
+    'aao':          output_rec,
+    'acalcout':     calc_rec(),
+    'ai':           input_rec,
+    'ao':           output_rec,
+    'asyn':         [],
+    'bi':           input_rec,
+    'bo':           output_rec,
+    'busy':         output_rec,
+    'calc':         calc_rec('CALC'),
+    'calcout':      calc_rec('CALC', 'OUT'),
+    'compress':     input_rec,
+    'dfanout':      output_rec,
+    'eg':           [],
+    'egevent':      [],
+    'er':           [],
+    'erevent':      [],
+    'event':        input_rec,
+    'fanout':       output_rec,
+    'funcgen':      [],
+    'genSub':       inp_range('U'),
+    'longin':       input_rec,
+    'longout':      output_rec,
+    'mbbi':         input_rec,
+    'mbbiDirect':   input_rec,
+    'mbbo':         output_rec,
+    'mbboDirect':   output_rec,
+    'motor':        values('OUT', 'MSTA'),
+    'permissive':   [],
+    'scalcout':     calc_rec(),
+    'scanparm':     [],
+    'sel':          calc_rec() + links('SELN'),
+    'seq':          links(*['DOL%d' % (n+1) for n in range(10)] + ['DOLA']),
+    'sscan':        [],
+    'state':        [],
+    'stringin':     input_rec,
+    'stringout':    output_rec,
+    'sub':          calc_rec(),
+    'subArray':     input_rec,
+    'swait':        [],
+    'transform':    inp_range('P'),
+    'waveform':     input_rec,
 }
 
 
 
-def colour(word, col):
+def colour(col, word):
     esc = 27
     return '%(esc)c[%(col)dm%(word)s%(esc)c[0m' % locals()
 
@@ -79,13 +90,16 @@ GREY    = 37
 BRIGHT  = 60    # Add to colours for bright colours
 BOLD    = 1
 
-def print_indent(indent, col, record, *args):
-    print '%s%s %s' % (
-        '  ' * indent, colour(record, col), ' '.join(map(str, args)))
+def print_indent(priority, indent, col, record, *args):
+    if options.quiet:
+        indent = 0
+    if priority > 0 or not options.quiet:
+        print '%s%s %s' % (
+            '  ' * indent, colour(col, record), ' '.join(map(str, args)))
 
 
+# Set of PVs that we've visited so we can avoid repeating ourself.
 visited_set = set()
-# values_set = set()
 
 # As well as numbers, match on anything starting with @ or # -- these look
 # like addresses.
@@ -129,10 +143,10 @@ def follow_link(indent, link):
         rtyp = caget('%s.RTYP' % record, datatype = str, timeout = 1)
     except Timedout:
         # No RTYP: presumably an ordinary value, not a link
-        print_indent(indent, BRIGHT+RED, record + ': link missing!')
+        print_indent(0, indent, BRIGHT+RED, record + ': RTYP missing!')
     else:
         if record in visited_set:
-            print_indent(indent, GREY, record + ' already visited')
+            print_indent(0, indent, GREY, record + ' already visited')
             return
         visited_set.add(record)
 
@@ -141,7 +155,7 @@ def follow_link(indent, link):
             # in link_fields should be true links or constants.
             fields, types = zip(*record_types[rtyp])
         except KeyError:
-            print_indent(indent, RED, record, 'type', rtyp, 'not found')
+            print_indent(0, indent, RED, record, 'type', rtyp, 'not found')
         else:
             values = caget(
                 map_fields(record,
@@ -149,24 +163,44 @@ def follow_link(indent, link):
                 datatype = str, timeout = 2, throw = False, count = 1)
             (val, sevr, stat, dtyp), values = values[:4], values[4:]
                 
-            print_indent(indent, BOLD, record,
+            print_indent(0, indent, BOLD, record,
                 '(%s, %s)' % (rtyp, dtyp_to_str(dtyp)),
-                val, colour(sevr, YELLOW), colour(stat, YELLOW))
+                val, colour(YELLOW, sevr), colour(YELLOW, stat))
             for value, link_type in zip(values, types):
-                if callable(link_type):
-                    link_type = link_type(dtyp)
                 if link_type:
                     if value.ok and value:
-                        print_indent(indent, BRIGHT+CYAN, value.name, value)
+                        ms_check = ()
+                        priority = 0
+                        if options.check_ms and 'NMS' in value.split(' '):
+                            ms_check = ':', colour(BRIGHT+RED, 'MS missing')
+                            priority = 1
+                        print_indent(priority, 
+                            indent, BRIGHT+CYAN, value.name, value, *ms_check)
                         follow_link(indent+1, value)
                 else:
-                    print_indent(indent, CYAN, value.name, value)
+                    print_indent(0, indent, CYAN, value.name, value)
 
 
-if len(sys.argv) == 2:
-    follow_link(0, sys.argv[1])
+
+# Argument parsing
+from optparse import OptionParser
+parser = OptionParser(
+    usage = '%prog [options] <link> ...',
+    description =
+        'Shows a tree of link dependencies of the given EPICS pv link.')
+
+parser.add_option(
+    '-m', '--nms',
+    dest = 'check_ms', default = False, action = 'store_true',
+    help = 'Check for missing maximise severity (MS) links')
+parser.add_option(
+    '-q', '--quiet',
+    dest = 'quiet', default = False, action = 'store_true',
+    help = 'Only show errors, suppress normal output')
+
+options, args = parser.parse_args()
+if args:
+    for arg in args:
+        follow_link(0, arg)
 else:
-    print '''Usage: %s <link>
-
-Shows a tree of link dependencies of the given EPICS pv link.
-''' % sys.argv[0]
+    parser.print_usage()
