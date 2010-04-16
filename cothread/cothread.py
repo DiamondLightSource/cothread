@@ -69,11 +69,19 @@ Similarly the EventQueue can be used for communication.
 import sys
 import os
 import time
-import greenlet
 import bisect
 import traceback
 import collections 
 import thread
+
+# Odd.  Two different versions of the greenlet library with slightly
+# different interfaces.
+try:
+    import greenlet
+    create_greenlet = greenlet.greenlet
+except ImportError:
+    from py.magic import greenlet
+    create_greenlet = greenlet
 
 import coselect
 
@@ -258,7 +266,7 @@ class _Scheduler(object):
         # We run the scheduler in its own greenlet to allow the main task to
         # participate in scheduling.  This produces its own complications but
         # makes for a more usable system.
-        scheduler_task = greenlet.greenlet(cls.__scheduler)
+        scheduler_task = create_greenlet(cls.__scheduler)
         return scheduler_task.switch(greenlet.getcurrent())
 
     @classmethod
@@ -401,7 +409,7 @@ class _Scheduler(object):
     def spawn(self, function):
         '''Spawns a new task: function is spawned as a new background task
         as a child of the scheduler task.'''
-        task = greenlet.greenlet(function, self.__greenlet)
+        task = create_greenlet(function, self.__greenlet)
         self.__ready_queue.append((task, _WAKEUP_NORMAL))
 
     def do_yield(self, until):
