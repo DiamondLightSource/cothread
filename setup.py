@@ -11,5 +11,8 @@ setup(
     description = 'Cooperative threading based utilities',
     author = 'Michael Abbott',
     author_email = 'Michael.Abbott@diamond.ac.uk',
+    entry_points = {
+        'console_scripts': [
+            'pvtree.py = cothread.tools.pvtree:main' ] },
     
-    packages = ['cothread'])
+    packages = ['cothread', 'cothread/tools'])

@@ -6,7 +6,11 @@
 import sys
 import re
 
-import require
+if __name__ == '__main__':
+    import os
+    sys.path.append(
+        os.path.join(os.path.dirname(__file__), '../..'))
+
 from cothread import Timedout
 from cothread.catools import *
 
@@ -182,25 +186,31 @@ def follow_link(indent, link):
 
 
 
-# Argument parsing
-from optparse import OptionParser
-parser = OptionParser(
-    usage = '%prog [options] <link> ...',
-    description =
-        'Shows a tree of link dependencies of the given EPICS pv link.')
+def main():
+    # Argument parsing
+    from optparse import OptionParser
+    parser = OptionParser(
+        usage = '%prog [options] <link> ...',
+        description =
+            'Shows a tree of link dependencies of the given EPICS pv link.')
 
-parser.add_option(
-    '-m', '--nms',
-    dest = 'check_ms', default = False, action = 'store_true',
-    help = 'Check for missing maximise severity (MS) links')
-parser.add_option(
-    '-q', '--quiet',
-    dest = 'quiet', default = False, action = 'store_true',
-    help = 'Only show errors, suppress normal output')
+    parser.add_option(
+        '-m', '--nms',
+        dest = 'check_ms', default = False, action = 'store_true',
+        help = 'Check for missing maximise severity (MS) links')
+    parser.add_option(
+        '-q', '--quiet',
+        dest = 'quiet', default = False, action = 'store_true',
+        help = 'Only show errors, suppress normal output')
 
-options, args = parser.parse_args()
-if args:
-    for arg in args:
-        follow_link(0, arg)
-else:
-    parser.print_usage()
+    global options
+    options, args = parser.parse_args()
+    if args:
+        for arg in args:
+            follow_link(0, arg)
+    else:
+        parser.print_usage()
+
+
+if __name__ == '__main__':
+    main()
