@@ -1,3 +1,9 @@
 *.pyc
-docs/*.html
-docs/pydoc/
+/docs/*.html
+/docs/pydoc/
+/cothread/libca_path.py
+
+# Setuptools debris
+/cothread.egg-info
+/build
+/dist

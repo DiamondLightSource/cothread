@@ -29,13 +29,11 @@
 
 '''Functions imported directly from libca.
 
-See http://he3.dartmouth.edu/manuals/CAref.html for detailed documentation
-of the functions below.
-
-Actually, see http://www.aps.anl.gov/epics/base/R3-14/8-docs/CAref.html
+See http://www.aps.anl.gov/epics/base/R3-14/11-docs/CAref.html for detailed
+documentation of the functions below.
 
 This module is a thin wrapper over the cadef.h file to be found in
-    /dls_sw/epics/R3.14.8.2/base/include/cadef.h
+    $EPICS_BASE/include/cadef.h
 '''
 
 import ctypes
@@ -49,10 +47,11 @@ __all__ = [
 ]
 
 
-# channel access
-# note 3.14.8.2 some threading problems when multiple with same name found
-libca = ctypes.cdll.LoadLibrary(
-    '/dls_sw/epics/R3.14.8.2/base/lib/linux-x86/libca.so')
+# Load libca from configured location.  The file libca_path must be set to
+# point to the full path to libca.so, should be:
+#   $EPICS_BASE/lib/$HOST_ARCH/libca.so
+import libca_path
+libca = ctypes.cdll.LoadLibrary(libca_path.libca_path)
 
 
 # -----------------------------------------------------------------------------
@@ -66,8 +65,8 @@ DBE_ALARM   = 4
 DBE_PROPERTY = 8
 
 # Connection state as passed to connection handler
-CA_OP_CONN_UP        = 6
-CA_OP_CONN_DOWN      = 7
+CA_OP_CONN_UP   = 6
+CA_OP_CONN_DOWN = 7
 
 # Status codes as returned by virtually all ca_ routines.  We only specially
 # handle normal return, timeout, or disconnection.

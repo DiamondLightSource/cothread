@@ -1,7 +1,11 @@
-PYTHON = python2.4
-SCRIPT_DIR = /dls_sw/tools/bin
-TEST_INSTALL_DIR = /dls_sw/work/common/python/test/packages
-TEST_SCRIPT_DIR = /dls_sw/work/common/python/test/scripts
+PREFIX = /dls_sw/prod/tools/RHEL5
+PYTHON = $(PREFIX)/bin/python2.6
+INSTALL_DIR = $(PREFIX)/lib/python2.6/site-packages
+SCRIPT_DIR = $(PREFIX)/bin
+MODULEVER = 0.0
+
+# Override defaults above with release info
+-include Makefile.private
 
 # builds a versioned python egg of the diamond namespace
 # install with easy_install
@@ -11,7 +15,7 @@ all: dist make_docs
 
 clean: remove clean_docs
 
-dist: setup.py $(wildcard cothread/*.py)
+dist: setup.py $(wildcard cothread/*.py cothread/*/*.py) cothread/libca_path.py
 	$(PYTHON) setup.py bdist_egg
 	touch dist
 
@@ -35,6 +39,5 @@ make_docs:
 clean_docs:
 	make -C docs clean
 
-
-runtests:
-	make -C tests
+cothread/libca_path.py: $(EPICS_BASE)/lib/$(HOST_ARCH)/libca.so
+	echo "libca_path = '$<'" >$@

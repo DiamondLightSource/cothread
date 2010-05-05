@@ -2,8 +2,8 @@
 
 from setuptools import setup, Extension
 
-if 'version' not in globals():
-    version = 'development'
+import os
+version = os.environ.get('MODULEVER', 'unknown')
 
 setup(
     name = 'cothread',
@@ -15,4 +15,5 @@ setup(
         'console_scripts': [
             'pvtree.py = cothread.tools.pvtree:main' ] },
 
-    packages = ['cothread', 'cothread/tools'])
+    packages = ['cothread', 'cothread/tools'],
+    package_data = {'cothread': ['libca.path']})
