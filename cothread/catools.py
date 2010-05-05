@@ -72,7 +72,7 @@ class ca_nothing(Exception):
     '''This value is returned as a success or failure indicator from caput,
     as a failure indicator from caget, and may be raised as an exception to
     report a data error on caget or caput with wait.'''
-    
+
     def __init__(self, name, errorcode = cadef.ECA_NORMAL):
         '''Initialise with PV name and associated errorcode.'''
         self.ok = errorcode == cadef.ECA_NORMAL
@@ -96,7 +96,7 @@ def maybe_throw(function):
     raised by the wrapped function are normally propagated unchanged, but if
     throw=False is specified as a keyword argument then the exception is
     transformed into an ordinary ca_nothing value!'''
-    
+
     def throw_wrapper(pv, *args, **kargs):
         if kargs.pop('throw', True):
             return function(pv, *args, **kargs)
@@ -135,13 +135,13 @@ class Channel(object):
         '__connected',      # Event for waiting for channel connection
         '_as_parameter_'    # Associated channel access channel handle
     ]
-    
+
     @cadef.connection_handler
     def on_ca_connect(args):
         '''This routine is called every time the connection status of the
         channel changes.  This is called directly from channel access, which
         means that user callbacks should not be called directly.'''
-        
+
         self = cadef.ca_puser(args.chid)
         op = args.op
         assert op in [cadef.CA_OP_CONN_UP, cadef.CA_OP_CONN_DOWN]
@@ -151,7 +151,7 @@ class Channel(object):
             self.__connected.Signal()
         else:
             self.__connected.Reset()
-            
+
         # Inform all the connected subscriptions
         for subscription in self.__subscriptions:
             subscription._on_connect(connected)
@@ -161,7 +161,7 @@ class Channel(object):
         self.name = name
         self.__subscriptions = set()
         self.__connected = cothread.Event(auto_reset = False)
-        
+
         chid = ctypes.c_void_p()
         cadef.ca_create_channel(
             name, self.on_ca_connect, ctypes.py_object(self),
@@ -169,7 +169,7 @@ class Channel(object):
         # Setting this allows a channel object to autoconvert into the chid
         # when passed to ca_ functions.
         self._as_parameter_ = chid.value
-        
+
     def __del__(self):
         '''Ensures the associated channel access is closed.'''
         # Note that Channel objects are normally only deleted on process
@@ -206,7 +206,7 @@ class ChannelCache(object):
     cache it is automatically opened.  The cache needs to be purged to
     ensure a clean shutdown.'''
     __slots__ = ['__channels']
-    
+
     def __init__(self):
         self.__channels = {}
 
@@ -248,12 +248,12 @@ class _Subscription(object):
         '__value',          # Most recent update if merging updates
         '__update_count',   # Number of updates seen since last notification
     ]
-    
+
     # _Subscription state values:
     __OPENING = 0       # Subscription not complete yet
     __OPEN    = 1       # Normally active
     __CLOSED  = 2       # Closed but not yet deleted
-    
+
     @cadef.event_handler
     def __on_event(args):
         '''This is called each time the subscribed value changes.  As this is
@@ -287,7 +287,7 @@ class _Subscription(object):
                 self.__callback_queue.Signal((
                     self, self.__merged_callback, None))
             self.__update_count += 1
-        
+
     def _on_connect(self, connected):
         '''This is called each time the connection state of the underlying
         channel changes.  Note that this is also called asynchronously.'''
@@ -299,7 +299,7 @@ class _Subscription(object):
         '''On object deletion ensure that the associated subscription is
         closed.'''
         self.close()
-        
+
     def close(self):
         '''Closes the subscription and releases any associated resources.
         Note that no further callbacks will occur on a closed subscription,
@@ -313,7 +313,7 @@ class _Subscription(object):
             del self.callback
         self.__state = self.__CLOSED
 
-    def __init__(self, name, callback, 
+    def __init__(self, name, callback,
             events = DBE_VALUE,
             datatype = None, format = FORMAT_RAW, count = 0,
             all_updates = False, notify_disconnect = False):
@@ -340,12 +340,12 @@ class _Subscription(object):
         self.__state = self.__OPENING
         cothread.Spawn(self.__create_subscription,
             events, datatype, format, count)
-            
+
     def __create_subscription(self, events, datatype, format, count):
         '''Creates the channel subscription with the specified parameters:
         event mask, datatype and format, array count.  Waits for the channel
         to become connected if datatype is not specified (None).'''
-        
+
         if datatype is None:
             # If no datatype has been specified then try and pick up the
             # datatype associated with the connected channel.
@@ -367,7 +367,7 @@ class _Subscription(object):
             self._as_parameter_ = event_id.value
             self.__state = self.__OPEN
 
-            
+
     # By default all subscription events are queued onto this queue which is
     # dispatched by the callback dispatcher in its own thread.
     __callback_queue = cothread.EventQueue()
@@ -428,7 +428,7 @@ def camonitor(pvs, callback, **kargs):
 
     for each update.  If pvs is a list of names then each update is
     reported as
-    
+
         callback(value, index)
 
     where index is the position in the original array of pvs of the name
@@ -449,7 +449,7 @@ def camonitor(pvs, callback, **kargs):
         DBE_LOG         Notify archive value changes
         DBE_ALARM       Notify alarm state changes
         DBE_PROPERTY    Notify property changes
-            
+
     datatype
     format
     count
@@ -493,7 +493,7 @@ def _caget_event_handler(args):
     # as this is a python object that is invisible to the C api.
     pv, as_string, done = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
-    
+
     if args.status == cadef.ECA_NORMAL:
         done.Signal(dbr.dbr_to_value(
             args.raw_dbr, args.type, args.count, pv, as_string))
@@ -506,12 +506,12 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     '''Retrieves a value from a single PV in the requested format.  Blocks
     until the request is complete, raises an exception if any problems
     occur.'''
-    
+
     # Start by converting the timeout into an absolute timeout.  This allows
     # us to do repeated timeouts without actually extending the timeout
     # deadline.
     timeout = cothread.AbsTimeout(timeout)
-    # Retrieve the requested channel and ensure it's connected. 
+    # Retrieve the requested channel and ensure it's connected.
     channel = _channel_cache[pv]
     channel.Wait(timeout)
 
@@ -530,7 +530,7 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     done = cothread.Event()
     context = (pv, datatype == DBR_CHAR_STR, done)
     ctypes.pythonapi.Py_IncRef(context)
-    
+
     # Perform the actual put as a non-blocking operation: we wait to be
     # informed of completion, or time out.
     cadef.ca_array_get_callback(
@@ -566,7 +566,7 @@ def caget(pvs, **kargs):
 
     If ok is False then the .errorcode field is set to the appropriate ECA_
     error code and str(value) will return an appropriate error message.
-    
+
     The various arguments control the behaviour of caget as follows:
 
     timeout
@@ -603,11 +603,11 @@ def caget(pvs, **kargs):
 
         FORMAT_RAW
             The data is returned unaugmented except for the .name field.
-        
+
         FORMAT_TIME
             The data is augmented by the data timestamp together with
             .alarm .status and .severity fields.
-        
+
         FORMAT_CTRL
             The data is augmented by channel access "control" fields.  This
             set of fields depends on the underlying datatype:
@@ -619,14 +619,14 @@ def caget(pvs, **kargs):
                 .upper_alarm_limit, .lower_alarm_limit,
                 .upper_warning_limit, .lower_warning_limit,
                 .upper_ctrl_limit, .lower_ctrl_limit.
-            
+
             DBR_FLOAT, DBR_DOUBLE
                 As above together with a .precision field.
-            
+
             DBR_ENUM
                 Alarm .status and .severity fields together with .enums, a
                 list of possible enumeration strings.
-            
+
             DBR_STRING
                 _CTRL format is not supported for this field type, and
                 FORMAT_TIME data is returned instead.
@@ -650,7 +650,7 @@ def caget(pvs, **kargs):
         return caget_array(pvs, **kargs)
 
 
-        
+
 # ----------------------------------------------------------------------------
 #   caput
 
@@ -663,18 +663,18 @@ def _caput_event_handler(args):
     # our context information and discard the context immediately.
     pv, done = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
-    
+
     if args.status == cadef.ECA_NORMAL:
         done.Signal()
     else:
         done.SignalException(ca_nothing(pv, args.status))
-    
+
 
 @maybe_throw
 def caput_one(pv, value, datatype=None, wait=False, timeout=5):
     '''Writes a value to a single pv, waiting for callback on completion if
     requested.'''
-    
+
     # Connect to the channel and wait for connection to complete.
     timeout = cothread.AbsTimeout(timeout)
     channel = _channel_cache[pv]
@@ -690,7 +690,7 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5):
         done = cothread.Event()
         context = (pv, done)
         ctypes.pythonapi.Py_IncRef(context)
-        
+
         # caput with callback requested: need to wait for response from
         # server before returning.
         cadef.ca_array_put_callback(
@@ -700,13 +700,13 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5):
     else:
         # Asynchronous caput, just do it now.
         cadef.ca_array_put(dbrtype, count, channel, dbr_array)
-        
+
     # Return a success code for compatibility with throw=False code.
     return ca_nothing(pv)
 
-    
+
 def caput_array(pvs, values, repeat_value=False, **kargs):
-    # Bring the arrays of pvs and values into alignment.  
+    # Bring the arrays of pvs and values into alignment.
     if repeat_value or isinstance(values, str):
         # If repeat_value is requested or the value is a string then we treat
         # it as a single value.
@@ -719,12 +719,12 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
             # as a single value
             values = [values] * len(pvs)
     assert len(pvs) == len(values), 'PV and value lists must match in length'
-    
+
     return cothread.WaitForAll([
         cothread.Spawn(caput_one, pv, value, raise_on_wait = True, **kargs)
         for pv, value in zip(pvs, values)])
 
-    
+
 def caput(pvs, values, **kargs):
     '''caput(pvs, values,
         repeat_value = False, datatype = None, wait = False,
@@ -789,7 +789,7 @@ class ca_info(object):
     datatype_strings = [
         'string', 'short', 'float', 'enum', 'char', 'long', 'double',
         'no access']
-    
+
     def __init__(self, pv, channel):
         self.ok = True
         self.name = pv
@@ -825,13 +825,13 @@ def connect_one(pv, cainfo = False, wait = True, timeout = 5):
         return ca_info(pv, channel)
     else:
         return ca_nothing(pv)
-    
+
 
 def connect_array(pvs, **kargs):
     return cothread.WaitForAll([
         cothread.Spawn(connect_one, pv, raise_on_wait = True, **kargs)
         for pv in pvs])
-    
+
 
 def connect(pvs, **kargs):
     '''connect(pvs, cainfo=False, wait=True, timeout=5, throw=True)
@@ -851,8 +851,8 @@ def connect(pvs, **kargs):
         By default a simple ca_nothing value is returned, but if this flag is
         set then a ca_info structure is returned recording the following
         information about the connection:
-        
-        .ok         True iff the channel was successfully connected 
+
+        .ok         True iff the channel was successfully connected
         .name       Name of PV
         .state      State of channel as an integer.  Look up
                     .state_strings[.state] for textual description.

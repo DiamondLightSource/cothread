@@ -53,9 +53,9 @@ def signaller(event):
 
 if __name__ == '__main__':
 #    threads.SpawnScheduler()
-    
+
     start = time_time()
-    
+
 #     Spawn(thread_one)
     thread_two = Spawn(thread_two)
     Spawn(thread_three)

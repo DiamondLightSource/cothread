@@ -31,7 +31,7 @@
 define the interface provided by this module.
 
     Spawn(function, arguments...)
-        A new cooperative thread, or "task", is created as a call to 
+        A new cooperative thread, or "task", is created as a call to
         function(arguments).  Control is not transferred to the task until
         control is yielded.
 
@@ -43,10 +43,10 @@ define the interface provided by this module.
         value returned by time.time()).
             Control is not returned to the calling task until all other
         active tasks have been processed.
-        
+
     Yield()
         Yield() suspends control so that all other potentially busy tasks can
-        run.  
+        run.
 
 Instances of the Event object can be used for communication between tasks.
 The following Event object methods are relevant.
@@ -71,7 +71,7 @@ import os
 import time
 import bisect
 import traceback
-import collections 
+import collections
 import thread
 
 # Odd.  Two different versions of the greenlet library with slightly
@@ -88,11 +88,11 @@ import coselect
 
 __all__ = [
     'Spawn',            # Spawn new task
-    
+
     'Sleep',            # Suspend task for given delay
     'SleepUntil',       # Suspend task until specified time
     'Yield',            # Suspend task for immediate resumption
-    
+
     'Event',            # Event for waiting and signalling
     'EventQueue',       # Queue of objects with event handling
     'ThreadedEventQueue',   # Event queue designed to work with threads
@@ -100,7 +100,7 @@ __all__ = [
 
     'AbsTimeout',       # Converts timeout into absolute deadline format
     'Timedout',         # Timeout exception raised by event waiting
-    
+
     'Quit',             # Immediate process quit
     'WaitForQuit',      # Wait until Quit() is called
 
@@ -116,14 +116,14 @@ class _TimerQueue(object):
     # The queue is implemented using the bisect function to insert objects
     # into the queue without having to resort the list.  This is cheap and
     # cheerful to implement and runs fast enough.
-    
+
     def __init__(self):
         # The queue is a list of (timeout, task) pairs -- it's important that
         # the timeout is first so that bisect searching of the queue works
         # properly.
         self.__queue = []
         self.__garbage = 0
-        
+
     def put(self, task, timeout):
         '''Adds value to the queue with the specified timeout.'''
         index = bisect.bisect(self.__queue, (timeout, None))
@@ -201,7 +201,7 @@ class _WakeupQueue(object):
                 for task in self.__waiters
                 if not task.woken()]
             self.__garbage = 0
-        
+
 
 class _Wakeup(object):
     '''A _Wakeup object is used when a task is to be suspended on one or more
@@ -212,7 +212,7 @@ class _Wakeup(object):
         self.__wakeup_task = wakeup_task
         self.__queue = queue
         self.__timers = timers
-        
+
     def wakeup(self, reason):
         if self.__task:
             # Let the scheduler know that this task has been woken, and forget
@@ -222,7 +222,7 @@ class _Wakeup(object):
             # their garbage collection will be confused!
             self.__wakeup_task(self.__task, reason)
             self.__task = None
-            
+
             # Each queue needs to be cancelled if it's not the wakeup reason.
             # This test also properly deals with _WAKEUP_INTERRUPT, which
             # requires both queues to be cancelled.
@@ -237,7 +237,7 @@ class _Wakeup(object):
             return True
         else:
             return False
-        
+
     def woken(self):
         return self.__task is None
 
@@ -295,10 +295,10 @@ class _Scheduler(object):
                     if task is main_task:
                         del self.__ready_queue[index]
                         break
-                # All task wakeup entry points will interpret this as a 
+                # All task wakeup entry points will interpret this as a
                 # request to re-raise the exception.
                 main_task.switch(_WAKEUP_INTERRUPT)
-        
+
     def __init__(self):
         # List of all tasks that are currently ready to be dispatched.
         self.__ready_queue = []
@@ -317,7 +317,7 @@ class _Scheduler(object):
         self.__poll_queue = {}
         # By default use blocking poll while waiting for the next event.
         self._poll_block = coselect.poll_block
-        
+
 
     def __tick(self):
         '''This must be called regularly to ensure that all waiting tasks are
@@ -330,7 +330,7 @@ class _Scheduler(object):
         # queue.
         if not self.__ready_queue:
             self.__yield_queue.wake(True)
-        
+
         # Pick up the ready queue and process every task in it.  When each
         # task is resumed it is passed a flag indicating whether it has been
         # resumed because of an expired timer, or for some other reason
@@ -341,13 +341,13 @@ class _Scheduler(object):
         for task, reason in ready_queue:
             assert not task.dead
             task.switch(reason)
-            
+
     def __schedule_loop(self):
         '''This runs a scheduler loop without returning.'''
         while True:
             # Dispatch all waiting tasks
             self.__tick()
-            
+
             # Now see how long we have to wait for the next tick
             if self.__ready_queue or self.__yield_queue:
                 # There are ready tasks: don't wait
@@ -389,7 +389,7 @@ class _Scheduler(object):
                 ready_list = poll_block(*poll_scheduler(ready_list))
         '''
         assert self.__poll_callback is None, 'Nested pollers will not work'
-        
+
         # Switching to the scheduler will return control to us when the next
         # round is complete.
         #    Note that the first time this is called we may get an incomplete
@@ -398,13 +398,13 @@ class _Scheduler(object):
         self.__poll_callback = greenlet.getcurrent()
         result = self.__greenlet.switch(ready_list)
         self.__poll_callback = None
-        
+
         if result == _WAKEUP_INTERRUPT:
             # This case arises if we are main and the scheduler just died.
             raise
         else:
             return result
-        
+
 
     def spawn(self, function):
         '''Spawns a new task: function is spawned as a new background task
@@ -429,7 +429,7 @@ class _Scheduler(object):
         # wakeup object ensures each task is only woken up exactly once.
         if wakeup is None:
             wakeup = self.__Wakeup(suspend_queue, until)
-            
+
         # If a timeout or a suspension queue has been specified, add
         # ourselves as appropriate.  Failing either of these it's up to the
         # caller to arrange a wakeup.
@@ -454,7 +454,7 @@ class _Scheduler(object):
             raise
         else:
             return result == _WAKEUP_TIMEOUT
-            
+
     def poll_until(self, poller, until):
         '''Cooperative poll: the calling task is suspended until one of
         the specified waitable objects becomes ready or the timeout expires.
@@ -480,7 +480,7 @@ class _Scheduler(object):
     def __wakeup_task(self, task, reason):
         if reason != _WAKEUP_INTERRUPT:
             self.__ready_queue.append((task, reason))
-                
+
     def __wakeup_poll(self, poll_result):
         '''Called with the result of a system poll: a list of file descriptors
         and wakeup reasons.  Each waiting task is informed.'''
@@ -535,7 +535,7 @@ def Deadline(timeout):
         return None
     else:
         return AbsTimeout(timeout)[0]
-    
+
 
 class EventBase(object):
     '''The base class for implementing events and signals.'''
@@ -576,14 +576,14 @@ class EventBase(object):
     def _AbortWait(self):
         self.__wait_abort += 1
 
-        
+
 
 class Spawn(EventBase):
     '''This class is used to wrap cooperative threads: every task (except
     for main) managed by the scheduler should be an instance of this class.'''
 
     finished = property(fget = lambda self: bool(self.__result))
-    
+
     def __init__(self, function, *args, **kargs):
         '''The given function and arguments will be called as a new task.
         All of the arguments will be be passed through to function, except for
@@ -607,7 +607,7 @@ class Spawn(EventBase):
             self.__result = (True,
                 self.__function(*self.__args, **self.__kargs))
         except:
-            # Oops: the task terminated with an exception.  
+            # Oops: the task terminated with an exception.
             if self.__raise_on_wait:
                 # The creator of the task is willing to catch this exception,
                 # so hang onto it now until Wait() is called.
@@ -656,18 +656,18 @@ class Spawn(EventBase):
         else:
             # Still need to wait: need to abort the next wakeup.
             self._AbortWait()
-            
-    
+
+
 class Event(EventBase):
     '''Any number of tasks can wait for an event to occur.  A single value
     can also be associated with the event.'''
 
     value = property(fget = lambda self: self.__value)
-    
+
     def __init__(self, auto_reset = True):
         '''An event object is either signalled or reset.  Any task can wait
         for the object to become signalled, and it will be suspended until
-        this occurs.  
+        this occurs.
 
         The intial value can be specified, as can the behaviour on succesfully
         signalling a process: if auto_reset=True is specified then only one
@@ -675,11 +675,11 @@ class Event(EventBase):
         EventBase.__init__(self)
         self.__value = ()
         self.__auto_reset = auto_reset
-        
+
     def __nonzero__(self):
         '''Tests whether the event is signalled.'''
         return bool(self.__value)
-        
+
     def Wait(self, timeout = None):
         '''The caller will block until the event becomes true, or until the
         timeout occurs if a timeout is specified.  A Timeout exception is
@@ -694,7 +694,7 @@ class Event(EventBase):
         if self.__auto_reset:
             # If this is an auto reset event then we reset it on exit;
             # this means that we're the only thread that sees it being
-            # signalled.  
+            # signalled.
             self.__value = ()
 
         # Finally return the result as a value or raise an exception.
@@ -714,7 +714,7 @@ class Event(EventBase):
                 self.Reset()
             else:
                 self._AbortWait()
-            
+
     def Signal(self, value = None):
         '''Signals the event.  Any waiting tasks are scheduled to be woken.'''
         self.__value = (True, value)
@@ -763,7 +763,7 @@ class EventQueue(EventBase):
             self.__queue.pop(0)
         elif not self.__closed:
             self._AbortWait()
-        
+
     def Signal(self, value):
         '''Adds the given value to the tail of the queue.'''
         assert not self.__closed, 'Can\'t write to a closed queue'
@@ -809,7 +809,7 @@ class ThreadedEventQueue(object):
             poll = coselect.poll_block
         if not poll([(self.wait_descriptor, coselect.POLLIN)], timeout):
             raise Timedout('Timed out waiting for signal')
-            
+
         os.read(self.wait_descriptor, 1)
         return self.__values.popleft()
 
@@ -820,10 +820,10 @@ class ThreadedEventQueue(object):
         os.write(self.__signal, '-')
 
 
-        
+
 class Timer(object):
     '''A cancellable one-shot or auto-retriggering timer.'''
-    
+
     def __init__(self, timeout, callback, retrigger = False):
         '''The callback will be called after the specified timeout.  If
         retrigger is set then the timer will automatically retrigger until
@@ -861,8 +861,8 @@ class Timer(object):
         to the given timeout (or its original timeout by default).  ???
         '''
         assert False, 'Got to write this yet...'
-            
-            
+
+
 
 def WaitForAll(event_list, timeout = None):
     '''Waits for all events in the event list to become ready or for the
@@ -906,7 +906,7 @@ _QuitEvent = Event(auto_reset = False)
 def Quit():
     '''Signals the quit event.  Once signalled it stays signalled.'''
     _QuitEvent.Signal()
-    
+
 def WaitForQuit(catch_interrupt = True):
     '''Waits for the quit event to be signalled.'''
     try:

@@ -37,7 +37,7 @@ def TopTest(function):
     end_ref_count = sys.gettotalrefcount()
     print function.__name__, end_ref_count - start_ref_count
 
-    
+
 
 def Waiter(event, timeout, who = 'Waiter', count = 100):
     for i in xrange(count):
@@ -100,7 +100,7 @@ def testSpawnOk():
     for t in tasks:
         t.Wait()
 
-        
+
 def testSelect():
     r, w = os.pipe()
     Reset()
@@ -108,11 +108,11 @@ def testSelect():
         select([r, w], [w], [], 1)
 #     os.close(r)
 #     os.close(w)
-        
+
 
 TopTest(testTimeouts)
 
-# 
+#
 TopTest(testUnexpiredTimers)
 TopTest(testTimeouts)
 TopTest(testWaitForAll)

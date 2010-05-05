@@ -1,4 +1,3 @@
-# /.gitignore
 *.pyc
 docs/*.html
 docs/pydoc/

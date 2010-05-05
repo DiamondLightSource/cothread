@@ -26,7 +26,7 @@ def load(filename, cls):
     (stdout, stderr) = pyuic.communicate()
     if pyuic.returncode != 0:
         raise Exception(stderr)
-        
+
     ns = {}
     exec stdout in ns
     globals()[cls] = ns[cls]
@@ -48,7 +48,7 @@ class MyScope(Scope):
         grid = QVBoxLayout(self.axes)
         grid.setAutoAdd(True)
         self.makeplot()
-        
+
     def bConnect_clicked(self):
         name = str(self.channel.text())
         print 'Connect Clicked', name
@@ -57,13 +57,13 @@ class MyScope(Scope):
             self.monitor.close()
         # connect new channel
         self.monitor = camonitor(name, self.on_event)
-        
+
     def on_event(self, value):
         '''camonitor callback'''
         if value.ok:
             x = arange(value.shape[0])
             self.p.setCurveData(1, x, value)
-            
+
     def makeplot(self):
         '''set up plotting'''
         # draw a plot in the frame

@@ -3,7 +3,7 @@ Using the catools Library
 Michael Abbott
 
 Related documentation: link:cothread.html[Cothread Library], back to
-link:index.html[Index Page]. 
+link:index.html[Index Page].
 
 
 Overview
@@ -68,7 +68,7 @@ require('cothread==1.15')
 ----------------------------
 +
 or if the most recent version is ok then the version number can be omitted as
-in the example. 
+in the example.
 
 . Any +EPICS_CA_+ environment variables should be set at this point, before
 importing +catools+ (see <<environment,below>>).
@@ -103,7 +103,7 @@ EPICS channel access developers manual].
 transferred in a single channel access message.
 
 +EPICS_CA_ADDR_LIST+:: A space separated list of channel access server
-addresses. 
+addresses.
 
 +EPICS_CA_AUTO_ADDR_LIST+:: If set to ``NO'' the automatic scanning of
 networks is disabled.
@@ -235,7 +235,7 @@ undefined.
 
 Retrieves a value from one or more PVs.  If +pvs+ is a single string then
 a single value is returned, otherwise a list of values is returned.  Each
-value returned is an <<Augmented, Augmented Value>>, see 
+value returned is an <<Augmented, Augmented Value>>, see
 below for details.
 +
 If +.ok+ is +False+ then the +.errorcode+ field is set to the appropriate
@@ -250,7 +250,7 @@ See documentation for <<Augmented, Augmented Values>> below.
 +timeout+, +throw+::
 Documented in <<Common, Common Notes>> above.  If a value cannot be retrieved
 and +throw=False+ is set then for each failing PV an empty value with
-+.ok==False+ is returned. 
++.ok==False+ is returned.
 --
 +
 The format of values returned depends on the number of values requested
@@ -260,7 +260,7 @@ as a scalar, otherwise as a numpy array.
 
 
 
-+camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)+:: 
++camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)+::
 
 Creates a subscription to one or more PVs, returning a subscription
 object for each PV.  If a single PV is given then a single subscription
@@ -286,7 +286,7 @@ callback(value, index)
 +
 where +index+ is the position in the original array of PVs of the PV
 generating this update.  The values passed to +callback+ are <<Augmented,
-Augmented Values>>. 
+Augmented Values>>.
 +
 The parameters modify the behaviour as follows:
 +
@@ -355,7 +355,7 @@ about the connection:
 +
 [frame="none", grid="none", cols="10%,90%"]
 |====
-|+.ok+      | True iff the channel was successfully connected 
+|+.ok+      | True iff the channel was successfully connected
 |+.name+    | Name of PV
 |+.state+   | State of channel as an integer.  Look up
 +.state_strings[.state]+ for textual description.
@@ -373,7 +373,7 @@ similar to that produced by the +cainfo+ command line tool.
 +timeout+, +throw+::
 Documented in <<Common, Common Notes>> above.  If a value cannot be retrieved
 and +throw=False+ is set then for each failing PV an empty value with
-+.ok==False+ is returned. 
++.ok==False+ is returned.
 --
 
 
@@ -466,7 +466,7 @@ array of strings.  The associated strings can be retrieved by using
 +
 --
 +DBR_STSACK_STRING+;; Returns the current value as a string together with
-extra fields +.status+, +.severity+, +.ackt+, +.acks+. 
+extra fields +.status+, +.severity+, +.ackt+, +.acks+.
 +DBR_CLASS_NAME+;; Returns the name of the ``enclosing interface'', typically
 the record type, and typically the same as the +.RTYP+ field.
 
@@ -542,11 +542,11 @@ The following fields are present in all values if +FORMAT_TIME+ is specified.
 +.raw_stamp+:: Record timestamp in raw format as provided by EPICS (but in the
 local Unix epoch, not the EPICS epoch).  Is a tuple of the form +(secs, nsec)+
 with integer seconds and nanosecond values, provided in case full ns timestamp
-precision is required.  
+precision is required.
 
 +.timestamp+:: Timestamp in seconds in format compatible with +time.time()+
 rounded to the nearest microsecond: for nanosecond precision use +.raw_stamp+
-instead.  
+instead.
 +
 To compute the timestamp in +datetime+ format, which can be more suitable for
 display applications, it can be added to the value by computing
@@ -577,10 +577,10 @@ The following fields are present in all values if +FORMAT_TIME+ or
 The following fields are present in numeric values if +FORMAT_CTRL+ is
 specified.  Values of type +DBR_ENUM+ or +DBR_STRING+ are not numeric.
 
-+.units+::  Units for display.  
++.units+::  Units for display.
 
 +.upper_disp_limit+, +.lower_disp_limit+:: Suggested display limits for
-numerical values.  
+numerical values.
 
 +.upper_alarm_limit+, +.lower_alarm_limit+, +.upper_warning_limit+, +.lower_warning_limit+, +.upper_ctrl_limit+, +.lower_ctrl_limit+::
 Various EPICS numeric limits.
@@ -601,7 +601,7 @@ Error Code Values
 Error code values are used to indicate a success return from +caput+ (in
 which case +.ok+ is +True+), to indicated disconnection using +camonitor+, and
 to indicate any other failure, either as a return value or raised as an
-exception.  
+exception.
 
 All error code values have type +ca_nothing+ and provide the following fields:
 

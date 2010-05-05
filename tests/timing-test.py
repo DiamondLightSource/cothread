@@ -13,7 +13,7 @@ def make_greenlet(i):
 
 def call_greenlet(g):
     return g.switch(0)
-    
+
 
 def timing_test(name, action, count):
     if isinstance(count, int):

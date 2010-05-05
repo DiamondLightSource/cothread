@@ -13,7 +13,7 @@ def ThreadTicker(queue):
         print 'tick',
         queue.Signal('tick')
         time.sleep(1)
-        
+
 
 
 def Listener(queue, n):
@@ -25,7 +25,7 @@ def Ticker(n):
     while True:
         print 'ticker', n
         Sleep(n)
-        
+
 
 queue = ThreadedEventQueue()
 

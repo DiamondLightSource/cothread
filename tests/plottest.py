@@ -34,10 +34,10 @@ def do_plot(xs):
 def update_plot(l, x):
     l.set_ydata(x)
 #    draw()
-    
+
     from cothread import catools
     print (len(catools._Subscription._Subscription__callback_queue),
-        x.update_count), 
+        x.update_count),
     sys.stdout.flush()
 
 def timer():

@@ -65,7 +65,7 @@ def _install_readline_hook(enable_hook = True):
         This routine can also be used to disable the input hook by setting the
     enable_hook parameter to False -- for example, this can be helpful if a
     background activity is causing a nuisance.'''
-    
+
     PyOS_InputHookP = pointer(hook_function.in_dll(
         pythonapi, 'PyOS_InputHook'))
     if enable_hook:
@@ -74,7 +74,7 @@ def _install_readline_hook(enable_hook = True):
         cast(PyOS_InputHookP, POINTER(c_void_p))[0] = 0
 
 
-        
+
 def _poll_iqt(QT, poll_interval):
     while True:
         try:
@@ -103,7 +103,7 @@ def _run_iqt(QT, poll_interval):
         cothread.Yield(poll_interval)
         while _global_timeout_depth > timeout_depth:
             cothread.Sleep(poll_interval)
-            
+
         _global_timeout_depth -= 1
 
     def at_exit():
@@ -133,7 +133,7 @@ def _run_iqt(QT, poll_interval):
     QT.unlock()
     qt_done.Signal()
 
-        
+
 def iqt(poll_interval = 0.05, use_timer = False, argv = sys.argv):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
@@ -159,7 +159,7 @@ def iqt(poll_interval = 0.05, use_timer = False, argv = sys.argv):
 
             if use_timer:
                 print >>sys.stderr, 'Experimental Qt timer enabled'
-            
+
         except ImportError:
             import qt
             from qt import SIGNAL, QTimer, QApplication
@@ -178,7 +178,7 @@ def iqt(poll_interval = 0.05, use_timer = False, argv = sys.argv):
 
     QT.QCoreApplication.connect(
         QT.instance(), QT.SIGNAL('lastWindowClosed()'), cothread.Quit)
-    
+
     if use_timer:
         cothread.Spawn(_run_iqt,  QT, poll_interval)
     else:

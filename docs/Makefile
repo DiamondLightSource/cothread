@@ -16,5 +16,5 @@ clean:
 %.html: %.txt
 	asciidoc -o $@ $<
 
-pydoc: $(wildcard ../cothread/*.py) 
+pydoc: $(wildcard ../cothread/*.py)
 	./makedocs.py

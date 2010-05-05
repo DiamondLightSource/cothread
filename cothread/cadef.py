@@ -42,7 +42,7 @@ import ctypes
 
 __all__ = [
     # Event type notification codes for camonitor
-    'DBE_VALUE',        # Notify normal value changes  
+    'DBE_VALUE',        # Notify normal value changes
     'DBE_LOG',          # Notify archival value changes
     'DBE_ALARM',        # Notify alarm state changes
     'DBE_PROPERTY',     # Notify property change events (3.14.11 and later)
@@ -93,7 +93,7 @@ class event_handler_args(ctypes.Structure):
         ('raw_dbr', ctypes.c_void_p),   # Pointer to raw dbr array
         ('status',  ctypes.c_int)]      # ECA_ status code of operation
 event_handler = ctypes.CFUNCTYPE(None, event_handler_args)
-    
+
 
 # Exception handler, called to report asynchronous errors that have no other
 # report path.
@@ -145,7 +145,7 @@ class CAException(Exception):
         return '%s calling %s' % (
             ca_message(self.status), self.function.__name__)
 
-        
+
 
 # For routines which are simply expected to succeed this routine should be
 # assigned to the routine's errcheck attribute.

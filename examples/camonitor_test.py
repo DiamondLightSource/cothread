@@ -9,7 +9,7 @@ from cothread import WaitForQuit
 def callback(value):
     '''monitor callback'''
     print value.name, value
-    
+
 camonitor('SR21C-DI-EBPM-01:FR:WFX', callback)
 
 WaitForQuit()

@@ -16,7 +16,7 @@ class MonitorWf:
     def __init__(self, pv, dtype = float):
         camonitor(BPMS(pv), self.on_update,
             datatype = dtype, all_updates = True)
-        
+
     def on_update(self, value, index):
         pass
 
@@ -28,8 +28,8 @@ Monitors = [
     ('FR:STDY',     float),   ('FR:PPY',      float),
 
     # Postmortem statistics
-    ('PM:X_OFFSET',   int),     ('PM:X_OFL',      bool), 
-    ('PM:Y_OFFSET',   int),     ('PM:Y_OFL',      bool), 
+    ('PM:X_OFFSET',   int),     ('PM:X_OFL',      bool),
+    ('PM:Y_OFFSET',   int),     ('PM:Y_OFL',      bool),
     ('PM:ADC_OFFSET', int),     ('PM:ADC_OFL',    bool),
 ]
 

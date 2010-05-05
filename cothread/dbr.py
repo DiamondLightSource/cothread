@@ -38,7 +38,7 @@ import time
 
 __all__ = [
     # Basic DBR request codes: any one of these can be used as part of a
-    # datatype request.  
+    # datatype request.
     'DBR_STRING',       # 40 character strings
     'DBR_SHORT',        # 16 bit signed
     'DBR_FLOAT',        # 32 bit float
@@ -53,7 +53,7 @@ __all__ = [
     'DBR_PUT_ACKS',     # Acknowledge global alarm
     'DBR_STSACK_STRING', # Returns status ack structure
     'DBR_CLASS_NAME',   # Returns record type (same as .RTYP?)
-    
+
     # Data type format requests
     'FORMAT_RAW',       # Request the underlying data only
     'FORMAT_TIME',      # Request alarm status and timestamp
@@ -90,7 +90,7 @@ ca_extra_fields = [
 
 
 # Standard hard-wired EPICS array sizes.
-MAX_STRING_SIZE = 40        # Size of string type 
+MAX_STRING_SIZE = 40        # Size of string type
 MAX_UNITS_SIZE = 8          # Size of units string
 MAX_ENUM_STRING_SIZE = 26   # Size of individual enumeration strings
 MAX_ENUM_STATES = 16        # Numer of possible enumeration strings
@@ -127,7 +127,7 @@ If control values requested (and datatype is not DBR_ENUM):
     precision (if floating point type)
 
 If control values requested and datatype is DBR_ENUM:
-    status, severity, 
+    status, severity,
     enums (list of possible enumeration strings)
 '''
 
@@ -153,13 +153,13 @@ class ca_float(float):
 # The EPICS epoch begins 1st January 1990.
 EPICS_epoch = int(time.mktime((1990, 1, 1, 0, 0, 0, 0, 0, 0)))
 
-    
+
 class ca_timestamp(ctypes.Structure):
     _fields_ = [
         ('secs',    ctypes.c_uint32),
         ('nsec',    ctypes.c_uint32)]
-        
-        
+
+
 # ----------------------------------------------------------------------------
 #   DBR type definitions
 
@@ -213,37 +213,37 @@ class dbr_string(ctypes.Structure):
     scalar = ca_str
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', (ctypes.c_byte * MAX_STRING_SIZE) * 1)]
-    
+
 class dbr_short(ctypes.Structure):
     dtype = numpy.int16
     scalar = ca_int
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', ctypes.c_int16 * 1)]
-    
+
 class dbr_float(ctypes.Structure):
     dtype = numpy.float32
     scalar = ca_float
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', ctypes.c_float * 1)]
-    
+
 class dbr_enum(ctypes.Structure):
     dtype = numpy.uint16
     scalar = ca_int
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', ctypes.c_uint16 * 1)]
-    
+
 class dbr_char(ctypes.Structure):
     dtype = numpy.uint8
     scalar = ca_int
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', ctypes.c_uint8 * 1)]
-    
+
 class dbr_long(ctypes.Structure):
     dtype = numpy.int32
     scalar = ca_int
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', ctypes.c_int32 * 1)]
-    
+
 class dbr_double(ctypes.Structure):
     dtype = numpy.float64
     scalar = ca_float
@@ -272,7 +272,7 @@ class dbr_time_short(ctypes.Structure):
         ('raw_stamp', ca_timestamp),
         ('RISC_pad',  ctypes.c_int16),
         ('raw_value', ctypes.c_int16 * 1)]
-    
+
 class dbr_time_float(ctypes.Structure):
     dtype = numpy.float32
     scalar = ca_float
@@ -282,7 +282,7 @@ class dbr_time_float(ctypes.Structure):
         ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
         ('raw_value', ctypes.c_float * 1)]
-    
+
 class dbr_time_enum(ctypes.Structure):
     dtype = numpy.uint16
     scalar = ca_int
@@ -293,7 +293,7 @@ class dbr_time_enum(ctypes.Structure):
         ('raw_stamp', ca_timestamp),
         ('RISC_pad',  ctypes.c_int16),
         ('raw_value', ctypes.c_uint16 * 1)]
-    
+
 class dbr_time_char(ctypes.Structure):
     dtype = numpy.uint8
     scalar = ca_int
@@ -305,7 +305,7 @@ class dbr_time_char(ctypes.Structure):
         ('RISC_pad0', ctypes.c_int16),
         ('RISC_pad1', ctypes.c_uint8),
         ('raw_value', ctypes.c_uint8 * 1)]
-    
+
 class dbr_time_long(ctypes.Structure):
     dtype = numpy.int32
     scalar = ca_int
@@ -315,7 +315,7 @@ class dbr_time_long(ctypes.Structure):
         ('severity',  ctypes.c_int16),
         ('raw_stamp', ca_timestamp),
         ('raw_value', ctypes.c_int32 * 1)]
-    
+
 class dbr_time_double(ctypes.Structure):
     dtype = numpy.float64
     scalar = ca_float
@@ -346,7 +346,7 @@ class dbr_ctrl_short(ctypes.Structure):
         ('upper_ctrl_limit',    ctypes.c_int16),
         ('lower_ctrl_limit',    ctypes.c_int16),
         ('raw_value',           ctypes.c_int16 * 1)]
-    
+
 class dbr_ctrl_float(ctypes.Structure):
     dtype = numpy.float32
     scalar = ca_float
@@ -366,7 +366,7 @@ class dbr_ctrl_float(ctypes.Structure):
         ('upper_ctrl_limit',    ctypes.c_float),
         ('lower_ctrl_limit',    ctypes.c_float),
         ('raw_value',           ctypes.c_float * 1)]
-    
+
 class dbr_ctrl_enum(ctypes.Structure):
     dtype = numpy.uint16
     scalar = ca_int
@@ -376,12 +376,12 @@ class dbr_ctrl_enum(ctypes.Structure):
         ('no_str',   ctypes.c_int16),
         ('raw_strs', (ctypes.c_char * MAX_ENUM_STRING_SIZE) * MAX_ENUM_STATES),
         ('raw_value', ctypes.c_uint16 * 1)]
-    
+
     def copy_attributes(self, other):
         other.status = self.status
         other.severity = self.severity
         other.enums = map(ctypes.string_at, self.raw_strs[:self.no_str])
-        
+
 class dbr_ctrl_char(ctypes.Structure):
     dtype = numpy.uint8
     scalar = ca_int
@@ -400,7 +400,7 @@ class dbr_ctrl_char(ctypes.Structure):
         ('lower_ctrl_limit',    ctypes.c_uint8),
         ('RISC_pad',            ctypes.c_uint8),
         ('raw_value',           ctypes.c_uint8 * 1)]
-    
+
 class dbr_ctrl_long(ctypes.Structure):
     dtype = numpy.int32
     scalar = ca_int
@@ -418,7 +418,7 @@ class dbr_ctrl_long(ctypes.Structure):
         ('upper_ctrl_limit',    ctypes.c_int32),
         ('lower_ctrl_limit',    ctypes.c_int32),
         ('raw_value',           ctypes.c_int32 * 1)]
-    
+
 class dbr_ctrl_double(ctypes.Structure):
     dtype = numpy.float64
     scalar = ca_float
@@ -455,7 +455,7 @@ class dbr_stsack_string(ctypes.Structure):
         other.ackt = self.ackt
         other.acks = self.acks
 
-    
+
 # DBR request codes.  These correspond precisely to the types above, as
 # identified in the DbrCodeToType lookup table below.
 DBR_STRING = 0
@@ -537,14 +537,14 @@ NumpyCharCodeToDbr = {
     'f':    DBR_FLOAT,      # single = float32
     'd':    DBR_DOUBLE,     # float_ = float64
     'S':    DBR_STRING,     # str_
-    
+
     # The following type codes are weakly supported by pretending that
     # they're related types.
     '?':    DBR_CHAR,       # bool_
     'B':    DBR_CHAR,       # ubyte  = uint8
     'H':    DBR_SHORT,      # ushort = uint16
     'I':    DBR_LONG,       # uintc  = uint32
-    
+
     # The following type codes are not supported at all:
     #   q   longlong        Q   ulonglong       g   longfloat
     #   F   csingle         D   complex_        G   clongfloat

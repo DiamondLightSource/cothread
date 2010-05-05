@@ -11,7 +11,7 @@ all: dist make_docs
 
 clean: remove clean_docs
 
-dist: setup.py $(wildcard cothread/*.py) 
+dist: setup.py $(wildcard cothread/*.py)
 	$(PYTHON) setup.py bdist_egg
 	touch dist
 

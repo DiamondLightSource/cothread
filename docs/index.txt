@@ -5,7 +5,7 @@ Index to cothread documentation
 * Channel access library: link:catools.html[]
 * Python code documentation (derived from internal doc strings)
 - link:pydoc/cothread.html[Top level cothread package]
-- Individual published modules: 
+- Individual published modules:
   link:pydoc/cothread.cothread.html[+cothread.cothread+],
   link:pydoc/cothread.coselect.html[+cothread.coselect+],
   link:pydoc/cothread.catools.html[+cothread.catools+].

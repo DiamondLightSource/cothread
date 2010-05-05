@@ -42,7 +42,7 @@ __all__ = [
     'poll_block',       # Simpler interface to blocking polling
 
     'SelectError',      # Exception raised by select()
-    
+
     # Poll constants
     'POLLIN',           # Data ready to read
     'POLLPRI',          # Urgent data ready to read
@@ -144,10 +144,10 @@ def poll_block_select(poll_list, timeout = None):
             for wtd, event in zip(selected, flag_mapping):
                 if file in wtd:
                     result[file] = result.get(file, 0) | event
-                    
+
     return result.items()
 
-    
+
 if hasattr(_select, 'poll'):
     import platform
     if platform.system() == 'Darwin':
@@ -164,7 +164,7 @@ if hasattr(_select, 'poll'):
 else:
     # If poll not available use select instead
     poll_block = poll_block_select
-    
+
 
 def _compute_poll_list(poll_queue):
     '''Computes a list of (file, event_mask) pairs of all descriptor events
@@ -189,7 +189,7 @@ def _compute_poll_list(poll_queue):
 
 class _Poller(object):
     '''Wrapper for handling poll wakeup.'''
-    
+
     def __init__(self, event_list):
         # .events is a dictionary mapping each descriptor we're interested in
         # to the bit mask of interesting events.
@@ -241,17 +241,17 @@ def poll_list(event_list, timeout = None):
 class poll(object):
     '''Emulates select.poll(), but implements a cooperative non-blocking
     version for use with the cothread library.'''
-    
+
     def __init__(self):
         self.__watch_list = {}
-        
+
     def register(self, file,
             events = _select.POLLIN | _select.POLLPRI | _select.POLLOUT):
         '''Adds file to the list of objects to be polled.  The default set
         of events is POLLIN|POLLPRI|POLLOUT.'''
         file = PyObject_AsFileDescriptor(file)
         self.__watch_list[file] = events
-        
+
     def unregister(self, file):
         '''Removes file from the polling list.'''
         file = PyObject_AsFileDescriptor(file)
@@ -261,7 +261,7 @@ class poll(object):
         '''Blocks until any of the registered file events become ready.
 
         Beware: the timeout here is in milliseconds.  This is consistent
-        with the select.poll().poll() function which this is emulating, 
+        with the select.poll().poll() function which this is emulating,
         but inconsistent with all the other cothread routines!
 
         Consider using poll_list() instead for polling.'''
@@ -294,7 +294,7 @@ def select(iwtd, owtd, ewtd, timeout = None):
     interest = [(file, flag)
         for files, flag in zip(inputs, flag_mapping)
         for file in files]
-    
+
     # Now wait until at least one of our interests occurs.
     poll_result = dict(poll_list(interest, timeout))
 

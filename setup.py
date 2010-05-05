@@ -14,5 +14,5 @@ setup(
     entry_points = {
         'console_scripts': [
             'pvtree.py = cothread.tools.pvtree:main' ] },
-    
+
     packages = ['cothread', 'cothread/tools'])

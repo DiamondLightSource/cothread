@@ -20,7 +20,7 @@ def maybe_throw(function):
     throw_wrapper.__doc__ = function.__doc__
 
     return throw_wrapper
-    
+
 
 @maybe_throw
 def fill_buffer_one(pv, length, datatype=float, timeout=None):
@@ -36,14 +36,14 @@ def fill_buffer_one(pv, length, datatype=float, timeout=None):
         if count[0] >= length:
             done.Signal()
             subscription.close()
-        
+
     subscription = catools.camonitor(pv, on_update, datatype = datatype)
     try:
         done.Wait(timeout)
     finally:
         subscription.close()
     return result
-    
+
 
 def fill_buffer_array(pvs, length, **kargs):
     return cothread.WaitForAll([

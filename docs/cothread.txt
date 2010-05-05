@@ -11,7 +11,7 @@ Python, and makes essential use of the features of cooperative threads -- in
 particular, +camonitor+ notifies updates in the background.
 
 Related documentation: link:catools.html[Channel Access Library], back to
-link:index.html[Index Page]. 
+link:index.html[Index Page].
 
 
 Introduction to Cothreads
@@ -63,13 +63,13 @@ cothread.WaitForQuit()
 1. +require(\'cothread==1.15\')+.  This statement is required by the way Diamond
 Controls modules are managed: it is necessary to specify precisely _which_
 version of a module is to be used.  This means that API changes can be made in
-future releases without breaking existing code.  
+future releases without breaking existing code.
 +
 Alternatively +require(\'cothread\')+ can be used to request the most recent
 installed version.
 +
 Note that the +require+ statements should only occur once in each application:
-it is an easy mistake to place them at the head of each Python module.  
+it is an easy mistake to place them at the head of each Python module.
 
 2. If Qt is to be used (for any graphical user interface) then the cothread
 library needs to be informed: this is done by calling +iqt()+ before any work
@@ -124,7 +124,7 @@ that +camonitor+ is the only routine guaranteed not to suspend):
 
 +caget+:: This always suspends the caller until the requested
 channel access data has arrived (or a timeout occurs), the only exception
-being if an expired timeout is specified.  
+being if an expired timeout is specified.
 
 +caput+:: This routine will normally cause the caller to suspend.  To avoid
 suspension, only put to one PV, use +wait=False+, and ensure that the channel
@@ -162,7 +162,7 @@ Timers are created by the +Timer+ function documented below.  The callback
 that is invoked as part of the timer is a fresh cothread, spawned when the
 timer is created.  This means that the timer callback function can run for as
 long as desired without interfering with other timer callbacks (so long as it
-suspends regularly, of course!)  
+suspends regularly, of course!)
 +
 Note however that a timer will not retrigger itself until its current callback
 routine completes.
@@ -215,7 +215,7 @@ be re-raised when +Wait+ is called.
 
 
 +Sleep(delay)+, +SleepUntil(time)+::
- 
+
 The calling task is suspended until the given time.  +Sleep(delay)+
 suspends the task for at least delay seconds, +SleepUntil(time)+
 suspends until the specified time has passed (+time+ is defined as the
@@ -294,7 +294,7 @@ Adds the given value to the queue, waking up a waiting cothread if one is
 waiting.  This routine does not suspend the caller.
 --
 +
-Example code using iteration over an +EventQueue+. 
+Example code using iteration over an +EventQueue+.
 +
 ----------------------------
 def consumer(e):
@@ -348,7 +348,7 @@ by an exception.  By default (if +catch_interrupt=True+ is set) the keyboard
 interrupt is silently caught, but still causes +WaitForQuit+ to exit.
 +
 This is designed to be used as the final blocking call at the end of the main
-program so that other event loops can run.  
+program so that other event loops can run.
 
 
 
