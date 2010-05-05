@@ -2,6 +2,7 @@
 
 from setuptools import setup, Extension
 
+# these lines allow the version to be specified in Makefile.RELEASE
 import os
 version = os.environ.get('MODULEVER', 'unknown')
 

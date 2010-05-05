@@ -1,44 +1,32 @@
-PREFIX = /dls_sw/prod/tools/RHEL5
-PYTHON = $(PREFIX)/bin/python2.6
-INSTALL_DIR = $(PREFIX)/lib/python2.6/site-packages
-SCRIPT_DIR = $(PREFIX)/bin
-MODULEVER = 0.0
+TOP = .
+include $(TOP)/Makefile.config
 
-# Override defaults above with release info
--include Makefile.private
-
-# builds a versioned python egg of the diamond namespace
-# install with easy_install
-# see http://peak.telecommunity.com/DevCenter/setuptools
-
-all: dist make_docs
-
-clean: remove clean_docs
-	rm -f cothread/libca_path.py
+default: dist make_docs
 
 dist: setup.py $(wildcard cothread/*.py cothread/*/*.py) cothread/libca_path.py
-	$(PYTHON) setup.py bdist_egg
+	MODULEVER=$(MODULEVER) $(PYTHON) setup.py bdist_egg
 	touch dist
 
-remove:
+# Clean the module
+clean: clean_docs
 	$(PYTHON) setup.py clean
-	-rm -rf build dist *egg-info print_documentation.sh
+	-rm -rf build dist *egg-info installed.files cothread/libca_path.py
 	-find -name '*.pyc' -exec rm {} \;
 
-install: all
+# Install the built egg
+install: dist
 	$(PYTHON) setup.py easy_install -m \
-            --script-dir=$(SCRIPT_DIR) dist/*.egg
-
-test: all
-	$(PYTHON) setup.py easy_install -m \
-            --install-dir=$(TEST_INSTALL_DIR) \
-            --script-dir=$(TEST_SCRIPT_DIR) dist/*.egg
+		--record=installed.files \
+		--install-dir=$(INSTALL_DIR) \
+		--script-dir=$(SCRIPT_DIR) dist/*.egg
 
 make_docs:
-	make -C docs
+	$(MAKE) -C docs
 
 clean_docs:
-	make -C docs clean
+	$(MAKE) -C docs clean
+
+.PHONY: clean clean_docs install make_docs clean_docs default
 
 cothread/libca_path.py: $(EPICS_BASE)/lib/$(EPICS_HOST_ARCH)/libca.so
 	echo "libca_path = '$<'" >$@
