@@ -1,10 +1,10 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env dls-python
 
 '''minimal Qt example'''
 
 import require
 import cothread
-from cothread import catools
+from cothread.catools import *
 
 try:
     from qt import QLabel
@@ -23,8 +23,9 @@ label.show()
 # animate label
 def signal(value):
     if value.ok:
-        label.setText('DCCT %f' % value)
+        label.setText('DCCT %f %s' % (value, value.units))
+        print 'DCCT %f %s' % (value, value.units)
 
 
-catools.camonitor('SR21C-DI-DCCT-01:SIGNAL', signal)
+camonitor('SR21C-DI-DCCT-01:SIGNAL', signal, format = FORMAT_CTRL)
 cothread.WaitForQuit()

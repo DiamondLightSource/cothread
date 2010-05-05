@@ -25,13 +25,16 @@ parser.add_option(
 Select format option.  Options are 0 => FORMAT_RAW, 1 => FORMAT_TIME,
 2 => FORMAT_CTRL.  Default is 0.''')
 parser.add_option(
-    '-t', dest = 'timeout', default = None, type = 'float',
+    '-t', dest = 'timeout', default = 5, type = 'float',
     help = 'Specify caget timeout in seconds.  Default is 5 seconds.')
 parser.add_option(
     '-c', dest = 'throw', default = True, action = 'store_false',
     help = '''\
 Catch exception.  If not set any failing PV will case a traceback
 to be generated.''')
+parser.add_option(
+    '-W', dest = 'timeout', action = 'store_const', const = None,
+    help = 'Wait forever.  Overrides -t option')
 
 options, arglist = parser.parse_args()
 if not arglist:
