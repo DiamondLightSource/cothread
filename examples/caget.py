@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.4
-# Simple example of caget tool using greenlets etcetera.
+#!/usr/bin/env dls-python
+# Simple example of caget tool using cothread.
 
 import sys
 import optparse
@@ -12,43 +12,35 @@ parser = optparse.OptionParser(
     usage = 'Usage: %prog pv-list\nRetrieve PV values over channel access')
 parser.add_option(
     '-d', dest = 'datatype', type = 'int',
-    help = 'Define datatype to fetch')
+    help = '''\
+Define datatype to fetch.  The default is the native data type,
+options are:  0 => DBR_STRING, 1 => DBR_SHORT, 2 => DBR_FLOAT,
+3 => DBR_ENUM, 4 => DBR_CHAR, 5 => DBR_LONG, 6 => DBR_DOUBLE.''')
 parser.add_option(
     '-n', dest = 'count', default = 0, type = 'int',
     help = 'Define number of elements to fetch for each value')
 parser.add_option(
     '-f', dest = 'format', default = FORMAT_RAW, type = 'int',
-    help = 'Select format option')
+    help = '''\
+Select format option.  Options are 0 => FORMAT_RAW, 1 => FORMAT_TIME,
+2 => FORMAT_CTRL.  Default is 0.''')
 parser.add_option(
     '-t', dest = 'timeout', default = None, type = 'float',
-    help = 'Specify caget timeout')
+    help = 'Specify caget timeout in seconds.  Default is 5 seconds.')
 parser.add_option(
     '-c', dest = 'throw', default = True, action = 'store_false',
-    help = 'Catch exception')
+    help = '''\
+Catch exception.  If not set any failing PV will case a traceback
+to be generated.''')
+
 options, arglist = parser.parse_args()
 if not arglist:
     parser.print_help()
     sys.exit()
 
 
-extra_fields = [
-    'status',
-    'severity',
-    'timestamp',
-    'raw_stamp',
-    'units',
-    'upper_disp_limit',
-    'lower_disp_limit',
-    'upper_alarm_limit',
-    'lower_alarm_limit',
-    'upper_warning_limit',
-    'lower_warning_limit',
-    'upper_ctrl_limit',
-    'lower_ctrl_limit',
-    'precision',
-    'enums',
-]
-    
+# Discard the first two names, 'name' and 'ok', as we show these anyway.
+extra_fields = ca_extra_fields[2:]
 
 get = caget(arglist,
     timeout = options.timeout, datatype = options.datatype,

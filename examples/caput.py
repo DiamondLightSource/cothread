@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.4
-# Simple example of caget tool using greenlets etcetera.
+#!/usr/bin/env dls-python
+# Simple example of caget tool using cothread.
 
 import require
 from cothread.catools import *
