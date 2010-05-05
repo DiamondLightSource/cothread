@@ -12,16 +12,16 @@ Overview
 The +catools+ library provides the following functions for access to EPICS
 ``process variables'' over channel access:
 
-+caget(pvs, ...)+::
+<<caget,`caget(pvs, ...)` >>::
 Returns a single snapshot of the current value of each PV.
 
-+caput(pvs, values, ...)+::
+<<caput,`caput(pvs, values, ...)`>>::
 Writes values to one or more PVs.
 
-+camonitor(pvs, callback, ...)+::
+<<camonitor,`camonitor(pvs, callback, ...)`>>::
 Receive notification each time any of the listed PVs changes.
 
-+connect(pvs, ...)+::
+<<connect,`connect(pvs, ...)`>>::
 Can be used to establish a connection to a list of PVs before calling the
 other routines.  This routine is optional.
 
@@ -180,6 +180,7 @@ failing PV.
 Functions
 ~~~~~~~~~
 
+[[caput]]
 +caput(pvs, values, repeat_value=False, datatype=None, wait=False, timeout=5, throw=True)+::
 
 Writes values to one or more PVs.  If +pvs+ is a single string then +values+
@@ -231,6 +232,7 @@ undefined.
 
 
 
+[[caget]]
 +caget(pvs, timeout=5, datatype=None, format=FORMAT_RAW, count=0, throw=True)+::
 
 Retrieves a value from one or more PVs.  If +pvs+ is a single string then
@@ -260,6 +262,7 @@ as a scalar, otherwise as a numpy array.
 
 
 
+[[camonitor]]
 +camonitor(pvs, callback, events=DBE_VALUE, datatype=None, format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)+::
 
 Creates a subscription to one or more PVs, returning a subscription
@@ -324,6 +327,7 @@ suppressed so that only valid values will be passed to the callback routine.
 --
 
 
+[[connect]]
 +connect(pvs, cainfo=False, wait=True, timeout=5, throw=True)+::
 
 Establishes a connection to one or more PVs, optionally returning detailed
