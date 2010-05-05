@@ -14,6 +14,7 @@ MODULEVER = 0.0
 all: dist make_docs
 
 clean: remove clean_docs
+	rm -f cothread/libca_path.py
 
 dist: setup.py $(wildcard cothread/*.py cothread/*/*.py) cothread/libca_path.py
 	$(PYTHON) setup.py bdist_egg
@@ -39,5 +40,5 @@ make_docs:
 clean_docs:
 	make -C docs clean
 
-cothread/libca_path.py: $(EPICS_BASE)/lib/$(HOST_ARCH)/libca.so
+cothread/libca_path.py: $(EPICS_BASE)/lib/$(EPICS_HOST_ARCH)/libca.so
 	echo "libca_path = '$<'" >$@
