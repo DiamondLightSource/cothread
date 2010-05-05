@@ -1,4 +1,7 @@
 TOP = .
+
+# This includes Makefile.private which is written by the make system, before
+# defining sensible defaults for all the symbols here.
 include $(TOP)/Makefile.config
 
 default: dist make_docs
