@@ -247,8 +247,7 @@ class poll(object):
     def __init__(self):
         self.__watch_list = {}
 
-    def register(self, file,
-            events = _select.POLLIN | _select.POLLPRI | _select.POLLOUT):
+    def register(self, file, events = POLLIN | POLLPRI | POLLOUT):
         '''Adds file to the list of objects to be polled.  The default set
         of events is POLLIN|POLLPRI|POLLOUT.'''
         file = PyObject_AsFileDescriptor(file)
