@@ -60,12 +60,14 @@ __all__ = [
 PyObject_AsFileDescriptor = ctypes.pythonapi.PyObject_AsFileDescriptor
 PyObject_AsFileDescriptor.argtypes = [ctypes.py_object]
 
-POLLIN     = _select.POLLIN
-POLLPRI    = _select.POLLPRI
-POLLOUT    = _select.POLLOUT
-POLLERR    = _select.POLLERR
-POLLHUP    = _select.POLLHUP
-POLLNVAL   = _select.POLLNVAL
+# We need these names from _select, but unfortunately it has a bad habit of not
+# always providing them, particularly if poll() is broken.  So we define
+# defaults to use internally if they can't be read.
+_poll_values = [
+    ('POLLIN',   1),    ('POLLPRI',  2),    ('POLLOUT',  4),
+    ('POLLERR',  8),    ('POLLHUP',  16),   ('POLLNVAL', 32)]
+for _name, _default in _poll_values:
+    globals()[_name] = getattr(_select, _name, _default)
 
 # These three flags are always treated as of interest and are never consumed.
 POLLEXTRA = POLLERR | POLLHUP | POLLNVAL
