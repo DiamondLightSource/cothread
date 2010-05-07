@@ -150,9 +150,9 @@ def poll_block_select(poll_list, timeout = None):
     return result.items()
 
 
+import platform as _platform
 if hasattr(_select, 'poll'):
-    import platform
-    if platform.system() == 'Darwin':
+    if _platform.system() == 'Darwin':
         # Unfortunately it would appear that Apple's implementation of the
         # poll() system call is incomplete: it returns POLLNVAL for devices!
         # Apparently kqueue and poll fail on anything in /dev (I suppose they
@@ -160,12 +160,17 @@ if hasattr(_select, 'poll'):
         #   So if this is your platform, sorry, we have to use select.
         poll_block = poll_block_select
     else:
-        # This is the preferred case (if you're on Windows, well I've *no*
-        # idea what's going to happen ... and frankly, I don't care).
+        # This is the preferred case.
         poll_block = poll_block_poll
 else:
-    # If poll not available use select instead
-    poll_block = poll_block_select
+    if _platform.system() == 'Windows':
+        # Oops.  Has to be the Windows way, how horrid.
+        from poll_win32 import poll_block_win32 as poll_block
+    else:
+        # If poll not available use select instead.  Guess this is going to be
+        # an ancient Unix with select but no poll, or Darwin on a newer Python
+        # version where the broken poll is excluded.
+        poll_block = poll_block_select
 
 
 def _compute_poll_list(poll_queue):
