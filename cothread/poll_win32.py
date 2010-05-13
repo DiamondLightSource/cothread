@@ -41,7 +41,6 @@ import coselect
 
 
 def poll_block_win32(poll_list, timeout = None):
-    print 'poll_block_win32', poll_list, timeout
     if poll_list:
         # Convert timeout into Windows wait compatible form.
         if timeout is None:

@@ -333,13 +333,6 @@ ca_context_create = libca.ca_context_create
 ca_context_create.errcheck = expect_ECA_NORMAL
 
 
-#   context = ca_current_context()
-#
-# Returns the channel access context or NULL.
-ca_current_context = libca.ca_current_context
-ca_current_context.restype = ctypes.c_void_p
-
-
 #   ca_context_destroy()
 #
 # To be called at exit.

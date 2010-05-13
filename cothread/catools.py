@@ -898,7 +898,7 @@ def _catools_atexit():
     #    One reason that it's rather important to do this properly is that we
     # can't safely do *any* ca_ calls once ca_context_destroy() is called!
     _channel_cache.purge()
-    cadef.ca_context_destroy(cadef.ca_current_context())
+    cadef.ca_context_destroy()
 
 cadef.ca_context_create(0)
 
