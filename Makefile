@@ -31,5 +31,5 @@ clean_docs:
 
 .PHONY: clean clean_docs install make_docs clean_docs default
 
-cothread/libca_path.py: $(EPICS_BASE)/lib/$(EPICS_HOST_ARCH)/libca.so
+cothread/libca_path.py: $(EPICS_BASE)/lib/$(EPICS_HOST_ARCH)
 	echo "libca_path = '$<'" >$@

@@ -37,6 +37,8 @@ This module is a thin wrapper over the cadef.h file to be found in
 '''
 
 import ctypes
+import platform
+import os
 
 __all__ = [
     # Event type notification codes for camonitor
@@ -51,7 +53,14 @@ __all__ = [
 # point to the full path to libca.so, should be:
 #   $EPICS_BASE/lib/$HOST_ARCH/libca.so
 import libca_path
-libca = ctypes.cdll.LoadLibrary(libca_path.libca_path)
+if platform.system() == 'Windows':
+    ctypes.windll.LoadLibrary(
+        os.path.join(libca_path.libca_path, 'Com.dll'))
+    libca = ctypes.windll.LoadLibrary(
+        os.path.join(libca_path.libca_path, 'ca.dll'))
+else:
+    libca = ctypes.cdll.LoadLibrary(
+        os.path.join(libca_path.libca_path, 'libca.so'))
 
 
 # -----------------------------------------------------------------------------
