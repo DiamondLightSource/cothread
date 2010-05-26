@@ -74,7 +74,13 @@ import traceback
 import collections
 import thread
 
-import coroutine
+# By preference use our local Python coroutine extension library, but if that's
+# not available fall back to greenlets.  The greenlet implementation differs in
+# that it recycles the main process stack, with all the associated tradeoffs.
+try:
+    import _coroutine
+except:
+    import greenco as _coroutine
 
 import coselect
 
@@ -201,7 +207,7 @@ class _Wakeup(object):
     queues.  On wakeup the original task is woken, but only once: this is
     used to ensure that entries on other queues are effectively cancelled.'''
     def __init__(self, wakeup_task, queue, timers):
-        self.__task = coroutine.get_current()
+        self.__task = _coroutine.get_current()
         self.__wakeup_task = wakeup_task
         self.__queue = queue
         self.__timers = timers
@@ -259,10 +265,10 @@ class _Scheduler(object):
         # We run the scheduler in its own greenlet to allow the main task to
         # participate in scheduling.  This produces its own complications but
         # makes for a more usable system.
-        current = coroutine.get_current()
-        scheduler_task = coroutine.create(
-            current, cls.__scheduler, coroutine.DEFAULT_STACK_SIZE)
-        return coroutine.switch(scheduler_task, current)
+        current = _coroutine.get_current()
+        scheduler_task = _coroutine.create(
+            current, cls.__scheduler, _coroutine.DEFAULT_STACK_SIZE)
+        return _coroutine.switch(scheduler_task, current)
 
     @classmethod
     def __scheduler(cls, main_task):
@@ -273,7 +279,7 @@ class _Scheduler(object):
         # expect to be the main task.  The next time we get control it's time
         # to run the scheduling loop.
         self = cls()
-        coroutine.switch(main_task, self)
+        _coroutine.switch(main_task, self)
 
         # If the schedule loop raises an exception then propagate the
         # exception up to the main thread before restarting the scheduler.
@@ -292,7 +298,7 @@ class _Scheduler(object):
                         break
                 # All task wakeup entry points will interpret this as a
                 # request to re-raise the exception.
-                coroutine.switch(main_task, _WAKEUP_INTERRUPT)
+                _coroutine.switch(main_task, _WAKEUP_INTERRUPT)
 
     def __init__(self):
         # List of all tasks that are currently ready to be dispatched.
@@ -303,7 +309,7 @@ class _Scheduler(object):
         self.__timer_queue = _TimerQueue()
         # Scheduler greenlet: this will be switched to whenever any other
         # task decides to sleep.
-        self.__greenlet = coroutine.get_current()
+        self.__greenlet = _coroutine.get_current()
         # Initially the schedule loop will run freely with its own select.
         self.__poll_callback = None
         # Dictionary of waitable descriptors for which polling needs to be
@@ -334,7 +340,7 @@ class _Scheduler(object):
         ready_queue = self.__ready_queue
         self.__ready_queue = []
         for task, reason in ready_queue:
-            coroutine.switch(task, reason)
+            _coroutine.switch(task, reason)
 
     def __schedule_loop(self):
         '''This runs a scheduler loop without returning.'''
@@ -392,8 +398,8 @@ class _Scheduler(object):
         #    Note that the first time this is called we may get an incomplete
         # schedule, as we may be resuming inside the dispatch loop: in effect
         # the first call to this routine interrupts the original scheduler.
-        self.__poll_callback = coroutine.get_current()
-        result = coroutine.switch(self.__greenlet, ready_list)
+        self.__poll_callback = _coroutine.get_current()
+        result = _coroutine.switch(self.__greenlet, ready_list)
         self.__poll_callback = None
 
         if result == _WAKEUP_INTERRUPT:
@@ -406,7 +412,7 @@ class _Scheduler(object):
     def spawn(self, function, stack_size):
         '''Spawns a new task: function is spawned as a new background task
         as a child of the scheduler task.'''
-        task = coroutine.create(self.__greenlet, function, stack_size)
+        task = _coroutine.create(self.__greenlet, function, stack_size)
         self.__ready_queue.append((task, _WAKEUP_NORMAL))
 
     def do_yield(self, until):
@@ -442,7 +448,7 @@ class _Scheduler(object):
         # suspending immediately after calling poll_scheduler() control is
         # returned to __select().  This last case expects a list of ready
         # descriptors to be returned, so we have to be compatible with this!
-        result = coroutine.switch(self.__greenlet, [])
+        result = _coroutine.switch(self.__greenlet, [])
         if result == _WAKEUP_INTERRUPT:
             # We get here if main is suspended and the scheduler decides
             # to die.  Make sure our wakeup is cancelled, and then
@@ -596,7 +602,7 @@ class Spawn(EventBase):
         self.__raise_on_wait = kargs.pop('raise_on_wait', False)
         # Hand control over to the run method in the scheduler.
         _scheduler.spawn(self.__run,
-            kargs.pop('stack_size', coroutine.DEFAULT_STACK_SIZE))
+            kargs.pop('stack_size', _coroutine.DEFAULT_STACK_SIZE))
 
     def __run(self, _):
         try:
