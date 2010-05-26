@@ -1,3 +1,6 @@
+TOP = ..
+include $(TOP)/Makefile.config
+
 CFLAGS += -std=gnu99
 CFLAGS += -pthread
 CFLAGS += -Werror -Wall -Wextra
@@ -6,13 +9,16 @@ CFLAGS += -Wno-missing-field-initializers
 CFLAGS += -O2
 # CFLAGS += -g
 
-PYTHON_DIR = /home/tools/python2.4/include/python2.4
+# Pick up the appropriate flags for building a Python extension
+CPPFLAGS += $(shell $(PYTHON_CONFIG) --includes)
 
+# Compute the appropriate frame switching code to use: this is computed by
+# Makefile.config.in from the currently configured compiler.
 include Makefile.config
 
 
 ../cothread/_coroutine.so: _coroutine.c $(SWITCH_FRAME)
-	$(CC) $(CPPFLAGS) -I$(PYTHON_DIR) $(CFLAGS) -fPIC --shared -o $@ $^
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC --shared -o $@ $^
 
 clean:
 	rm -f ../cothread/_coroutine.so Makefile.config
