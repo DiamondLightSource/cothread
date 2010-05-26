@@ -35,7 +35,7 @@ else:
     delete = _coroutine.delete_coroutine
 
     _coroutine_action = ctypes.CFUNCTYPE(
-        ctypes.py_object, ctypes.py_object, ctypes.py_object)
+        ctypes.c_void_p, ctypes.py_object, ctypes.py_object)
 
     _create_coroutine = _coroutine.create_coroutine
     _create_coroutine.argtypes = [
@@ -63,7 +63,9 @@ else:
         # leaks from within ctypes.
         result = action(arg)
         ctypes.pythonapi.Py_DecRef(action)
-        return result
+        ctypes.pythonapi.Py_DecRef(arg)
+        ctypes.pythonapi.Py_IncRef(result)
+        return id(result)
 
     def create(parent, action, stack_size):
         ctypes.pythonapi.Py_IncRef(action)
