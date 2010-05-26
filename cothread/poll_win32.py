@@ -126,3 +126,7 @@ def poll_block_win32(poll_list, timeout = None):
 #   eventlet    http://eventlet.net
 #   gevent      http://www.gevent.org
 #   libevent    http://monkey.org/~provos/libevent
+#
+# Some final links to record here:
+#   http://sourceware.org/pthreads-win32    Pthreads for Win32
+#   http://www.mingw.org                    GNU for Windows

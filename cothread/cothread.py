@@ -353,8 +353,11 @@ class _Scheduler(object):
                 # There are ready tasks: don't wait
                 delay = 0
             elif self.__timer_queue:
-                # There are timers waiting to fire: wait for the first one.
-                delay = max(self.__timer_queue.timeout() - time.time(), 0)
+                # There are timers waiting to fire: wait for the first one.  We
+                # don't sleep for less than 1ms: there's not a lot of point in a
+                # shorter timeout, and this works around some timer calculation
+                # quirks.
+                delay = max(self.__timer_queue.timeout() - time.time(), 0.001)
             else:
                 # Nothing to do: block until something external happens.
                 delay = None
