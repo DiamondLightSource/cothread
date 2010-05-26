@@ -19,9 +19,9 @@ clean: clean_docs
 # Install the built egg
 install: dist
 	$(PYTHON) setup.py easy_install -m \
-		--record=installed.files \
-		--install-dir=$(INSTALL_DIR) \
-		--script-dir=$(SCRIPT_DIR) dist/*.egg
+            --record=installed.files \
+            --install-dir=$(INSTALL_DIR) \
+            --script-dir=$(SCRIPT_DIR) dist/*.egg
 
 make_docs:
 	$(MAKE) -C docs

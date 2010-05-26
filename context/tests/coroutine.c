@@ -70,10 +70,8 @@ coroutine_t create_coroutine(
     coroutine->defunct = NULL;
     if (check_stack_enabled)
         memset(coroutine->stack, 0xC5, stack_size);
-    printf("About to initialise frame\n");
     create_frame(&coroutine->frame, coroutine->stack, stack_size,
         action_wrapper, context);
-    printf("Frame prepared: %p %p\n", coroutine->frame, coroutine->stack);
     return coroutine;
 }
 
