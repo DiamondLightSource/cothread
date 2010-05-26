@@ -408,7 +408,6 @@ class _Scheduler(object):
         as a child of the scheduler task.'''
         task = coroutine.create(self.__greenlet, function, stack_size)
         self.__ready_queue.append((task, _WAKEUP_NORMAL))
-        return task
 
     def do_yield(self, until):
         '''Hands control to the next task with work to do, will return as
@@ -596,13 +595,8 @@ class Spawn(EventBase):
         self.__result = ()
         self.__raise_on_wait = kargs.pop('raise_on_wait', False)
         # Hand control over to the run method in the scheduler.
-        self.__task = _scheduler.spawn(self.__run,
+        _scheduler.spawn(self.__run,
             kargs.pop('stack_size', coroutine.DEFAULT_STACK_SIZE))
-
-    def __del__(self):
-        # It would be preferable to delete the coroutine resources within the
-        # coroutine itself.  Last time we tried it failed...
-        coroutine.delete(self.__task)
 
     def __run(self, _):
         try:

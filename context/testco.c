@@ -1,5 +1,6 @@
 /* Simple coroutine test. */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "coroutine.h"
@@ -36,6 +37,7 @@ void * coroutine_2(void *context, void *arg)
 
 int main(int argc, char **argv)
 {
+    enable_check_stack(true);
     c0 = get_current_coroutine();
     c1 = create_coroutine(c0, coroutine_1, STACK_SIZE, (void*)101);
     c2 = create_coroutine(c1, coroutine_2, STACK_SIZE, (void*)102);

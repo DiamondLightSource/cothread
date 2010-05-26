@@ -4,10 +4,12 @@ import ctypes
 import os
 
 try:
+#     raise 'no'
     _coroutine = ctypes.cdll.LoadLibrary(
         os.path.join(os.path.dirname(__file__), '_coroutine.so'))
 
 except:
+    print 'using greenlet'
     # Can't load _coroutine library, try using greenlet in one form or another
     # instead.  Odd.  Two different versions of the greenlet library with
     # slightly different interfaces.
@@ -26,13 +28,10 @@ except:
     def switch(coroutine, arg):
         return coroutine.switch(arg)
 
-    def delete(coroutine):
-        pass
-
 else:
     # _coroutine successfully loaded, proceed with wrapping it.
     get_current = _coroutine.get_current_coroutine
-    delete = _coroutine.delete_coroutine
+    enable_check_stack = _coroutine.enable_check_stack
 
     _coroutine_action = ctypes.CFUNCTYPE(
         ctypes.c_void_p, ctypes.py_object, ctypes.py_object)
@@ -48,6 +47,8 @@ else:
 
     ctypes.pythonapi.Py_IncRef.argtypes = [ctypes.py_object]
     ctypes.pythonapi.Py_DecRef.argtypes = [ctypes.py_object]
+
+#     enable_check_stack(True)
 
     def switch(coroutine, arg):
         # The story here with reference counting is a little delicate.  The

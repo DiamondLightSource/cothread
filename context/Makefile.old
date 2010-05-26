@@ -1,0 +1,24 @@
+CFLAGS += -std=gnu99
+CFLAGS += -pthread
+CFLAGS += -O2 -Werror -Wall -Wextra
+CFLAGS += -Wno-unused-parameter
+CFLAGS += -Wno-missing-field-initializers
+
+PYTHON_DIR = /home/tools/python2.4/include/python2.4
+
+all: test
+
+test: test.c
+
+testco: testco.c coroutine.c
+
+_coroutine.so: _coroutine.c
+	$(CC) $(CPPFLAGS) -I$(PYTHON_DIR) $(CFLAGS) -fPIC --shared -o $@ $<
+
+coroutine.so: coroutine.c
+	$(CC) $(CPPFLAGS) -fPIC --shared -o $@ $<
+
+clean:
+	rm -f test
+
+.PHONY: clean
