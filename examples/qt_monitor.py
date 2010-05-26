@@ -8,10 +8,11 @@ from cothread.catools import *
 
 try:
     from qt import QLabel
+    print 'using qt 3'
 except ImportError:
     from PyQt4.QtGui import QLabel
 
-cothread.iqt()
+cothread.iqt(use_timer = True)
 
 
 # make a label widget (None is the parent, this is top-level widget)

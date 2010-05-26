@@ -9,7 +9,7 @@ import os
 import require
 from cothread.catools import *
 from cothread import *
-iqt()
+iqt(use_timer = True)
 
 from numpy import *
 from qwt.qplt import Plot, Curve, Bottom, QwtPlot, \

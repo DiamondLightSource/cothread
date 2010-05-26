@@ -1,4 +1,5 @@
 *.pyc
+*.so
 /docs/*.html
 /docs/pydoc/
 /cothread/libca_path.py

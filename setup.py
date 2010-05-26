@@ -6,6 +6,9 @@ from setuptools import setup, Extension
 import os
 version = os.environ.get('MODULEVER', 'unknown')
 
+# coroutine = Extension(
+#     'cothread._coroutine', sources = ['context/coroutine.c'])
+
 setup(
     name = 'cothread',
     version = version,
@@ -16,5 +19,7 @@ setup(
         'console_scripts': [
             'pvtree.py = cothread.tools.pvtree:main' ] },
 
+    zip_safe = False,
+#     ext_modules = [coroutine],
     packages = ['cothread', 'cothread/tools'],
-    package_data = {'cothread': ['libca.path']})
+    package_data = {'cothread': ['_coroutine.so']})
