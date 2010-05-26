@@ -3,8 +3,7 @@
 '''Channel Access Example'''
 
 # load correct version of catools
-from pkg_resources import require
-require('cothread')
+import require
 from cothread.catools import *
 
 print caget('SR21C-DI-DCCT-01:SIGNAL')
