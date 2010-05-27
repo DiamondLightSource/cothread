@@ -1,8 +1,4 @@
-/* Coroutine implementation. 
- *
- * This implementation uses swapcontext, see ucontext.h.  This is a somewhat
- * unoptimal implementation, as alas each context switch involves a system call
- * to set the signal mask! */
+/* Coroutine implementation. */
 
 #include <stdbool.h>
 #include <stdio.h>

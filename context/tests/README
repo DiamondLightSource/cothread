@@ -1,0 +1,38 @@
+Some of the files in this directory are useful for development testing.
+
+bigtest.py
+    A nice test of catools fetching a largeish number of PVs.
+
+coco.py
+    Simple sanity check: spawns a number of cothreads which themselves simply
+    perform a number of task switches, and waits for them to complete.  If this
+    fails then something is comprehensively broken!
+
+coroutine.c
+    A very simple coroutine implementation on top of the frame switching code.
+    Usefuly for tests of the frame switching code, but more Python state is
+    needed for use as a cothread support framework.
+
+coroutine.h
+    Interface provided by coroutine.c.
+
+leak.py
+    Mostly a relic of some earlier memory leak testing.
+
+Makefile
+    Binds coroutine.c and testco.c into a working program.
+
+pyco.py
+    A nice direct sanity check of the _coroutine Python extension.  Like
+    coco.py, if this fails switching or _coroutine is broken.
+
+testco.c
+    Tests coroutine.c and hence the configured switch mechanism.
+
+test.py
+    A test of spawning a large number of tasks.  Breaks coroutine.c as a Python
+    frame switching mechanism, because the Python interpreter thinks there's
+    been a stack overflow.
+
+timing.py
+    Framework for some more serious timing tests.
