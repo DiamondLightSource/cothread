@@ -15,7 +15,7 @@ void * coroutine_1(void *context, void *arg)
     for (int i = 0; i < 5; i++)
     {
         printf("switching to coroutine_2: %d, %p\n", i, arg);
-        arg = switch_coroutine(c2, (void*)((int) arg + 1));
+        arg = switch_coroutine(c2, (void*)((long) arg + 1));
         printf("coroutine_1 in control: %d, %p\n", i, arg);
     }
     printf("coroutine_1 returning %p\n", arg);
@@ -28,7 +28,7 @@ void * coroutine_2(void *context, void *arg)
     for (int i = 0; i < 4; i ++)
     {
         printf("switching to coroutine_1: %d, %p\n", i, arg);
-        arg = switch_coroutine(c1, (void*)((int) arg + 1));
+        arg = switch_coroutine(c1, (void*)((long) arg + 1));
         printf("coroutine_2 in control: %d, %p\n", i, arg);
     }
     printf("coroutine_2 returning %p\n", arg);

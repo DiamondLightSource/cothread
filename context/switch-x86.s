@@ -10,7 +10,6 @@
 #   ebp     Frame pointer, safely restored on return
 #   eax     Return result register
 #   ebx     Must be preserved
-
 #   esi     Must be preserved
 #   edi     Must be preserved
 #   ecx     Scratch

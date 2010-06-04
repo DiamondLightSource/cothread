@@ -9,6 +9,15 @@
 
 #include "switch.h"
 
+/* Macro for number formatting.  Bit tricky this, as the type of size_t depends
+ * on the compiler, and inttypes.h doesn't appear to provide anything suitable.
+ * Thus we have to roll our own. */
+#if __WORDSIZE == 32
+#define PRI_size_t  "%u"
+#elif __WORDSIZE == 64
+#define PRI_size_t  "%lu"
+#endif
+
 
 /* If multiple threads are in play then each thread needs its own coroutine. */
 static __thread coroutine_t current_coroutine = NULL;
@@ -78,7 +87,8 @@ void check_stack(unsigned char *stack, size_t stack_size)
     for (i = 0; i < stack_size; i ++)
         if (stack[i] != 0xC5)
             break;
-    fprintf(stderr, "Stack frame: %d of %d bytes used\n",
+    fprintf(stderr,
+        "Stack frame: " PRI_size_t " of " PRI_size_t " bytes used\n",
         stack_size - i, stack_size);
 }
 

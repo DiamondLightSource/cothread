@@ -4,8 +4,8 @@
 #if defined(__GNUC__)
     #if defined(__i386__)
         SWITCH_FRAME = switch-x86.s
-    #elif defined(__amd64__)
-        SWITCH_FRAME = switch-amd64.s
+    #elif defined(__x86_64__)
+        SWITCH_FRAME = switch-x86_64.s
     #elif defined(__arm__)
         SWITCH_FRAME = switch-arm.s
     #elif defined(__unix__)
