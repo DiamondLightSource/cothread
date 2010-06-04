@@ -115,10 +115,3 @@ action_entry:
         jmp     *%ecx
 
         .size   create_frame, .-create_frame
-
-.globl  current_frame
-        .type   current_frame, @function
-        # Nothing needs to be done for current
-current_frame:
-        ret
-        .size   current_frame, .-current_frame

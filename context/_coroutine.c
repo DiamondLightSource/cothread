@@ -38,13 +38,15 @@ struct py_coroutine * get_current_coroutine(void)
         /* In this special case the current coroutine must be the main thread,
          * so we create a dummy coroutine to represent it. */
         current_coroutine = malloc(sizeof(struct py_coroutine));
-        current_frame(&current_coroutine->frame);
         current_coroutine->stack = NULL;
         current_coroutine->stack_size = 0;
         current_coroutine->parent = NULL;
         current_coroutine->defunct = NULL;
         current_coroutine->python_frame = NULL;
         current_coroutine->recursion_depth = 0;
+#ifdef USE_UCONTEXT
+        current_frame(&current_coroutine->frame);
+#endif
     }
     return current_coroutine;
 }

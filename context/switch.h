@@ -9,6 +9,10 @@ typedef struct frame
     struct ucontext ucontext;
     void *result;
 } frame_t;
+
+/* Initialises a frame to refer to the current frame. */
+void current_frame(frame_t *frame);
+
 #else
 typedef void *frame_t;
 #endif
@@ -26,6 +30,3 @@ void * switch_frame(frame_t *old_frame, frame_t *new_frame, void *arg);
 void create_frame(
     frame_t *frame, void *stack, size_t stack_size,
     frame_action_t action, void *context);
-
-/* Initialises a frame to refer to the current frame. */
-void current_frame(frame_t *frame);

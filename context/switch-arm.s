@@ -51,8 +51,3 @@ action_entry:
         # saved context and routine to call, switch argument is in r0.
         ldmfd   sp!, {r1, r2}   /* r1 <- context, r2 <- action routine */
         bx      r2
-
-        .global current_frame
-        .type   current_frame, %function
-current_frame:
-        bx      lr

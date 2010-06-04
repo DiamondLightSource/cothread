@@ -43,8 +43,10 @@ coroutine_t get_current_coroutine(void)
     if (current_coroutine == NULL)
     {
         current_coroutine = malloc(sizeof(struct coroutine));
-        current_frame(&current_coroutine->frame);
         current_coroutine->defunct = NULL;
+#ifdef USE_UCONTEXT
+        current_frame(&current_coroutine->frame);
+#endif
     }
     return current_coroutine;
 }
