@@ -3,6 +3,8 @@
 /docs/*.html
 /docs/pydoc/
 /cothread/libca_path.py
+/context/Makefile.config
+/context/tests/testco
 
 # Setuptools debris
 /cothread.egg-info
