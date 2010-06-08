@@ -6,16 +6,18 @@ import optparse
 
 import require
 from cothread.catools import *
+import numpy
 
 
 parser = optparse.OptionParser(
     usage = 'Usage: %prog pv-list\nRetrieve PV values over channel access')
 parser.add_option(
-    '-d', dest = 'datatype', type = 'int',
+    '-d', dest = 'datatype', type = 'int', default = None,
     help = '''\
 Define datatype to fetch.  The default is the native data type,
 options are:  0 => DBR_STRING, 1 => DBR_SHORT, 2 => DBR_FLOAT,
-3 => DBR_ENUM, 4 => DBR_CHAR, 5 => DBR_LONG, 6 => DBR_DOUBLE.''')
+3 => DBR_ENUM, 4 => DBR_CHAR, 5 => DBR_LONG, 6 => DBR_DOUBLE, 
+999 => char array as string.''')
 parser.add_option(
     '-n', dest = 'count', default = 0, type = 'int',
     help = 'Define number of elements to fetch for each value')
@@ -50,7 +52,12 @@ get = caget(arglist,
     format = options.format, count = options.count, throw = options.throw)
 for result in get:
     if result.ok:
-        print result.name, result
+        print result.name, 
+        if isinstance(result, numpy.ndarray):
+            print '[', ' '.join(map(str, result)), ']'
+        else:
+            print repr(result)
+
         for field in extra_fields:
             if hasattr(result, field):
                 print field, getattr(result, field)

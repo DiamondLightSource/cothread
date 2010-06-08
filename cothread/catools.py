@@ -523,6 +523,11 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     # If no datatype has been specified, use the channel's default
     if datatype is None:
         datatype = cadef.ca_field_type(channel)
+        if datatype == DBR_CHAR and pv[-1] == '$':
+            # The default datatype for PVs ending in $ is to return the value as
+            # a string, but we need to check that the data is coming over the
+            # wire as a char array first.
+            datatype = DBR_CHAR_STR
 
     # Assemble the callback context.  Note that we need to explicitly
     # increment the reference count so that the context survives until the
@@ -679,6 +684,12 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5):
     timeout = cothread.AbsTimeout(timeout)
     channel = _channel_cache[pv]
     channel.Wait(timeout)
+
+    # Special handling of strings as character arrays, but only if server is
+    # expecting it.
+    if datatype is None and pv[-1] == '$' and \
+            cadef.ca_field_type(channel) == DBR_CHAR:
+        datatype = DBR_CHAR_STR
 
     # Note: the unused value returned below needs to be retained so that
     # dbr_array, a pointer to C memory, has the right lifetime: it has to

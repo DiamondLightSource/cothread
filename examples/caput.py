@@ -28,5 +28,7 @@ if len(arglist) < 2:
     parser.print_help()
     sys.exit()
 
-print caput(arglist[0], arglist[1:],
+args = arglist[1:]
+if len(args) == 1: args = args[0]
+print caput(arglist[0], args,
     timeout = options.timeout, wait = options.wait, throw = options.throw)

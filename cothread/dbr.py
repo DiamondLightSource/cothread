@@ -606,7 +606,8 @@ def type_to_dbr(datatype, format):
             datatype = DBR_CHAR     # Retrieve this type using char array
         elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
             return datatype         # format is meaningless in this case
-        datatype = _dtype_to_dbr(numpy.dtype(datatype))
+        else:
+            datatype = _dtype_to_dbr(numpy.dtype(datatype))
 
     # Now take account of the format
     if format == FORMAT_RAW:
