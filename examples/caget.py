@@ -1,4 +1,4 @@
-#!/usr/bin/env dls-python
+#!/usr/bin/env dls-python2.6
 # Simple example of caget tool using cothread.
 
 import sys

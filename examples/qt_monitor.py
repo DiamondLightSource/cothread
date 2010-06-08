@@ -1,4 +1,4 @@
-#!/usr/bin/env dls-python
+#!/usr/bin/env dls-python2.6
 
 '''minimal Qt example'''
 
@@ -6,11 +6,7 @@ import require
 import cothread
 from cothread.catools import *
 
-try:
-    from qt import QLabel
-    print 'using qt 3'
-except ImportError:
-    from PyQt4.QtGui import QLabel
+from PyQt4.QtGui import QLabel
 
 cothread.iqt(use_timer = True)
 
@@ -25,8 +21,6 @@ label.show()
 def signal(value):
     if value.ok:
         label.setText('DCCT %f %s' % (value, value.units))
-        print 'DCCT %f %s' % (value, value.units)
-
 
 camonitor('SR21C-DI-DCCT-01:SIGNAL', signal, format = FORMAT_CTRL)
 cothread.WaitForQuit()
