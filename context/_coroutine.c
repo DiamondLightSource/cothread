@@ -95,17 +95,21 @@ static void coroutine_wrapper(void *arg, void *action)
 
 PyObject * coroutine_create(PyObject *self, PyObject *args)
 {
-    unsigned int parent_;
-    PyObject *action;
+    PyObject *parent_, *action;
     size_t stack_size;
-    if (PyArg_ParseTuple(args, "IOI", &parent_, &action, &stack_size))
+    if (PyArg_ParseTuple(args, "OOI", &parent_, &action, &stack_size))
     {
-        struct py_coroutine *parent = (struct py_coroutine *) parent_;
+        struct py_coroutine *parent = 
+            (struct py_coroutine *) PyCObject_AsVoidPtr(parent_);
+        if (parent == NULL)
+            return NULL;
         struct py_coroutine *coroutine = malloc(sizeof(struct py_coroutine));
+        /* If a malloc this small fails we're dead anyway, not going to bother
+         * to handle this one! */
 
         Py_INCREF(action);
 
-        coroutine->stack = malloc(stack_size);
+        coroutine->stack = malloc(stack_size);  /* Ditto, but less force. */
         coroutine->stack_size = stack_size;
         if (check_stack_enabled)
             memset(coroutine->stack, 0xC5, stack_size);
@@ -116,7 +120,7 @@ PyObject * coroutine_create(PyObject *self, PyObject *args)
         create_frame(
             &coroutine->frame, coroutine->stack, stack_size,
             coroutine_wrapper, action);
-        return PyInt_FromLong((int)coroutine);
+        return PyCObject_FromVoidPtr(coroutine, NULL);
     }
     else
         return NULL;
@@ -137,11 +141,13 @@ void check_stack(unsigned char *stack, size_t stack_size)
 
 PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 {
-    unsigned int coroutine_;
-    PyObject *arg;
-    if (PyArg_ParseTuple(args, "IO", &coroutine_, &arg))
+    PyObject *coroutine_, *arg;
+    if (PyArg_ParseTuple(args, "OO", &coroutine_, &arg))
     {
-        struct py_coroutine *target = (struct py_coroutine *) coroutine_;
+        struct py_coroutine *target =
+            (struct py_coroutine *) PyCObject_AsVoidPtr(coroutine_);
+        if (target == NULL)
+            return NULL;
 
         /* Switch to new coroutine.  For the duration arg needs an extra
          * reference count, it'll be accounted for either on the next returned
@@ -171,7 +177,7 @@ PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 
 static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
 {
-    return PyInt_FromLong((int)get_current_coroutine());
+    return PyCObject_FromVoidPtr(get_current_coroutine(), NULL);
 }
 
 
