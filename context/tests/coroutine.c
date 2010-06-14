@@ -74,21 +74,34 @@ coroutine_t create_coroutine(
     coroutine->defunct = NULL;
     if (check_stack_enabled)
         memset(coroutine->stack, 0xC5, stack_size);
-    create_frame(&coroutine->frame, coroutine->stack, stack_size,
-        action_wrapper, context);
+#ifdef STACK_GROWS_DOWNWARD
+    void *stack_base = (char *) coroutine->stack + stack_size;
+#else
+    void *stack_base = coroutine->stack;
+#endif
+    create_frame(&coroutine->frame, stack_base, action_wrapper, context);
     return coroutine;
 }
 
 void check_stack(unsigned char *stack, size_t stack_size)
 {
-    /* Hard wired assumption that stack grows down.  Ho hum. */
     size_t i;
+#ifdef STACK_GROWS_DOWNWARD
     for (i = 0; i < stack_size; i ++)
+#else
+    for (i = stack_size - 1; i >= 0; i --)
+#endif
         if (stack[i] != 0xC5)
             break;
+
+#ifdef STACK_GROWS_DOWNWARD
+    size_t used = stack_size - i;
+#else
+    size_t used = i + 1;
+#endif
     fprintf(stderr,
         "Stack frame: " PRI_size_t " of " PRI_size_t " bytes used\n",
-        stack_size - i, stack_size);
+        used, stack_size);
 }
 
 void * switch_coroutine(coroutine_t coroutine, void *parameter)

@@ -3,10 +3,13 @@
 
 #if defined(__i386__)
     SWITCH_FRAME = switch-x86.s
+    CPPFLAGS += -DSTACK_GROWS_DOWNWARD
 #elif defined(__x86_64__)
     SWITCH_FRAME = switch-x86_64.s
+    CPPFLAGS += -DSTACK_GROWS_DOWNWARD
 #elif defined(__arm__)
     SWITCH_FRAME = switch-arm.s
+    CPPFLAGS += -DSTACK_GROWS_DOWNWARD
 #else
     #error "Don't know how to support this platform"
 #endif

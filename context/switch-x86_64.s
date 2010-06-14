@@ -69,24 +69,19 @@ switch_frame:
 
 
 # void create_frame(
-#     frame_t *frame, void *stack, size_t stack_size,
-#     frame_action_t action, void *context)
+#     frame_t *frame, void *stack_base, frame_action_t action, void *context)
 .globl  create_frame
         .type   create_frame, @function
 
 # Arguments:
 #   rdi     address of frame to be created
 #   rsi     base of stack to use
-#   rdx     length of stack to use
-#   rcx     action routine
-#   r8      context to pass to action routine
+#   rdx     action routine
+#   rcx     context to pass to action routine
 create_frame:
-        # Compute the new stack frame by adding in the length of the stack (our
-        # frames grow downwards).
-        addq    %rdx, %rsi
         # Save the extra arguments needed by the new frame
-        movq    %r8, -8(%rsi)       # Context for action routine
-        movq    %rcx, -16(%rsi)     # Action routine to call
+        movq    %rcx, -8(%rsi)      # Context for action routine
+        movq    %rdx, -16(%rsi)     # Action routine to call
         # Push the frame expected by switch_frame, but store 0 for %rbp.  Set
         # things up to start control at action_entry
         movq    $action_entry, -24(%rsi)

@@ -61,29 +61,23 @@ switch_frame:
 
 
 # void create_frame(
-#     frame_t *frame, void *stack, size_t stack_size,
-#     frame_action_t action, void *context)
+#     frame_t *frame, void *stack_base, frame_action_t action, void *context)
 .globl  create_frame
         .type   create_frame, @function
 
 # On entry have following arguments on stack:
 #   4(%esp)     address of frame to be created
 #   8(%esp)     base of stack to use
-#   12(%esp)    length of stack to use
-#   16(%esp)    action routine
-#   20(%esp)    context to pass to action routine
+#   12(%esp)    action routine
+#   16(%esp)    context to pass to action routine
 create_frame:
-        # Compute the new stack frame.  On this architecture the stack frame
-        # grows downwards, so we add the stack length.
-        movl    8(%esp), %ecx       # Base of stack
-        addl    12(%esp), %ecx      # Compute active base of stack
-
         # Save the context needed by the action routine and prepare the switch
         # context.
-        movl    20(%esp), %eax
-        movl    %eax, -4(%ecx)      # Context for action
-        movl    16(%esp), %eax
-        movl    %eax, -8(%ecx)      # Action routine to call
+        movl    8(%esp), %ecx       # %ecx = base of stack
+        movl    12(%esp), %edx      # %edx = action routine to call
+        movl    16(%esp), %eax      # %eax = context for action
+        movl    %eax, -4(%ecx)
+        movl    %edx, -8(%ecx)
         # Push variables expected by switch_frame restore, but push 0 for %ebp
         # to mark base of stack frame list.
         movl    $action_entry, -12(%ecx)  # Where switch_frame will switch to

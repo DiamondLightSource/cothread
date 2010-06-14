@@ -14,5 +14,4 @@ void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg);
  * when the newly created frame is switched to.  When the action routine returns
  * control is switched to parent. */
 void create_frame(
-    frame_t *frame, void *stack, size_t stack_size,
-    frame_action_t action, void *context);
+    frame_t *frame, void *stack_base, frame_action_t action, void *context);

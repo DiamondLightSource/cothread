@@ -21,33 +21,27 @@ switch_frame:
 
 
 # void create_frame(
-#     frame_t *frame, void *stack, size_t stack_size,
-#     frame_action_t action, void *context)
+#     frame_t *frame, void *stack_base, frame_action_t action, void *context)
         .global create_frame
         .type   create_frame, %function
 
 # Arguments on entry:
 #   r0      address of frame to be written
 #   r1      initial base of stack
-#   r2      length of stack (needs to be added to stack)
-#   r3      action routine
-#   [sp]    context argument to action
+#   r2      action routine
+#   r3      context argument to action
 create_frame:
-        add     r1, r1, r2      /* Compute base of downward growing stack */
-
-        ldr     r2, [sp]        /* Save arguments needed for action routine */
-        stmfd   r1!, {r2, r3}   /* Want action routine in later register */
-        mov     ip, lr          /* Save LR so can use same STM slot */
-        ldr     lr, _action_entry
+        stmfd   r1!, {r2, r3}           /* Save arguments for new coroutine */
+        mov     ip, lr                  /* Save LR so can use same STM slot */
+        ldr     lr, =action_entry
         stmfd   r1!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
         str     r1, [r0]
-
         bx      ip
 
-_action_entry:
-        .word   action_entry
 action_entry:
         # Receive control after first switch to new frame.  Top of stack has the
         # saved context and routine to call, switch argument is in r0.
-        ldmfd   sp!, {r1, r2}   /* r1 <- context, r2 <- action routine */
+        ldmfd   sp!, {r2, r3}   /* r2 <- action routine, r3 <- context */
+        mov     r1, r3
         bx      r2
+        .size   create_frame, .-create_frame

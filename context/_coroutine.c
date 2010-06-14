@@ -8,6 +8,16 @@
 #include "switch.h"
 
 
+/* Macro for number formatting.  Bit tricky this, as the type of size_t depends
+ * on the compiler, and inttypes.h doesn't appear to provide anything suitable.
+ * Thus we have to roll our own. */
+#if __WORDSIZE == 32
+#define PRI_size_t  "%u"
+#elif __WORDSIZE == 64
+#define PRI_size_t  "%lu"
+#endif
+
+
 /* Default suggested stack size.  Later on we might keep a pool of stack frames
  * of this size. */
 #define DEFAULT_STACK_SIZE      (1 << 16)
@@ -116,9 +126,13 @@ PyObject * coroutine_create(PyObject *self, PyObject *args)
         coroutine->defunct = NULL;
         coroutine->python_frame = NULL;
         coroutine->recursion_depth = 0;
+#ifdef STACK_GROWS_DOWNWARD
+        void *stack_base = (char *) coroutine->stack + stack_size;
+#else
+        void *stack_base = coroutine->stack;
+#endif
         create_frame(
-            &coroutine->frame, coroutine->stack, stack_size,
-            coroutine_wrapper, action);
+            &coroutine->frame, stack_base, coroutine_wrapper, action);
         return PyCObject_FromVoidPtr(coroutine, NULL);
     }
     else
@@ -128,13 +142,23 @@ PyObject * coroutine_create(PyObject *self, PyObject *args)
 
 void check_stack(unsigned char *stack, size_t stack_size)
 {
-    /* Hard wired assumption that stack grows down.  Ho hum. */
     size_t i;
+#ifdef STACK_GROWS_DOWNWARD
     for (i = 0; i < stack_size; i ++)
+#else
+    for (i = stack_size - 1; i >= 0; i --)
+#endif
         if (stack[i] != 0xC5)
             break;
-    fprintf(stderr, "Stack frame: %d of %d bytes used\n",
-        stack_size - i, stack_size);
+
+#ifdef STACK_GROWS_DOWNWARD
+    size_t used = stack_size - i;
+#else
+    size_t used = i + 1;
+#endif
+    fprintf(stderr,
+        "Stack frame: " PRI_size_t " of " PRI_size_t " bytes used\n",
+        used, stack_size);
 }
 
 
