@@ -91,6 +91,9 @@ else:
     except:
         import greenco as _coroutine
 
+if os.environ.get('COTHREAD_CHECK_STACK', ''):
+    _coroutine.enable_check_stack(True)
+
 import coselect
 
 
