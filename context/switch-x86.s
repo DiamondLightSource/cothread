@@ -29,17 +29,20 @@
 # void * switch_frame(frame_t *old_frame, frame_t *new_frame, void *arg)
 .globl  switch_frame
         .type   switch_frame, @function
+
+# On entry have following arguments on stack:
+#   4(%esp)     address of frame to be written
+#   8(%esp)     address of frame to be loaded
+#   12(%esp)    argument to pass through switch
 switch_frame:
-        # Standard frame entry.  Don't need any extra registers for this one.
-        pushl   %ebp
-        movl    %esp, %ebp
         # Pick up the arguments
-        movl    12(%ebp), %eax      # new_frame
-        movl    8(%ebp), %ecx       # %ecx = old_frame
+        movl    8(%esp), %eax       # new_frame
+        movl    4(%esp), %ecx       # %ecx = old_frame
         movl    (%eax), %edx        # %edx = *new_frame
-        movl    16(%ebp), %eax      # %eax = arg = result register
+        movl    12(%esp), %eax      # %eax = arg = result register
 
         # Save registers ABI requires to be preserved.
+        pushl   %ebp
         pushl   %ebx
         pushl   %edi
         pushl   %esi
@@ -48,12 +51,10 @@ switch_frame:
         movl    %esp, (%ecx)
         movl    %edx, %esp
 
-        # Restore previously saved registers.
+        # Restore previously saved registers and we're done.
         popl    %esi
         popl    %edi
         popl    %ebx
-
-        # Done
         popl    %ebp
         ret
         .size   switch_frame, .-switch_frame
@@ -65,44 +66,36 @@ switch_frame:
 .globl  create_frame
         .type   create_frame, @function
 
-# After standard entry have following arguments on frame:
-#   8(%ebp)     address of frame to be created
-#   12(%ebp)    base of stack to use
-#   16(%ebp)    length of stack to use
-#   20(%ebp)    action routine
-#   24(%ebp)    context to pass to action routine
+# On entry have following arguments on stack:
+#   4(%esp)     address of frame to be created
+#   8(%esp)     base of stack to use
+#   12(%esp)    length of stack to use
+#   16(%esp)    action routine
+#   20(%esp)    context to pass to action routine
 create_frame:
-        # Standard entry with some extra register saves.  We need all the
-        # arguments in registers because we're going to switch stack frames
-        # while we prepare the new frame.
-        pushl   %ebp
-        movl    %esp, %ebp
-
         # Compute the new stack frame.  On this architecture the stack frame
         # grows downwards, so we add the stack length.
-        movl    12(%ebp), %ecx      # Base of stack
-        movl    8(%ebp), %edx       # Pick up frame address in background
-        addl    16(%ebp), %ecx      # Compute active base of stack
-        # Switch to new frame, saving original frame in %eax
-        movl    %esp, %eax
-        movl    %ecx, %esp
+        movl    8(%esp), %ecx       # Base of stack
+        addl    12(%esp), %ecx      # Compute active base of stack
 
         # Save the context needed by the action routine and prepare the switch
         # context.
-        pushl   24(%ebp)            # Context for action
-        pushl   20(%ebp)            # Action routine to call
+        movl    20(%esp), %eax
+        movl    %eax, -4(%ecx)      # Context for action
+        movl    16(%esp), %eax
+        movl    %eax, -8(%ecx)      # Action routine to call
         # Push variables expected by switch_frame restore, but push 0 for %ebp
         # to mark base of stack frame list.
-        pushl   $action_entry       # Where switch_frame will switch to
-        pushl   $0
-        pushl   %ebx
-        pushl   %edi
-        pushl   %esi
+        movl    $action_entry, -12(%ecx)  # Where switch_frame will switch to
+        movl    $0, -16(%ecx)
+        movl    %ebx, -20(%ecx)
+        movl    %edi, -24(%ecx)
+        movl    %esi, -28(%ecx)
 
-        # Save new stack frame, switch back to original, then we're all done.
-        movl    %esp, (%edx)
-        movl    %eax, %esp
-        popl    %ebp
+        # Save new stack frame and we're all done.
+        movl    4(%esp), %edx       # Frame address
+        subl    $28, %ecx
+        movl    %ecx, (%edx)
         ret
 
 action_entry:
