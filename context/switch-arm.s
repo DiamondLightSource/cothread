@@ -48,15 +48,6 @@ switch_frame:
         .size   switch_frame, .-switch_frame
 
 
-# frame_t get_frame(void)
-        .globl  get_frame
-        .type   get_frame, %function
-get_frame:
-        mov     r0, sp
-        bx      r14
-        .size   get_frame, .-get_frame
-
-
 # frame_t create_frame(void *stack_base, frame_action_t action, void *context)
         .global create_frame
         .type   create_frame, %function

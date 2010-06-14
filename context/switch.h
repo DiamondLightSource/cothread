@@ -31,8 +31,7 @@
  *
  * This file defines a complete but minimal interface for implementing stack
  * frame switching.  All of the routines in this file can only be implemented in
- * assembler (well, get_frame() could just as well return the address of a local
- * variable), and the descriptions below define the required implementation.
+ * assembler, and the descriptions below define the required implementation.
  *
  * This interface assumes a classical C stack occupying a contiguous block of
  * memory.  The assumption is made that stack frame switching can be achieved by
@@ -73,11 +72,6 @@ typedef __attribute__((noreturn))
 /* Switch to new frame, previously established by create_frame() or an earlier
  * switch_frame().  The caller's stack frame is written to *old_frame. */
 void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg);
-
-/* Retrieves the current frame.  Note that the returned result will be invalid
- * as soon as control is returned, so this is only useful for retrieving an
- * indication of the current high water mark in the stack. */
-frame_t get_frame(void);
 
 /* Establish a new frame in the given stack.  action(arg, context) will be
  * called when the newly created frame is switched to, and it must never return.

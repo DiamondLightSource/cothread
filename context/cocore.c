@@ -233,7 +233,7 @@ static struct stack * create_base_stack(struct cocore *coroutine)
     /* We need to initialise stack_base to something sensible.  It doesn't
      * hugely matter where it is, but placing it at the current high water mark
      * seems a good idea. */
-    stack->stack_base = get_frame();
+    stack->stack_base = &stack;
     return stack;
 }
 
