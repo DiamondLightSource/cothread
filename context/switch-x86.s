@@ -60,6 +60,15 @@ switch_frame:
         .size   switch_frame, .-switch_frame
 
 
+# frame_t get_frame(void)
+.globl  get_frame
+        .type   get_frame, @function
+get_frame:
+        movl    %esp, %eax
+        ret
+        .size   get_frame, .-get_frame
+
+
 # void create_frame(
 #     frame_t *frame, void *stack_base, frame_action_t action, void *context)
 .globl  create_frame
