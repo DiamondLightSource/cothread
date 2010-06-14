@@ -45,7 +45,7 @@ CPPFLAGS += $(shell $(PYTHON_CONFIG) --includes)
 include Makefile.config
 
 
-../cothread/_coroutine.so: _coroutine.c $(SWITCH_FRAME)
+../cothread/_coroutine.so: _coroutine.c cocore.c $(SWITCH_FRAME)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC --shared -o $@ $^
 
 clean:

@@ -33,8 +33,10 @@
 #include <Python.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stddef.h>
 
 #include "switch.h"
+#include "cocore.h"
 
 
 /* Macro for number formatting.  Bit tricky this, as the type of size_t depends
@@ -53,11 +55,8 @@
 
 
 struct py_coroutine {
-    frame_t frame;
-    void *stack;
-    size_t stack_size;
-    struct py_coroutine *parent;
-    struct py_coroutine *defunct;
+    struct cocore cocore;
+    PyObject *action;
 
     /* Python stack tracking.  Need to switch recursion depth and top frame
      * around as we switch frames, otherwise the interpreter gets confused and
@@ -68,24 +67,66 @@ struct py_coroutine {
 };
 
 static __thread struct py_coroutine *current_coroutine = NULL;
+static __thread struct py_coroutine *base_coroutine = NULL;
 static bool check_stack_enabled = false;
 
 
-struct py_coroutine * get_current_coroutine(void)
+static struct py_coroutine * get_current_coroutine(void)
 {
-    if (current_coroutine == NULL)
+    if (unlikely(base_coroutine == NULL))
     {
-        /* In this special case the current coroutine must be the main thread,
-         * so we create a dummy coroutine to represent it. */
-        current_coroutine = malloc(sizeof(struct py_coroutine));
-        current_coroutine->stack = NULL;
-        current_coroutine->stack_size = 0;
-        current_coroutine->parent = NULL;
-        current_coroutine->defunct = NULL;
-        current_coroutine->python_frame = NULL;
-        current_coroutine->recursion_depth = 0;
+        /* First time through: initialise the base coroutine and make it
+         * current. */
+        base_coroutine = malloc(sizeof(struct py_coroutine));
+        initialise_cocore(&base_coroutine->cocore);
+        current_coroutine = base_coroutine;
     }
+
     return current_coroutine;
+}
+
+
+static void * coroutine_wrapper(struct cocore *cocore, void *arg_)
+{
+    PyThreadState *thread_state = PyThreadState_GET();
+    /* New coroutine gets a brand new Python interpreter stack frame. */
+    thread_state->frame = NULL;
+    thread_state->recursion_depth = 0;
+    /* Call the given action with the passed argument. */
+    struct py_coroutine *this =
+        container_of(cocore, struct py_coroutine, cocore);
+    current_coroutine = this;
+
+    PyObject *arg = arg_;
+    PyObject *result = PyObject_CallFunction(this->action, "O", arg);
+    Py_DECREF(this->action);
+    Py_DECREF(arg);
+    return result;
+}
+
+
+static PyObject * coroutine_create(PyObject *self, PyObject *args)
+{
+    PyObject *parent_, *action;
+    size_t stack_size;
+    if (PyArg_ParseTuple(args, "OOI", &parent_, &action, &stack_size))
+    {
+        struct py_coroutine *parent = PyCObject_AsVoidPtr(parent_);
+        if (parent == NULL)
+            return NULL;
+        struct py_coroutine *coroutine = malloc(sizeof(struct py_coroutine));
+
+        Py_INCREF(action);
+        coroutine->action = action;
+        create_cocore(
+            &coroutine->cocore, &parent->cocore, coroutine_wrapper,
+            NULL, stack_size, check_stack_enabled);
+        coroutine->python_frame = NULL;
+        coroutine->recursion_depth = 0;
+        return PyCObject_FromVoidPtr(coroutine, NULL);
+    }
+    else
+        return NULL;
 }
 
 
@@ -99,9 +140,13 @@ static PyObject *do_switch(struct py_coroutine *target, PyObject *arg)
     this->python_frame = thread_state->frame;
     this->recursion_depth = thread_state->recursion_depth;
 
-    current_coroutine = target;
-    PyObject *result = (PyObject *) switch_frame(
-        &this->frame, target->frame, arg);
+    struct cocore *defunct_core;
+    PyObject *result = switch_cocore(
+        &this->cocore, &target->cocore, arg, &defunct_core);
+    if (defunct_core != NULL)
+        free(container_of(defunct_core, struct py_coroutine, cocore));
+
+    current_coroutine = this;
 
     thread_state = PyThreadState_GET();
     thread_state->frame = this->python_frame;
@@ -110,95 +155,12 @@ static PyObject *do_switch(struct py_coroutine *target, PyObject *arg)
 }
 
 
-static __attribute__((noreturn))
-    void coroutine_wrapper(void *arg, void *action)
-{
-    PyThreadState *thread_state = PyThreadState_GET();
-    /* New coroutine gets a brand new Python interpreter stack frame. */
-    thread_state->frame = NULL;
-    thread_state->recursion_depth = 0;
-
-    /* Call the given action with the passed argument. */
-    PyObject *result = PyObject_CallFunction(
-        (PyObject *) action, "O", (PyObject *) arg);
-    Py_DECREF((PyObject *) action);
-    Py_DECREF((PyObject *) arg);
-
-    /* Switch control to parent after marking ourself as defunct.  We had better
-     * not get control back! */
-    struct py_coroutine *parent = current_coroutine->parent;
-    parent->defunct = current_coroutine;
-    (void) do_switch(parent, result);
-    abort();
-}
-
-
-PyObject * coroutine_create(PyObject *self, PyObject *args)
-{
-    PyObject *parent_, *action;
-    size_t stack_size;
-    if (PyArg_ParseTuple(args, "OOI", &parent_, &action, &stack_size))
-    {
-        struct py_coroutine *parent = 
-            (struct py_coroutine *) PyCObject_AsVoidPtr(parent_);
-        if (parent == NULL)
-            return NULL;
-        struct py_coroutine *coroutine = malloc(sizeof(struct py_coroutine));
-        /* If a malloc this small fails we're dead anyway, not going to bother
-         * to handle this one! */
-
-        Py_INCREF(action);
-
-        coroutine->stack = malloc(stack_size);  /* Ditto, but less force. */
-        coroutine->stack_size = stack_size;
-        if (check_stack_enabled)
-            memset(coroutine->stack, 0xC5, stack_size);
-        coroutine->parent = parent;
-        coroutine->defunct = NULL;
-        coroutine->python_frame = NULL;
-        coroutine->recursion_depth = 0;
-#ifdef STACK_GROWS_DOWNWARD
-        void *stack_base = (char *) coroutine->stack + stack_size;
-#else
-        void *stack_base = coroutine->stack;
-#endif
-        coroutine->frame = create_frame(stack_base, coroutine_wrapper, action);
-        return PyCObject_FromVoidPtr(coroutine, NULL);
-    }
-    else
-        return NULL;
-}
-
-
-void check_stack(unsigned char *stack, size_t stack_size)
-{
-    size_t i;
-#ifdef STACK_GROWS_DOWNWARD
-    for (i = 0; i < stack_size; i ++)
-#else
-    for (i = stack_size - 1; i >= 0; i --)
-#endif
-        if (stack[i] != 0xC5)
-            break;
-
-#ifdef STACK_GROWS_DOWNWARD
-    size_t used = stack_size - i;
-#else
-    size_t used = i + 1;
-#endif
-    fprintf(stderr,
-        "Stack frame: " PRI_size_t " of " PRI_size_t " bytes used\n",
-        used, stack_size);
-}
-
-
-PyObject * coroutine_switch(PyObject *Self, PyObject *args)
+static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 {
     PyObject *coroutine_, *arg;
     if (PyArg_ParseTuple(args, "OO", &coroutine_, &arg))
     {
-        struct py_coroutine *target =
-            (struct py_coroutine *) PyCObject_AsVoidPtr(coroutine_);
+        struct py_coroutine *target = PyCObject_AsVoidPtr(coroutine_);
         if (target == NULL)
             return NULL;
 
@@ -206,21 +168,7 @@ PyObject * coroutine_switch(PyObject *Self, PyObject *args)
          * reference count, it'll be accounted for either on the next returned
          * result or in the entry to a new coroutine. */
         Py_INCREF(arg);
-        PyObject *result = do_switch(target, arg);
-
-        /* If the coroutine switching to us has just terminated it will have
-         * left us a defunct pointer, which can be cleaned up now. */
-        struct py_coroutine *defunct = current_coroutine->defunct;
-        if (defunct)
-        {
-            if (check_stack_enabled)
-                check_stack(defunct->stack, defunct->stack_size);
-            free(defunct->stack);
-            free(defunct);
-            current_coroutine->defunct = NULL;
-        }
-
-        return result;
+        return do_switch(target, arg);
     }
     else
         return NULL;
