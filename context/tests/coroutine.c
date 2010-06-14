@@ -34,28 +34,21 @@
 #include <stdlib.h>
 #include <stddef.h>
 
-#include "switch.h"
 #include "cocore.h"
 #include "coroutine.h"
 
 
-struct coroutine {
-    struct cocore cocore;
-    void *context;
-    coroutine_action_t action;
-};
-
-
-/* Extracts associated coroutine from cocore pointer. */
-#define get_coroutine(cocore_)   container_of(cocore_, struct coroutine, cocore)
-
-
 static __thread coroutine_t base_coroutine = NULL;
 
-void * action_wrapper(struct cocore *cocore, void *argument)
+struct action_context {
+    coroutine_action_t action;
+    void *context;
+};
+
+void * action_wrapper(void *context_, void *argument)
 {
-    coroutine_t coroutine = get_coroutine(cocore);
-    return coroutine->action(coroutine->context, argument);
+    struct action_context *context = context_;
+    return context->action(context->context, argument);
 }
 
 
@@ -66,15 +59,11 @@ coroutine_t create_coroutine(
     coroutine_t parent, coroutine_action_t action, void *context,
     coroutine_t shared_stack, size_t stack_size, bool check_stack)
 {
-    coroutine_t coroutine = malloc(sizeof(struct coroutine));
-    coroutine->context = context;
-    coroutine->action = action;
-    struct cocore *shared =
-        shared_stack == NULL ? NULL : &shared_stack->cocore;
-    create_cocore(
-        &coroutine->cocore, &parent->cocore, action_wrapper,
-        shared, stack_size, check_stack);
-    return coroutine;
+    struct action_context action_context =
+        { .action = action, .context = context };
+    return create_cocore(
+        parent, action_wrapper, &action_context, sizeof(action_context),
+        shared_stack, stack_size, check_stack);
 }
 
 
@@ -83,11 +72,8 @@ coroutine_t create_coroutine(
 coroutine_t get_current_coroutine(void)
 {
     if (unlikely(base_coroutine == NULL))
-    {
-        base_coroutine = malloc(sizeof(struct coroutine));
-        initialise_cocore(&base_coroutine->cocore);
-    }
-    return get_coroutine(get_current_cocore());
+        base_coroutine = initialise_cocore();
+    return get_current_cocore();
 }
 
 
@@ -95,9 +81,5 @@ coroutine_t get_current_coroutine(void)
  * on stack frame sharing the switching process may be more or less involved. */
 void * switch_coroutine(coroutine_t target, void *parameter)
 {
-    struct cocore *defunct;
-    void *result = switch_cocore(&target->cocore, parameter, &defunct);
-    if (defunct != NULL)
-        free(get_coroutine(defunct));
-    return result;
+    return switch_cocore(target, parameter);
 }

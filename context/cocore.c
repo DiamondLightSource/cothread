@@ -84,6 +84,21 @@ struct stack {
     unsigned int ref_count;     // Number of sharing coroutines
 };
 
+struct cocore {
+    frame_t frame;              // Coroutine frame: saves dynamic state
+    struct stack *stack;        // Stack that this cocore belongs to
+    cocore_action_t action;     // Action performed by coroutine
+    struct cocore *parent;      // Receives control when coroutine exits
+    struct cocore *defunct;     // Used to delete exited coroutine
+    /* If the coroutine needs to share a stack frame then the following state
+     * is used to save the frame while it is not in use. */
+    void *saved_frame;          // Saved stack frame for shared stack
+    size_t saved_length;        // Bytes saved in saved_frame
+    size_t max_saved_length;    // Length of allocated saved_frame
+
+    char context[];             // Context saved for coroutine
+};
+
 
 static __thread struct cocore *current_coroutine;
 
@@ -268,7 +283,7 @@ static __attribute__((noreturn))
 {
     struct cocore *this = context;
     current_coroutine = this;
-    void *result = this->action(context, switch_arg);
+    void *result = this->action(this->context, switch_arg);
 
     /* We're nearly done.  As soon as control is switched away from this
      * coroutine it can be recycled: the receiver of our switch will do the
@@ -276,7 +291,7 @@ static __attribute__((noreturn))
     struct cocore *parent = this->parent;
     parent->defunct = this;
     /* Pass control to the parent.  We'll never get control back again! */
-    switch_cocore(parent, result, &this);
+    switch_cocore(parent, result);
     abort();    // (Only needed to persuade compiler.)
 }
 
@@ -311,12 +326,12 @@ static void create_shared_frame(struct cocore *coroutine)
 
 /* Returns the current coroutine.  On first call a wrapper to represent the main
  * stack is created at the same time. */
-void initialise_cocore(struct cocore *coroutine)
+struct cocore * initialise_cocore(void)
 {
     /* The base coroutine is rather special: it represents the first coroutine
      * running on the main stack, and so everything is initialised slightly
      * differently. */
-    memset(coroutine, 0, sizeof(struct cocore));
+    struct cocore *coroutine = calloc(1, sizeof(struct cocore));
     coroutine->stack = create_base_stack(coroutine);
     current_coroutine = coroutine;
 
@@ -325,6 +340,8 @@ void initialise_cocore(struct cocore *coroutine)
     void *stack = STACK_BASE(
         malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
     switcher_coroutine = create_frame(stack, frame_switcher, NULL);
+
+    return coroutine;
 }
 
 
@@ -338,15 +355,17 @@ struct cocore *get_current_cocore(void)
 /* Creates a new coroutine with the given parent, action and context.  If
  * shared_stack is NULL a fresh stack of stack_size is created, otherwise the
  * stack is shared with the shared_stack coroutine. */
-void create_cocore(
-    struct cocore *coroutine,
+struct cocore * create_cocore(
     struct cocore *parent, cocore_action_t action,
+    void *context, size_t context_size,
     struct cocore *shared_stack, size_t stack_size, bool check_stack)
 {
-    /* To simplify default state, start with everything zero! */
-    memset(coroutine, 0, sizeof(struct cocore));
+    /* To simplify default state, start with everything zero!  We add on enough
+     * space to save the requested context area. */
+    struct cocore *coroutine = calloc(1, sizeof(struct cocore) + context_size);
     coroutine->action = action;
     coroutine->parent = parent;
+    memcpy(coroutine->context, context, context_size);
 
     if (shared_stack)
     {
@@ -364,6 +383,7 @@ void create_cocore(
         coroutine->frame = create_frame(
             coroutine->stack->stack_base, action_wrapper, coroutine);
     }
+    return coroutine;
 }
 
 
@@ -375,13 +395,13 @@ static void delete_cocore(struct cocore *coroutine)
     if (stack->ref_count == 0)
         delete_stack(stack);
     free(coroutine->saved_frame);
+    free(coroutine);
 }
 
 
 /* Switches control to target coroutine passing the given parameter.  Depending
  * on stack frame sharing the switching process may be more or less involved. */
-void * switch_cocore(
-    struct cocore *target, void *parameter, struct cocore **defunct)
+void * switch_cocore(struct cocore *target, void *parameter)
 {
     struct cocore *this = current_coroutine;
     void *result;
@@ -394,8 +414,7 @@ void * switch_cocore(
         result = switch_shared_frame(this, target, parameter);
     current_coroutine = this;
 
-    /* Pass back any defunct coroutine signal if appropriate. */
-    *defunct = this->defunct;
+    /* If the coroutine which just gave us control is defunct delete it now. */
     if (this->defunct)
         delete_cocore(this->defunct);
     this->defunct = NULL;

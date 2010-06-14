@@ -29,7 +29,7 @@
 
 /* Simple coroutine library. */
 
-typedef struct coroutine *coroutine_t;
+typedef struct cocore *coroutine_t;
 typedef void * (*coroutine_action_t)(void *context, void *argument);
 
 coroutine_t get_current_coroutine(void);

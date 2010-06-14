@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include "switch.h"
 #include "cocore.h"
 
 
@@ -54,21 +53,11 @@
 #define DEFAULT_STACK_SIZE      (1 << 16)
 
 
-struct py_coroutine {
-    struct cocore cocore;
-    PyObject *action;
-};
-
-/* Extracts associated coroutine from cocore pointer. */
-#define get_coroutine(cocore_) \
-    container_of(cocore_, struct py_coroutine, cocore)
-
-
-static __thread struct py_coroutine *base_coroutine = NULL;
+static __thread struct cocore *base_coroutine = NULL;
 static bool check_stack_enabled = false;
 
 
-static void * coroutine_wrapper(struct cocore *cocore, void *arg_)
+static void * coroutine_wrapper(void *action_, void *arg_)
 {
     PyThreadState *thread_state = PyThreadState_GET();
     /* New coroutine gets a brand new Python interpreter stack frame. */
@@ -76,7 +65,7 @@ static void * coroutine_wrapper(struct cocore *cocore, void *arg_)
     thread_state->recursion_depth = 0;
 
     /* Call the given action with the passed argument. */
-    PyObject *action = get_coroutine(cocore)->action;
+    PyObject *action = *(PyObject **)action_;
     PyObject *arg = arg_;
     PyObject *result = PyObject_CallFunction(action, "O", arg);
     Py_DECREF(action);
@@ -91,16 +80,14 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
     size_t stack_size;
     if (PyArg_ParseTuple(args, "OOI", &parent_, &action, &stack_size))
     {
-        struct py_coroutine *parent = PyCObject_AsVoidPtr(parent_);
+        struct cocore *parent = PyCObject_AsVoidPtr(parent_);
         if (parent == NULL)
             return NULL;
-        struct py_coroutine *coroutine = malloc(sizeof(struct py_coroutine));
 
         Py_INCREF(action);
-        coroutine->action = action;
-        create_cocore(
-            &coroutine->cocore, &parent->cocore, coroutine_wrapper,
-            &base_coroutine->cocore, stack_size, check_stack_enabled);
+        struct cocore * coroutine = create_cocore(
+            parent, coroutine_wrapper, &action, sizeof(action),
+            base_coroutine, stack_size, check_stack_enabled);
         return PyCObject_FromVoidPtr(coroutine, NULL);
     }
     else
@@ -113,7 +100,7 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
     PyObject *coroutine_, *arg;
     if (PyArg_ParseTuple(args, "OO", &coroutine_, &arg))
     {
-        struct py_coroutine *target = PyCObject_AsVoidPtr(coroutine_);
+        struct cocore *target = PyCObject_AsVoidPtr(coroutine_);
         if (target == NULL)
             return NULL;
 
@@ -129,10 +116,7 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
          * reference count, it'll be accounted for either on the next returned
          * result or in the entry to a new coroutine. */
         Py_INCREF(arg);
-        struct cocore *defunct;
-        PyObject *result = switch_cocore(&target->cocore, arg, &defunct);
-        if (defunct != NULL)
-            free(get_coroutine(defunct));
+        PyObject *result = switch_cocore(target, arg);
 
         /* Restore previously saved state.  I wonder if PyThreadState_GET()
          * really needs to be called again here... */
@@ -149,14 +133,9 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
 {
     if (unlikely(base_coroutine == NULL))
-    {
-        /* First time through: create a base_coroutine and use it to initialise
-         * the cocore library. */
-        base_coroutine = malloc(sizeof(struct py_coroutine));
-        initialise_cocore(&base_coroutine->cocore);
-    }
-
-    return PyCObject_FromVoidPtr(get_coroutine(get_current_cocore()), NULL);
+        /* First time through initialise the cocore library. */
+        base_coroutine = initialise_cocore();
+    return PyCObject_FromVoidPtr(get_current_cocore(), NULL);
 }
 
 
@@ -178,10 +157,9 @@ static PyMethodDef module_methods[] = {
       "_coroutine.getcurrent()\nReturns the current coroutine." },
     { "create", coroutine_create, METH_VARARGS,
       "create(action, parent, stack_size)\n\
-Creates a new coroutine with the given action to invoke.  If no parent is\n\
-specified the caller will become the parent, which will be switched to\n\
-when the coroutine exits.  If no stack_size is specified a default small\n\
-stack is allocated." },
+Creates a new coroutine with the given action to invoke.  The parent will\n\
+be switched to when the coroutine exits.  If no stack_size is specified a\n\
+default small stack is allocated." },
     { "switch", coroutine_switch, METH_VARARGS,
       "result = switch(coroutine, arg)\n\
 Switches control to this coroutine, passing arg to new coroutine.\n\
