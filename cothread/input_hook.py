@@ -42,7 +42,7 @@ from ctypes import *
 import cothread
 import coselect
 
-from cothread import _scheduler
+_separate_stacks = cothread._coroutine.separate_stacks
 
 
 __all__ = [
@@ -51,7 +51,7 @@ __all__ = [
 
 
 # When Qt is running in its own stack it really needs quite a bit of room.
-QT_STACK_SIZE = 512 * 1024
+QT_STACK_SIZE = 1024 * 1024
 
 hook_function = CFUNCTYPE(None)
 
@@ -137,7 +137,7 @@ def _run_iqt(QT, poll_interval):
     qt_done.Signal()
 
 
-def iqt(poll_interval = 0.05, use_timer = False, argv = sys.argv):
+def iqt(poll_interval = 0.05, use_timer = _separate_stacks, argv = sys.argv):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
 

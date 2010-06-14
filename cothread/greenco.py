@@ -39,8 +39,6 @@ except ImportError:
     from py.magic import greenlet
     create_greenlet = greenlet
 
-DEFAULT_STACK_SIZE = None
-
 get_current = greenlet.getcurrent
 
 def create(parent, action, stack_size):
@@ -51,3 +49,5 @@ def switch(coroutine, arg):
 
 def enable_check_stack(enable):
     pass
+
+separate_stacks = False

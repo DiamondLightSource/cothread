@@ -269,6 +269,9 @@ _WAKEUP_INTERRUPT = 2  # Special: transfer scheduler exception to main
 class _Scheduler(object):
     '''Coroutine activity scheduler.'''
 
+    # The scheduler runs in a dedicated stack.  It doesn't need much stack.
+    SCHEDULER_STACK_SIZE = 65536
+
     @classmethod
     def create(cls):
         '''Creates the scheduler in its own coroutine and starts it running.
@@ -279,7 +282,7 @@ class _Scheduler(object):
         # makes for a more usable system.
         current = _coroutine.get_current()
         scheduler_task = _coroutine.create(
-            current, cls.__scheduler, _coroutine.DEFAULT_STACK_SIZE)
+            current, cls.__scheduler, cls.SCHEDULER_STACK_SIZE)
         return _coroutine.switch(scheduler_task, current)
 
     @classmethod
@@ -613,8 +616,7 @@ class Spawn(EventBase):
         self.__result = ()
         self.__raise_on_wait = kargs.pop('raise_on_wait', False)
         # Hand control over to the run method in the scheduler.
-        _scheduler.spawn(self.__run,
-            kargs.pop('stack_size', _coroutine.DEFAULT_STACK_SIZE))
+        _scheduler.spawn(self.__run, kargs.pop('stack_size', 0))
 
     def __run(self, _):
         try:

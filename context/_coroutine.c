@@ -48,9 +48,13 @@
 #endif
 
 
-/* Default suggested stack size.  Later on we might keep a pool of stack frames
- * of this size. */
-#define DEFAULT_STACK_SIZE      (1 << 16)
+/* Special casting operation to bypass strict aliasing warnings. */
+#define CAST(type, value) \
+    ( { \
+        union { __typeof__(value) a; type b; } __u; \
+        __u.a = (value); \
+        __u.b; \
+    } )
 
 
 static __thread struct cocore *base_coroutine = NULL;
@@ -87,7 +91,8 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
         Py_INCREF(action);
         struct cocore * coroutine = create_cocore(
             parent, coroutine_wrapper, &action, sizeof(action),
-            base_coroutine, stack_size, check_stack_enabled);
+            stack_size == 0 ? base_coroutine : NULL,
+            stack_size, check_stack_enabled);
         return PyCObject_FromVoidPtr(coroutine, NULL);
     }
     else
@@ -158,8 +163,8 @@ static PyMethodDef module_methods[] = {
     { "create", coroutine_create, METH_VARARGS,
       "create(action, parent, stack_size)\n\
 Creates a new coroutine with the given action to invoke.  The parent will\n\
-be switched to when the coroutine exits.  If no stack_size is specified a\n\
-default small stack is allocated." },
+be switched to when the coroutine exits.  If no stack_size is specified\n\
+the stack is shared with the main stack." },
     { "switch", coroutine_switch, METH_VARARGS,
       "result = switch(coroutine, arg)\n\
 Switches control to this coroutine, passing arg to new coroutine.\n\
@@ -172,9 +177,14 @@ coroutine terminates." },
 };
 
 
+/* Ugh: the compiler gets all excited about "strict-aliasing rules", broken by
+ * the definition of Py_True.  Make it happy. */
+#undef Py_True
+#define Py_True CAST(PyObject *, &_Py_TrueStruct)
+
 void init_coroutine(void)
 {
     PyObject * module = Py_InitModule("_coroutine", module_methods);
-    PyModule_AddObject(module,
-        "DEFAULT_STACK_SIZE", PyInt_FromLong(DEFAULT_STACK_SIZE));
+    Py_INCREF(Py_True);
+    PyModule_AddObject(module, "separate_stacks", Py_True);
 }

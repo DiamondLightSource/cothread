@@ -10,7 +10,7 @@ from cothread import *
 from numpy import *
 from PyQt4 import Qwt5, QtGui, QtCore, uic
 
-iqt(use_timer = True)
+iqt()
 
 # Qt designer form class (widget is actually QtGui.QWidget)
 scope_ui_file = os.path.join(os.path.dirname(__file__), 'scope.ui')
