@@ -3,18 +3,18 @@
         .text
         .align  2
 
-# void * switch_frame(frame_t *old_frame, frame_t *new_frame, void *arg)
+# void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
         .global switch_frame
         .type   switch_frame, %function
 
 # Arugments on entry:
 #   r0      address of frame to be saved
-#   r1      address of frame to be loaded
+#   r1      frame to be loaded
 #   r2      Context argument to pass through
 switch_frame:
         stmfd   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
         str     sp, [r0]
-        ldr     sp, [r1]
+        mov     sp, r1
         mov     r0, r2
         ldmfd   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
         .size   switch_frame, .-switch_frame

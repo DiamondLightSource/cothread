@@ -24,16 +24,15 @@
 #   r12-r15 Must be preserved
 
 
-# void * switch_frame(frame_t *old_frame, frame_t *new_frame, void *arg)
+# void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
 .globl  switch_frame
         .type   switch_frame, @function
 
 # Arguments:
 #   rdi     Address to store saved stack after switch
-#   rsi     Address to load new stack pointers
+#   rsi     New stack pointer
 #   rdx     Argument to pass through to switched frame
 switch_frame:
-        movq    (%rsi), %rax        # Pick up target frame
         # Push all the registers we need to save
         pushq   %rbp
         pushq   %r15
@@ -50,7 +49,7 @@ switch_frame:
 
         # Switch frame and save current frame
         movq    %rsp, (%rdi)
-        movq    %rax, %rsp
+        movq    %rsi, %rsp
 
         # Restore FP and MMX
         ldmxcsr (%rsp)

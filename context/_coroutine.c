@@ -45,9 +45,6 @@ struct py_coroutine * get_current_coroutine(void)
         current_coroutine->defunct = NULL;
         current_coroutine->python_frame = NULL;
         current_coroutine->recursion_depth = 0;
-#ifdef USE_UCONTEXT
-        current_frame(&current_coroutine->frame);
-#endif
     }
     return current_coroutine;
 }
@@ -65,7 +62,7 @@ static PyObject *do_switch(struct py_coroutine *target, PyObject *arg)
 
     current_coroutine = target;
     PyObject *result = (PyObject *) switch_frame(
-        &this->frame, &target->frame, arg);
+        &this->frame, target->frame, arg);
 
     thread_state = PyThreadState_GET();
     thread_state->frame = this->python_frame;

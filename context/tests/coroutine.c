@@ -44,9 +44,6 @@ coroutine_t get_current_coroutine(void)
     {
         current_coroutine = malloc(sizeof(struct coroutine));
         current_coroutine->defunct = NULL;
-#ifdef USE_UCONTEXT
-        current_frame(&current_coroutine->frame);
-#endif
     }
     return current_coroutine;
 }
@@ -98,7 +95,7 @@ void * switch_coroutine(coroutine_t coroutine, void *parameter)
 {
     coroutine_t this = get_current_coroutine();
     current_coroutine = coroutine;
-    void *result = switch_frame(&this->frame, &coroutine->frame, parameter);
+    void *result = switch_frame(&this->frame, coroutine->frame, parameter);
 
     coroutine_t defunct = current_coroutine->defunct;
     if (defunct)

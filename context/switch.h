@@ -1,28 +1,14 @@
 /* Interface for stack switching. */
 
-// #define USE_UCONTEXT
-
-#if defined(USE_UCONTEXT)
-#include <ucontext.h>
-typedef struct frame
-{
-    struct ucontext ucontext;
-    void *result;
-} frame_t;
-
-/* Initialises a frame to refer to the current frame. */
-void current_frame(frame_t *frame);
-
-#else
+/* A saved stack frame is completely defined by a pointer to the top of the
+ * stack frame. */
 typedef void *frame_t;
-#endif
-
 
 typedef void (*frame_action_t)(void *arg, void *context);
 
 /* Switch to new frame, previously established by create_frame() or an earlier
  * switch_frame().  The frame context is updated. */
-void * switch_frame(frame_t *old_frame, frame_t *new_frame, void *arg);
+void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg);
 
 /* Establish a new frame in the given stack.  action(context) will be called
  * when the newly created frame is switched to.  When the action routine returns

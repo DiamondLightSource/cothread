@@ -1,18 +1,12 @@
 /* Makefile configuration.  This is processed by the compiler to discover the
  * appropriate stack frame switching code. */
 
-#if defined(__GNUC__)
-    #if defined(__i386__)
-        SWITCH_FRAME = switch-x86.s
-    #elif defined(__x86_64__)
-        SWITCH_FRAME = switch-x86_64.s
-    #elif defined(__arm__)
-        SWITCH_FRAME = switch-arm.s
-    #elif defined(__unix__)
-        /* Well, not sure about this, but try ucontext as a last gap measure. */
-        SWITCH_FRAME = switch-ucontext.c
-        CPPFLAGS += -DUSE_UCONTEXT
-    #endif
+#if defined(__i386__)
+    SWITCH_FRAME = switch-x86.s
+#elif defined(__x86_64__)
+    SWITCH_FRAME = switch-x86_64.s
+#elif defined(__arm__)
+    SWITCH_FRAME = switch-arm.s
 #else
-#error "Don't know how to support this platform"
+    #error "Don't know how to support this platform"
 #endif

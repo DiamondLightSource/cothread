@@ -26,19 +26,18 @@
 #   -4(%ebp)    ... local variables
 
 
-# void * switch_frame(frame_t *old_frame, frame_t *new_frame, void *arg)
+# void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
 .globl  switch_frame
         .type   switch_frame, @function
 
 # On entry have following arguments on stack:
 #   4(%esp)     address of frame to be written
-#   8(%esp)     address of frame to be loaded
+#   8(%esp)     frame to be loaded
 #   12(%esp)    argument to pass through switch
 switch_frame:
         # Pick up the arguments
-        movl    8(%esp), %eax       # new_frame
         movl    4(%esp), %ecx       # %ecx = old_frame
-        movl    (%eax), %edx        # %edx = *new_frame
+        movl    8(%esp), %edx       # %edx = new_frame
         movl    12(%esp), %eax      # %eax = arg = result register
 
         # Save registers ABI requires to be preserved.
@@ -51,7 +50,8 @@ switch_frame:
         movl    %esp, (%ecx)
         movl    %edx, %esp
 
-        # Restore previously saved registers and we're done.
+        # Restore previously saved registers and we're done, the result is
+        # already in the right place.
         popl    %esi
         popl    %edi
         popl    %ebx
