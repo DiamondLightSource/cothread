@@ -58,14 +58,6 @@
 #define COMPILER_MEMORY_BARRIER()   __asm__ __volatile__("" ::: "memory")
 
 
-/* Saved frame allocation size calculation.  We round the saved length up to a
- * multiple of some largeish number to try and avoid lots of tiny reallocations
- * as the frame grows. */
-#define SAVE_FRAME_INCREMENT    (1 << 12)
-#define SAVE_FRAME_SIZE(size) \
-    (((size) + SAVE_FRAME_INCREMENT - 1) & (SAVE_FRAME_INCREMENT - 1))
-
-
 /* A single stack frame can be shared among multiple coroutines, in the style of
  * "greenlets", so we manage the stack separately.  The stack frame records the
  * current coroutine and has to be reference counted (unless it's the master
@@ -94,7 +86,6 @@ struct cocore {
      * is used to save the frame while it is not in use. */
     void *saved_frame;          // Saved stack frame for shared stack
     size_t saved_length;        // Bytes saved in saved_frame
-    size_t max_saved_length;    // Length of allocated saved_frame
 
     char context[];             // Context saved for coroutine
 };
@@ -124,17 +115,13 @@ static void save_frame(struct cocore *target)
         /* Can happen for frames on the main stack if the high water mark falls
          * below the originally detected stack base. */
         frame_size = 0;
-    else if (frame_size > (ssize_t) target->max_saved_length)
+    else
     {
-        /* Rather than realloc, save the hassle of copying data around that we'd
-         * immediately discard, just free and allocate at a larger size. */
-        free(target->saved_frame);
-        target->max_saved_length = SAVE_FRAME_SIZE(frame_size);
-        target->saved_frame = malloc(target->max_saved_length);
+        target->saved_frame = malloc(frame_size);
+        memcpy(
+            target->saved_frame, FRAME_START(stack->stack_base, target->frame),
+            frame_size);
     }
-    memcpy(
-        target->saved_frame, FRAME_START(stack->stack_base, target->frame),
-        frame_size);
     target->saved_length = frame_size;
 }
 
@@ -146,6 +133,8 @@ static void restore_frame(struct cocore *target)
     memcpy(
         FRAME_START(stack->stack_base, target->frame),
         target->saved_frame, target->saved_length);
+    free(target->saved_frame);
+    target->saved_frame = NULL;
     stack->current = target;
 }
 
@@ -306,7 +295,6 @@ static void create_shared_frame(struct cocore *coroutine)
 
     /* Relocate the new frame into a saved frame area for this coroutine. */
     size_t frame_length = FRAME_LENGTH(initial_base, frame);
-    coroutine->max_saved_length = SAVE_FRAME_SIZE(frame_length);
     coroutine->saved_frame = malloc(frame_length);
     coroutine->saved_length = frame_length;
     memcpy(coroutine->saved_frame,
