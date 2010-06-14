@@ -57,33 +57,15 @@
 struct py_coroutine {
     struct cocore cocore;
     PyObject *action;
-
-    /* Python stack tracking.  Need to switch recursion depth and top frame
-     * around as we switch frames, otherwise the interpreter gets confused and
-     * thinks we've recursed too deep.  In truth tracking this stuff is the
-     * only reason this code is in a Python extension! */
-    struct _frame *python_frame;
-    int recursion_depth;
 };
 
-static __thread struct py_coroutine *current_coroutine = NULL;
+/* Extracts associated coroutine from cocore pointer. */
+#define get_coroutine(cocore_) \
+    container_of(cocore_, struct py_coroutine, cocore)
+
+
 static __thread struct py_coroutine *base_coroutine = NULL;
 static bool check_stack_enabled = false;
-
-
-static struct py_coroutine * get_current_coroutine(void)
-{
-    if (unlikely(base_coroutine == NULL))
-    {
-        /* First time through: initialise the base coroutine and make it
-         * current. */
-        base_coroutine = malloc(sizeof(struct py_coroutine));
-        initialise_cocore(&base_coroutine->cocore);
-        current_coroutine = base_coroutine;
-    }
-
-    return current_coroutine;
-}
 
 
 static void * coroutine_wrapper(struct cocore *cocore, void *arg_)
@@ -92,14 +74,12 @@ static void * coroutine_wrapper(struct cocore *cocore, void *arg_)
     /* New coroutine gets a brand new Python interpreter stack frame. */
     thread_state->frame = NULL;
     thread_state->recursion_depth = 0;
-    /* Call the given action with the passed argument. */
-    struct py_coroutine *this =
-        container_of(cocore, struct py_coroutine, cocore);
-    current_coroutine = this;
 
+    /* Call the given action with the passed argument. */
+    PyObject *action = get_coroutine(cocore)->action;
     PyObject *arg = arg_;
-    PyObject *result = PyObject_CallFunction(this->action, "O", arg);
-    Py_DECREF(this->action);
+    PyObject *result = PyObject_CallFunction(action, "O", arg);
+    Py_DECREF(action);
     Py_DECREF(arg);
     return result;
 }
@@ -120,38 +100,11 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
         coroutine->action = action;
         create_cocore(
             &coroutine->cocore, &parent->cocore, coroutine_wrapper,
-            NULL, stack_size, check_stack_enabled);
-        coroutine->python_frame = NULL;
-        coroutine->recursion_depth = 0;
+            &base_coroutine->cocore, stack_size, check_stack_enabled);
         return PyCObject_FromVoidPtr(coroutine, NULL);
     }
     else
         return NULL;
-}
-
-
-/* This does the core work of stack switching including the maintenance of all
- * associated Python state.  The given arg must already have the appropriate
- * extra reference count. */
-static PyObject *do_switch(struct py_coroutine *target, PyObject *arg)
-{
-    struct py_coroutine *this = current_coroutine;
-    PyThreadState *thread_state = PyThreadState_GET();
-    this->python_frame = thread_state->frame;
-    this->recursion_depth = thread_state->recursion_depth;
-
-    struct cocore *defunct_core;
-    PyObject *result = switch_cocore(
-        &this->cocore, &target->cocore, arg, &defunct_core);
-    if (defunct_core != NULL)
-        free(container_of(defunct_core, struct py_coroutine, cocore));
-
-    current_coroutine = this;
-
-    thread_state = PyThreadState_GET();
-    thread_state->frame = this->python_frame;
-    thread_state->recursion_depth = this->recursion_depth;
-    return result;
 }
 
 
@@ -164,11 +117,29 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
         if (target == NULL)
             return NULL;
 
+        /* Need to switch the Python interpreter's record of recursion depth and
+         * top frame around as we switch frames, otherwise the interpreter gets
+         * confused and thinks we've recursed too deep.  In truth tracking this
+         * stuff is the only reason this code is in a Python extension! */
+        PyThreadState *thread_state = PyThreadState_GET();
+        struct _frame *python_frame = thread_state->frame;
+        int recursion_depth = thread_state->recursion_depth;
+
         /* Switch to new coroutine.  For the duration arg needs an extra
          * reference count, it'll be accounted for either on the next returned
          * result or in the entry to a new coroutine. */
         Py_INCREF(arg);
-        return do_switch(target, arg);
+        struct cocore *defunct;
+        PyObject *result = switch_cocore(&target->cocore, arg, &defunct);
+        if (defunct != NULL)
+            free(get_coroutine(defunct));
+
+        /* Restore previously saved state.  I wonder if PyThreadState_GET()
+         * really needs to be called again here... */
+        thread_state = PyThreadState_GET();
+        thread_state->frame = python_frame;
+        thread_state->recursion_depth = recursion_depth;
+        return result;
     }
     else
         return NULL;
@@ -177,7 +148,15 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 
 static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
 {
-    return PyCObject_FromVoidPtr(get_current_coroutine(), NULL);
+    if (unlikely(base_coroutine == NULL))
+    {
+        /* First time through: create a base_coroutine and use it to initialise
+         * the cocore library. */
+        base_coroutine = malloc(sizeof(struct py_coroutine));
+        initialise_cocore(&base_coroutine->cocore);
+    }
+
+    return PyCObject_FromVoidPtr(get_coroutine(get_current_cocore()), NULL);
 }
 
 

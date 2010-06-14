@@ -40,6 +40,9 @@ typedef void * (*cocore_action_t)(struct cocore *coroutine, void *argument);
  * thread) before any other coroutine actions. */
 void initialise_cocore(struct cocore *coroutine);
 
+/* Returns the current coroutine. */
+struct cocore *get_current_cocore(void);
+
 /* Creates a new coroutine. */
 void create_cocore(
     struct cocore *coroutine,
@@ -51,8 +54,7 @@ void create_cocore(
  * assigned to *defunct: at this point the original cocore structure has already
  * been released and invalidated, the caller can do any extra cleanup work. */
 void * switch_cocore(
-    struct cocore *current, struct cocore *target,
-    void *parameter, struct cocore **defunct);
+    struct cocore *target, void *parameter, struct cocore **defunct);
 
 
 /* Casts a member of a structure out to the containing structure. */

@@ -85,6 +85,8 @@ struct stack {
 };
 
 
+static __thread struct cocore *current_coroutine;
+
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*  Shared Stack Switching.                                                  */
@@ -265,6 +267,7 @@ static __attribute__((noreturn))
     void action_wrapper(void *switch_arg, void *context)
 {
     struct cocore *this = context;
+    current_coroutine = this;
     void *result = this->action(context, switch_arg);
 
     /* We're nearly done.  As soon as control is switched away from this
@@ -273,7 +276,7 @@ static __attribute__((noreturn))
     struct cocore *parent = this->parent;
     parent->defunct = this;
     /* Pass control to the parent.  We'll never get control back again! */
-    switch_cocore(this, parent, result, &this);
+    switch_cocore(parent, result, &this);
     abort();    // (Only needed to persuade compiler.)
 }
 
@@ -315,12 +318,20 @@ void initialise_cocore(struct cocore *coroutine)
      * differently. */
     memset(coroutine, 0, sizeof(struct cocore));
     coroutine->stack = create_base_stack(coroutine);
+    current_coroutine = coroutine;
 
     /* Now is also a good time to prepare the switcher coroutine in case we need
      * it. */
     void *stack = STACK_BASE(
         malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
     switcher_coroutine = create_frame(stack, frame_switcher, NULL);
+}
+
+
+/* Returns current coroutine. */
+struct cocore *get_current_cocore(void)
+{
+    return current_coroutine;
 }
 
 
@@ -370,22 +381,23 @@ static void delete_cocore(struct cocore *coroutine)
 /* Switches control to target coroutine passing the given parameter.  Depending
  * on stack frame sharing the switching process may be more or less involved. */
 void * switch_cocore(
-    struct cocore *current, struct cocore *target,
-    void *parameter, struct cocore **defunct)
+    struct cocore *target, void *parameter, struct cocore **defunct)
 {
+    struct cocore *this = current_coroutine;
     void *result;
     if (target->stack->current == target)
         /* No stack retargeting required, simply switch to already available
          * stack frame. */
-        result = switch_frame(&current->frame, target->frame, parameter);
+        result = switch_frame(&this->frame, target->frame, parameter);
     else
         /* Need to switch a shared frame at the same time. */
-        result = switch_shared_frame(current, target, parameter);
+        result = switch_shared_frame(this, target, parameter);
+    current_coroutine = this;
 
     /* Pass back any defunct coroutine signal if appropriate. */
-    *defunct = current->defunct;
-    if (current->defunct)
-        delete_cocore(current->defunct);
-    current->defunct = NULL;
+    *defunct = this->defunct;
+    if (this->defunct)
+        delete_cocore(this->defunct);
+    this->defunct = NULL;
     return result;
 }
