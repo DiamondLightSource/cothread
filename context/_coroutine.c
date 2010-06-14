@@ -19,6 +19,7 @@ struct py_coroutine {
     size_t stack_size;
     struct py_coroutine *parent;
     struct py_coroutine *defunct;
+
     /* Python stack tracking.  Need to switch recursion depth and top frame
      * around as we switch frames, otherwise the interpreter gets confused and
      * thinks we've recursed too deep.  In truth tracking this stuff is the
@@ -75,9 +76,8 @@ static PyObject *do_switch(struct py_coroutine *target, PyObject *arg)
 
 static void coroutine_wrapper(void *arg, void *action)
 {
-    struct py_coroutine *this = current_coroutine;
     PyThreadState *thread_state = PyThreadState_GET();
-    /* New coroutine gets a brand new stack frame. */
+    /* New coroutine gets a brand new Python interpreter stack frame. */
     thread_state->frame = NULL;
     thread_state->recursion_depth = 0;
 
@@ -87,9 +87,11 @@ static void coroutine_wrapper(void *arg, void *action)
     Py_DECREF((PyObject *) action);
     Py_DECREF((PyObject *) arg);
 
-    /* Switch control to parent.  We had better not get control back! */
-    this->parent->defunct = this;
-    (void) do_switch(this->parent, result);
+    /* Switch control to parent after marking ourself as defunct.  We had better
+     * not get control back! */
+    struct py_coroutine *parent = current_coroutine->parent;
+    parent->defunct = current_coroutine;
+    (void) do_switch(parent, result);
 }
 
 
@@ -157,15 +159,14 @@ PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 
         /* If the coroutine switching to us has just terminated it will have
          * left us a defunct pointer, which can be cleaned up now. */
-        struct py_coroutine *this = current_coroutine;
-        struct py_coroutine *defunct = this->defunct;
+        struct py_coroutine *defunct = current_coroutine->defunct;
         if (defunct)
         {
             if (check_stack_enabled)
                 check_stack(defunct->stack, defunct->stack_size);
             free(defunct->stack);
             free(defunct);
-            this->defunct = NULL;
+            current_coroutine->defunct = NULL;
         }
 
         return result;
