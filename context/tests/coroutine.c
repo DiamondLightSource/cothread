@@ -171,7 +171,7 @@ static void *switch_shared_frame(
              * switcher coroutine. */
             void *stack = STACK_BASE(
                 malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
-            create_frame(&switcher_coroutine, stack, frame_switcher, NULL);
+            switcher_coroutine = create_frame(stack, frame_switcher, NULL);
         }
 
         struct frame_action action = { .arg = arg, .target = target };
@@ -278,8 +278,7 @@ static void create_shared_frame(coroutine_t coroutine, void *context)
     /* Create a temporary frame right here on the stack. */
     char initial_frame[INITIAL_FRAME_SIZE];
     void *initial_base = STACK_BASE(initial_frame, INITIAL_FRAME_SIZE);
-    frame_t frame;
-    create_frame(&frame, initial_base, action_wrapper, context);
+    frame_t frame = create_frame(initial_base, action_wrapper, context);
 
     /* Relocate the new frame into a saved frame area for this coroutine. */
     size_t frame_length = FRAME_LENGTH(initial_base, frame);
@@ -348,9 +347,8 @@ coroutine_t create_coroutine(
         /* Coroutine is created in its own stack frame.  This is the easiest
          * case, the frame can be created in place. */
         coroutine->stack = create_stack(coroutine, stack_size, check_stack);
-        create_frame(
-            &coroutine->frame, coroutine->stack->stack_base,
-            action_wrapper, context);
+        coroutine->frame = create_frame(
+            coroutine->stack->stack_base, action_wrapper, context);
     }
     return coroutine;
 }

@@ -28,8 +28,7 @@ frame_t get_frame(void);
  * location.  FRAME_START(stack_base, *frame) points to the start of the created
  * frame and FRAME_LENGTH(stack_base, *frame) computes its length, which is
  * guaranteed to be no more than INITIAL_FRAME_SIZE. */
-void create_frame(
-    frame_t *frame, void *stack_base, frame_action_t action, void *context);
+frame_t create_frame(void *stack_base, frame_action_t action, void *context);
 
 /* This is a safe upper bound on the storage required by create_frame(), a newly
  * created frame is guaranteed to fit into this many bytes. */

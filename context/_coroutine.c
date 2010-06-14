@@ -133,8 +133,7 @@ PyObject * coroutine_create(PyObject *self, PyObject *args)
 #else
         void *stack_base = coroutine->stack;
 #endif
-        create_frame(
-            &coroutine->frame, stack_base, coroutine_wrapper, action);
+        coroutine->frame = create_frame(stack_base, coroutine_wrapper, action);
         return PyCObject_FromVoidPtr(coroutine, NULL);
     }
     else

@@ -69,36 +69,33 @@ get_frame:
         .size   get_frame, .-get_frame
 
 
-# void create_frame(
-#     frame_t *frame, void *stack_base, frame_action_t action, void *context)
+# frame_t create_frame(void *stack_base, frame_action_t action, void *context)
 .globl  create_frame
         .type   create_frame, @function
 
 # On entry have following arguments on stack:
-#   4(%esp)     address of frame to be created
-#   8(%esp)     base of stack to use
-#   12(%esp)    action routine
-#   16(%esp)    context to pass to action routine
+#   4(%esp)     base of stack to use
+#   8(%esp)     action routine
+#   12(%esp)    context to pass to action routine
 create_frame:
         # Save the context needed by the action routine and prepare the switch
-        # context.
-        movl    8(%esp), %ecx       # %ecx = base of stack
-        movl    12(%esp), %edx      # %edx = action routine to call
-        movl    16(%esp), %eax      # %eax = context for action
-        movl    %eax, -4(%ecx)
-        movl    %edx, -8(%ecx)
+        # context.  Start by picking up our arguments into registers.
+        movl    4(%esp), %eax       # %eax = base of stack
+        movl    8(%esp), %edx       # %edx = action routine to call
+        movl    12(%esp), %ecx      # %ecx = context for action
+        movl    %ecx, -4(%eax)
+        movl    %edx, -8(%eax)
         # Push variables expected by switch_frame restore, but push 0 for %ebp
         # to mark base of stack frame list.
-        movl    $action_entry, -12(%ecx)  # Where switch_frame will switch to
-        movl    $0, -16(%ecx)
-        movl    %ebx, -20(%ecx)
-        movl    %edi, -24(%ecx)
-        movl    %esi, -28(%ecx)
+        movl    $action_entry, -12(%eax)  # Where switch_frame will switch to
+        movl    $0, -16(%eax)
+        movl    %ebx, -20(%eax)
+        movl    %edi, -24(%eax)
+        movl    %esi, -28(%eax)
 
         # Save new stack frame and we're all done.
         movl    4(%esp), %edx       # Frame address
-        subl    $28, %ecx
-        movl    %ecx, (%edx)
+        subl    $28, %eax
         ret
 
 action_entry:

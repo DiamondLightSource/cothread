@@ -29,22 +29,19 @@ get_frame:
         .size   get_frame, .-get_frame
 
 
-# void create_frame(
-#     frame_t *frame, void *stack_base, frame_action_t action, void *context)
+# frame_t create_frame(void *stack_base, frame_action_t action, void *context)
         .global create_frame
         .type   create_frame, %function
 
 # Arguments on entry:
-#   r0      address of frame to be written
-#   r1      initial base of stack
-#   r2      action routine
-#   r3      context argument to action
+#   r0      initial base of stack
+#   r1      action routine
+#   r2      context argument to action
 create_frame:
-        stmfd   r1!, {r2, r3}           /* Save arguments for new coroutine */
+        stmfd   r0!, {r1, r2}           /* Save arguments for new coroutine */
         mov     ip, lr                  /* Save LR so can use same STM slot */
         ldr     lr, =action_entry
-        stmfd   r1!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
-        str     r1, [r0]
+        stmfd   r0!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
         bx      ip
 
 action_entry:
@@ -52,5 +49,6 @@ action_entry:
         # saved context and routine to call, switch argument is in r0.
         ldmfd   sp!, {r2, r3}   /* r2 <- action routine, r3 <- context */
         mov     r1, r3
+        mov     r14, #0         /* Ensure no return from action */
         bx      r2
         .size   create_frame, .-create_frame

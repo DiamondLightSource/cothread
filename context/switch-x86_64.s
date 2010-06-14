@@ -77,36 +77,34 @@ get_frame:
         .size   get_frame, .-get_frame
 
 
-# void create_frame(
-#     frame_t *frame, void *stack_base, frame_action_t action, void *context)
+# frame_t create_frame(void *stack_base, frame_action_t action, void *context)
 .globl  create_frame
         .type   create_frame, @function
 
 # Arguments:
-#   rdi     address of frame to be created
-#   rsi     base of stack to use
-#   rdx     action routine
-#   rcx     context to pass to action routine
+#   rdi     base of stack to use
+#   rsi     action routine
+#   rdx     context to pass to action routine
 create_frame:
         # Save the extra arguments needed by the new frame
-        movq    %rcx, -8(%rsi)      # Context for action routine
-        movq    %rdx, -16(%rsi)     # Action routine to call
+        movq    %rdx, -8(%rdi)      # Context for action routine
+        movq    %rsi, -16(%rdi)     # Action routine to call
         # Push the frame expected by switch_frame, but store 0 for %rbp.  Set
         # things up to start control at action_entry
-        movq    $action_entry, -24(%rsi)
-        movq    $0, -32(%rsi)
-        movq    %r15, -40(%rsi)
-        movq    %r14, -48(%rsi)
-        movq    %r13, -56(%rsi)
-        movq    %r12, -64(%rsi)
-        movq    %rbx, -72(%rsi)
+        movq    $action_entry, -24(%rdi)
+        movq    $0, -32(%rdi)
+        movq    %r15, -40(%rdi)
+        movq    %r14, -48(%rdi)
+        movq    %r13, -56(%rdi)
+        movq    %r12, -64(%rdi)
+        movq    %rbx, -72(%rdi)
         # Save floating point and MMX status.
         wait
-        fnstcw  -74(%rsi)
-        stmxcsr -80(%rsi)
+        fnstcw  -74(%rdi)
+        stmxcsr -80(%rdi)
         # Save the new frame pointer and we're done
-        subq    $80, %rsi
-        movq    %rsi, (%rdi)
+        subq    $80, %rdi
+        movq    %rdi, %rax
         ret
 
 action_entry:
