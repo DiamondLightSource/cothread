@@ -10,3 +10,5 @@
 /cothread.egg-info
 /build
 /dist
+
+/Makefile.private
