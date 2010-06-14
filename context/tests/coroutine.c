@@ -48,7 +48,8 @@ coroutine_t get_current_coroutine(void)
     return current_coroutine;
 }
 
-static void action_wrapper(void *switch_arg, void *context)
+static __attribute__((noreturn))
+    void action_wrapper(void *switch_arg, void *context)
 {
     coroutine_t this = current_coroutine;
     void *result = this->action(context, switch_arg);
@@ -60,6 +61,7 @@ static void action_wrapper(void *switch_arg, void *context)
     parent->defunct = this;
     // Pass control to the parent.  We'd better never get control back again!
     switch_coroutine(parent, result);
+    abort();
 }
 
 coroutine_t create_coroutine(

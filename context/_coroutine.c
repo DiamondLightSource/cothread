@@ -81,7 +81,8 @@ static PyObject *do_switch(struct py_coroutine *target, PyObject *arg)
 }
 
 
-static void coroutine_wrapper(void *arg, void *action)
+static __attribute__((noreturn))
+    void coroutine_wrapper(void *arg, void *action)
 {
     PyThreadState *thread_state = PyThreadState_GET();
     /* New coroutine gets a brand new Python interpreter stack frame. */
@@ -99,6 +100,7 @@ static void coroutine_wrapper(void *arg, void *action)
     struct py_coroutine *parent = current_coroutine->parent;
     parent->defunct = current_coroutine;
     (void) do_switch(parent, result);
+    abort();
 }
 
 

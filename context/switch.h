@@ -4,7 +4,8 @@
  * stack frame. */
 typedef void *frame_t;
 
-typedef void (*frame_action_t)(void *arg, void *context);
+typedef __attribute__((noreturn))
+    void (*frame_action_t)(void *arg, void *context);
 
 /* Switch to new frame, previously established by create_frame() or an earlier
  * switch_frame().  The frame context is updated. */
