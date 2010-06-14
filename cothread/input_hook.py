@@ -50,6 +50,9 @@ __all__ = [
 ]
 
 
+# When Qt is running in its own stack it really needs quite a bit of room.
+QT_STACK_SIZE = 512 * 1024
+
 hook_function = CFUNCTYPE(None)
 
 @hook_function
@@ -157,9 +160,6 @@ def iqt(poll_interval = 0.05, use_timer = False, argv = sys.argv):
             QtCore.pyqtRemoveInputHook()
             _install_readline_hook(True)
 
-            if use_timer:
-                print >>sys.stderr, 'Experimental Qt timer enabled'
-
         except ImportError:
             import qt
             from qt import SIGNAL, QTimer, QApplication
@@ -180,9 +180,10 @@ def iqt(poll_interval = 0.05, use_timer = False, argv = sys.argv):
         QT.instance(), QT.SIGNAL('lastWindowClosed()'), cothread.Quit)
 
     if use_timer:
-        cothread.Spawn(_run_iqt,  QT, poll_interval)
+        iqt_thread = _run_iqt
     else:
-        cothread.Spawn(_poll_iqt, QT, poll_interval)
+        iqt_thread = _poll_iqt
+    cothread.Spawn(iqt_thread,  QT, poll_interval, stack_size = QT_STACK_SIZE)
     cothread.Yield()
 
     return _qapp
