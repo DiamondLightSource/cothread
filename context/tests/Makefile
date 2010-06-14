@@ -11,7 +11,7 @@ CFLAGS += -O2
 
 CPPFLAGS += -I..
 
-testco: testco.c coroutine.c ../$(SWITCH_FRAME)
+testco: testco.c coroutine.c ../cocore.c ../$(SWITCH_FRAME)
 
 clean:
 	rm -f testco

@@ -27,7 +27,36 @@
  *      michael.abbott@diamond.ac.uk
  */
 
-/* Interface for stack switching. */
+/* Interface for stack switching.
+ *
+ * This file defines a complete but minimal interface for implementing stack
+ * frame switching.  All of the routines in this file can only be implemented in
+ * assembler (well, get_frame() could just as well return the address of a local
+ * variable), and the descriptions below define the required implementation.
+ *
+ * This interface assumes a classical C stack occupying a contiguous block of
+ * memory.  The assumption is made that stack frame switching can be achieved by
+ * simply relocating the stack pointer and related registers.
+ *
+ * A saved "frame" as defined by this API is the position of the stack pointer
+ * where all registers required to be saved by the ABI are saved.  Multiple
+ * frames can be saved, each in its own dedicated stack, and switch_frame() is
+ * used to transfer control between frames.
+ *
+ * The API defined here consists of the following routines:
+ *
+ *  create_frame()
+ *      Creates a new saved frame on a previously unused stack.  When the frame
+ *      is resumed control will be passed to the given action routine.
+ *
+ *  switch_frame()
+ *      Switches control from the currently active stack to a saved frame.  The
+ *      active stack becomes a saved frame and the switched to frame becomes the
+ *      active stack.
+ *
+ * Some macros are also defined to help cope with the fact that, at least in
+ * principle, the stack can grown up or down.  In practice only downward stacks
+ * have ever been tested with this code. */
 
 /* A saved stack frame is completely defined by a pointer to the top of the
  * stack frame. */
@@ -78,20 +107,20 @@ frame_t create_frame(void *stack_base, frame_action_t action, void *context);
  *  FRAME_LENGTH(stack_base, frame_ptr)
  *      Returns the length of the frame bounded by stack base and frame pointer.
  *
- *  STACK_INDEX(stack_base, index)
- *      Returns a char* pointer to the indexed character in the stack, with
- *      index 0 addressing the first pushed byte.
+ *  STACK_CHAR(stack_base, index)
+ *      Returns the indexed character in the stack, with index 0 addressing the
+ *      first pushed byte.
  */
 #ifdef STACK_GROWS_DOWNWARD
 #define STACK_BASE(stack_start, length)     ((stack_start) + (length))
 #define FRAME_START(stack_base, frame)      (frame)
 #define FRAME_LENGTH(stack_base, frame)     ((stack_base) - (frame))
-#define STACK_INDEX(stack_base, index) \
-    (&((unsigned char *)(stack_base))[-(index)-1])
+#define STACK_CHAR(stack_base, index) \
+    (((unsigned char *)(stack_base))[-(index)-1])
 #else
 #define STACK_BASE(stack_start, length)     (stack_start)
 #define FRAME_START(stack_base, frame)      (stack_base)
 #define FRAME_LENGTH(stack_base, frame)     ((frame) - (stack_base))
-#define STACK_INDEX(stack_base, index) \
-    (&((unsigned char *)(stack_base))[(index)])
+#define STACK_CHAR(stack_base, index) \
+    (((unsigned char *)(stack_base))[(index)])
 #endif
