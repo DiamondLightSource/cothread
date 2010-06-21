@@ -240,15 +240,13 @@ static struct stack * create_base_stack(struct cocore *coroutine)
 
 /* For a stack frame originally initialised with C5 in each byte checks for the
  * high water mark and logs the frame usage to stderr. */
-static void check_stack(void *stack_base, size_t stack_size)
+static size_t check_stack_use(struct stack *stack)
 {
     ssize_t i;
-    for (i = stack_size-1; i >= 0; i--)
-        if (STACK_CHAR(stack_base, i) != 0xC5)
+    for (i = stack->stack_size - 1; i >= 0; i--)
+        if (STACK_CHAR(stack->stack_base, i) != 0xC5)
             break;
-    fprintf(stderr,
-        "Stack frame: " PRI_size_t " of " PRI_size_t " bytes used\n",
-        i + 1, stack_size);
+    return i + 1;
 }
 
 
@@ -256,7 +254,9 @@ static void check_stack(void *stack_base, size_t stack_size)
 static void delete_stack(struct stack *stack)
 {
     if (stack->check_stack)
-        check_stack(stack->stack_base, stack->stack_size);
+        fprintf(stderr,
+            "Stack frame: " PRI_size_t " of " PRI_size_t " bytes used\n",
+            check_stack_use(stack), stack->stack_size);
     /* Recover allocated base from working stack base and original allocation
      * size. */
     free(STACK_BASE(stack->stack_base, - stack->stack_size));
@@ -407,4 +407,16 @@ void * switch_cocore(struct cocore *target, void *parameter)
         delete_cocore(this->defunct);
     this->defunct = NULL;
     return result;
+}
+
+
+/* Stack checking. */
+void stack_use(ssize_t *current_use, ssize_t *max_use)
+{
+    struct stack *stack = current_coroutine->stack;
+    *current_use = FRAME_LENGTH(stack->stack_base, (frame_t) &stack);
+    if (stack->check_stack)
+        *max_use = check_stack_use(stack);
+    else
+        *max_use = -1;      // Error return, cannot compute this value
 }

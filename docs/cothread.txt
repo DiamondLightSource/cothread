@@ -191,15 +191,32 @@ The following functions define the basic cothread interface provided by this
 module.
 
 
-+Spawn(function, arguments, raise_on_wait=False, ...)+::
++Spawn(function, arguments, raise_on_wait=False, stack_size=0, ...)+::
 
 A new cooperative thread, or _cothread_, is created as a call to
 +function(arguments)+ where +arguments+ can be any list of values and keyword
-arguments (except for the special +raise_on_wait+ flag).  This routine is not
-a suspension point.
+arguments (except for the +raise_on_wait+ and +stack_size+ arguments).
+This routine is not a suspension point.
 +
 This is the fundamental building block of the cothreading library.  It is
 quite cheap to spawn fresh cothreads, and so this routine can be used freely.
++
+The following arguments are treated specially by this routine:
++
+--
++raise_on_wait+::
+
+By default any exception raised by running +function(arguments)+ is caught and
+reported by a traceback to +stderr+.  If this flag is set then instead the
+exception is retained and returned when +Wait+ is called.
+
++stack_size+::
+
+If a non-zero +stack_size+ is specified the new cothread is allocated its own
+stack, otherwise it will share the main process stack.  The tradeoffs involved
+in whether to allocate a stack are subtle -- by default it is safest to leave
+this parameter unset.
+--
 +
 It is possible to wait for the completion of a spawned cothread by calling its
 +Wait+ method:

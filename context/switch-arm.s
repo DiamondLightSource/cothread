@@ -57,8 +57,8 @@ switch_frame:
 #   r1      action routine
 #   r2      context argument to action
 create_frame:
-        stmfd   r0!, {r1, r2}           /* Save arguments for new coroutine */
-        mov     ip, lr                  /* Save LR so can use same STM slot */
+        stmfd   r0!, {r1, r2}       @ Save arguments for new coroutine
+        mov     ip, lr              @ Save LR so can use same STM slot
         ldr     lr, =action_entry
         stmfd   r0!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
         bx      ip
@@ -66,8 +66,8 @@ create_frame:
 action_entry:
         # Receive control after first switch to new frame.  Top of stack has the
         # saved context and routine to call, switch argument is in r0.
-        ldmfd   sp!, {r2, r3}   /* r2 <- action routine, r3 <- context */
+        ldmfd   sp!, {r2, r3}       @ r2 <- action routine, r3 <- context
         mov     r1, r3
-        mov     r14, #0         /* Ensure no return from action */
+        mov     r14, #0             @ Ensure no return from action
         bx      r2
         .size   create_frame, .-create_frame

@@ -157,6 +157,14 @@ static PyObject* enable_check_stack(PyObject *self, PyObject *arg)
 }
 
 
+static PyObject* py_stack_use(PyObject *self, PyObject *args)
+{
+    ssize_t current_use, max_use;
+    stack_use(&current_use, &max_use);
+    return Py_BuildValue("nn", current_use, max_use);
+}
+
+
 static PyMethodDef module_methods[] = {
     { "get_current", coroutine_getcurrent, METH_NOARGS,
       "_coroutine.getcurrent()\nReturns the current coroutine." },
@@ -173,6 +181,8 @@ When switched back new argument will be returned as result" },
       "enable_check_stack(enable)\n\
 Enables verbose stack checking with results written to stderr when each\n\
 coroutine terminates." },
+    { "stack_use", py_stack_use, METH_NOARGS,
+      "Returns current and maximum stack use." },
     { NULL, NULL }
 };
 
