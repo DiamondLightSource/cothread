@@ -112,7 +112,7 @@ static void save_frame(struct cocore *target)
     struct stack *stack = target->stack;
     ssize_t frame_size = FRAME_LENGTH(stack->stack_base, target->frame);
     if (frame_size < 0)
-        /* Can happen for frames on the main stack if the high water mark falls
+        /* Can happen for frames on the main stack if the stack pointer falls
          * below the originally detected stack base. */
         frame_size = 0;
     else
@@ -233,7 +233,7 @@ static struct stack * create_base_stack(struct cocore *coroutine)
     stack->current = coroutine;
     stack->ref_count = 1;
     /* We need to initialise stack_base to something sensible.  It doesn't
-     * hugely matter where it is, but placing it at the current high water mark
+     * hugely matter where it is, but placing it at the current stack pointer
      * seems a good idea. */
     stack->stack_base = &stack;
     return stack;
@@ -416,10 +416,14 @@ void * switch_cocore(struct cocore *target, void *parameter)
 
 
 /* Stack checking. */
-void stack_use(ssize_t *current_use, ssize_t *max_use)
+void stack_use(struct cocore *coroutine, ssize_t *current_use, ssize_t *max_use)
 {
-    struct stack *stack = current_coroutine->stack;
-    *current_use = FRAME_LENGTH(stack->stack_base, (frame_t) &stack);
+    struct stack *stack = coroutine->stack;
+    /* For the active current coroutine use (a proxy for) the current stack
+     * pointer, for a saved coroutine use its saved frame. */
+    frame_t current_frame = coroutine == current_coroutine ?
+        (frame_t) &stack : coroutine->frame;
+    *current_use = FRAME_LENGTH(stack->stack_base, current_frame);
     if (stack->check_stack)
         *max_use = check_stack_use(stack);
     else

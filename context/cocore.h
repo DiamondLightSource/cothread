@@ -58,7 +58,7 @@ void * switch_cocore(struct cocore *target, void *parameter);
 /* Reports current and maximum stack use for the calling coroutine.  On the
  * base coroutine *current_use is relative to the base used for frame
  * switching, rather than the true stack base. */
-void stack_use(ssize_t *current_use, ssize_t *max_use);
+void stack_use(struct cocore *target, ssize_t *current_use, ssize_t *max_use);
 
 /* Macro derived from the kernel to tell the compiler that x is quite
  * unlikely to be true. */

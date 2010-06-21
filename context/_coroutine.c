@@ -61,6 +61,15 @@ static __thread struct cocore *base_coroutine = NULL;
 static bool check_stack_enabled = false;
 
 
+/* Helper function for use with "O&" format to extract the underlying cocore
+ * object from the wrapping Python object. */
+static int get_cocore(PyObject *object, void **result)
+{
+    *result = PyCObject_AsVoidPtr(object);
+    return *result != NULL;
+}
+
+
 static void * coroutine_wrapper(void *action_, void *arg_)
 {
     PyThreadState *thread_state = PyThreadState_GET();
@@ -80,14 +89,12 @@ static void * coroutine_wrapper(void *action_, void *arg_)
 
 static PyObject * coroutine_create(PyObject *self, PyObject *args)
 {
-    PyObject *parent_, *action;
+    struct cocore *parent;
+    PyObject *action;
     size_t stack_size;
-    if (PyArg_ParseTuple(args, "OOI", &parent_, &action, &stack_size))
+    if (PyArg_ParseTuple(args, "O&OI",
+            get_cocore, &parent, &action, &stack_size))
     {
-        struct cocore *parent = PyCObject_AsVoidPtr(parent_);
-        if (parent == NULL)
-            return NULL;
-
         Py_INCREF(action);
         struct cocore * coroutine = create_cocore(
             parent, coroutine_wrapper, &action, sizeof(action),
@@ -102,13 +109,10 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
 
 static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 {
-    PyObject *coroutine_, *arg;
-    if (PyArg_ParseTuple(args, "OO", &coroutine_, &arg))
+    struct cocore *target;
+    PyObject *arg;
+    if (PyArg_ParseTuple(args, "O&O", get_cocore, &target, &arg))
     {
-        struct cocore *target = PyCObject_AsVoidPtr(coroutine_);
-        if (target == NULL)
-            return NULL;
-
         /* Need to switch the Python interpreter's record of recursion depth and
          * top frame around as we switch frames, otherwise the interpreter gets
          * confused and thinks we've recursed too deep.  In truth tracking this
@@ -159,9 +163,17 @@ static PyObject* enable_check_stack(PyObject *self, PyObject *arg)
 
 static PyObject* py_stack_use(PyObject *self, PyObject *args)
 {
-    ssize_t current_use, max_use;
-    stack_use(&current_use, &max_use);
-    return Py_BuildValue("nn", current_use, max_use);
+    struct cocore *target = NULL;
+    if (PyArg_ParseTuple(args, "|O&", get_cocore, &target))
+    {
+        if (target == NULL)
+            target = get_current_cocore();
+        ssize_t current_use, max_use;
+        stack_use(target, &current_use, &max_use);
+        return Py_BuildValue("nn", current_use, max_use);
+    }
+    else
+        return NULL;
 }
 
 
@@ -169,7 +181,7 @@ static PyMethodDef module_methods[] = {
     { "get_current", coroutine_getcurrent, METH_NOARGS,
       "_coroutine.getcurrent()\nReturns the current coroutine." },
     { "create", coroutine_create, METH_VARARGS,
-      "create(action, parent, stack_size)\n\
+      "create(parent, action, stack_size)\n\
 Creates a new coroutine with the given action to invoke.  The parent will\n\
 be switched to when the coroutine exits.  If no stack_size is specified\n\
 the stack is shared with the main stack." },
@@ -181,7 +193,7 @@ When switched back new argument will be returned as result" },
       "enable_check_stack(enable)\n\
 Enables verbose stack checking with results written to stderr when each\n\
 coroutine terminates." },
-    { "stack_use", py_stack_use, METH_NOARGS,
+    { "stack_use", py_stack_use, METH_VARARGS,
       "Returns current and maximum stack use." },
     { NULL, NULL }
 };
