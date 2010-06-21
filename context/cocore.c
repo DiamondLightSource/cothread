@@ -192,8 +192,10 @@ static void *switch_shared_frame(
     else
     {
         /* The target frame doesn't overlap so we can do the switching right
-         * here. */
-        save_frame(target->stack->current);
+         * here.  In this case it's possible that we're switching to a frame
+         * that's already defunct, in which case we don't save it. */
+        if (target->stack->current != NULL)
+            save_frame(target->stack->current);
         restore_frame(target);
         return switch_frame(&current->frame, target->frame, arg);
     }
@@ -382,6 +384,9 @@ static void delete_cocore(struct cocore *coroutine)
     stack->ref_count -= 1;
     if (stack->ref_count == 0)
         delete_stack(stack);
+    else if (stack->current == coroutine)
+        /* Whoops: we're still marked as using the the stack.  This won't do. */
+        stack->current = NULL;
     free(coroutine->saved_frame);
     free(coroutine);
 }
