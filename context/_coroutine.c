@@ -38,16 +38,6 @@
 #include "cocore.h"
 
 
-/* Macro for number formatting.  Bit tricky this, as the type of size_t depends
- * on the compiler, and inttypes.h doesn't appear to provide anything suitable.
- * Thus we have to roll our own. */
-#if __WORDSIZE == 32
-#define PRI_size_t  "%u"
-#elif __WORDSIZE == 64
-#define PRI_size_t  "%lu"
-#endif
-
-
 /* Special casting operation to bypass strict aliasing warnings. */
 #define CAST(type, value) \
     ( { \

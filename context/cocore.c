@@ -39,16 +39,6 @@
 #include "cocore.h"
 
 
-/* Macro for number formatting.  Bit tricky this, as the type of size_t depends
- * on the compiler, and inttypes.h doesn't appear to provide anything suitable.
- * Thus we have to roll our own. */
-#if __WORDSIZE == 32
-#define PRI_size_t  "%u"
-#elif __WORDSIZE == 64
-#define PRI_size_t  "%lu"
-#endif
-
-
 /* The shared stack coroutine frame switcher runs in its own stack.  Only a tiny
  * stack is needed for this self contained routine. */
 #define FRAME_SWITCHER_STACK    4096
@@ -257,7 +247,7 @@ static void delete_stack(struct stack *stack)
 {
     if (stack->check_stack)
         fprintf(stderr,
-            "Stack frame: " PRI_size_t " of " PRI_size_t " bytes used\n",
+            "Stack frame: %zu of %zu bytes used\n",
             check_stack_use(stack), stack->stack_size);
     /* Recover allocated base from working stack base and original allocation
      * size. */
