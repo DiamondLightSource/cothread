@@ -112,8 +112,6 @@ def maybe_throw(function):
                 return ca_nothing(pv, error.status)
             except cadef.Disconnected, error:
                 return ca_nothing(pv, cadef.ECA_DISCONN)
-            except cothread.Timedout:
-                return ca_nothing(pv, cadef.ECA_TIMEOUT)
 
     # Make sure the wrapped function looks like its original self.
     throw_wrapper.__name__ = function.__name__
@@ -121,6 +119,14 @@ def maybe_throw(function):
 
     return throw_wrapper
 
+
+def ca_timeout(event, timeout, name):
+    '''Converts an ordinary cothread timeout into a more informative
+    ca_nothing timeout exception containing the PV name.'''
+    try:
+        return event.Wait(timeout)
+    except cothread.Timedout:
+        raise ca_nothing(name, cadef.ECA_TIMEOUT)
 
 
 # ----------------------------------------------------------------------------
@@ -198,7 +204,7 @@ class Channel(object):
     def Wait(self, timeout = None):
         '''Waits for the channel to become connected.  Raises a Timeout
         exception if the timeout expires first.'''
-        self.__connected.Wait(timeout)
+        ca_timeout(self.__connected, timeout, self.name)
 
 
 class ChannelCache(object):
@@ -536,7 +542,7 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     cadef.ca_array_get_callback(
         dbr.type_to_dbr(datatype, format), count, channel,
         _caget_event_handler, ctypes.py_object(context))
-    return done.Wait(timeout)
+    return ca_timeout(done, timeout, pv)
 
 
 def caget_array(pvs, **kargs):
@@ -696,7 +702,7 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5):
         cadef.ca_array_put_callback(
             dbrtype, count, channel, dbr_array,
             _caput_event_handler, ctypes.py_object(context))
-        done.Wait(timeout)
+        ca_timeout(done, timeout, pv)
     else:
         # Asynchronous caput, just do it now.
         cadef.ca_array_put(dbrtype, count, channel, dbr_array)
