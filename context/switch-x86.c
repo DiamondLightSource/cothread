@@ -66,14 +66,12 @@ __asm__(
 "       .text\n"
 
 // void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
-"       .globl  switch_frame\n"
-"       .type   switch_frame, @function\n"
+FNAME(switch_frame)
 
 // On entry have following arguments on stack:
 //   4(%esp)     address of frame to be written
 //   8(%esp)     frame to be loaded
 //   12(%esp)    argument to pass through switch
-"switch_frame:\n"
         // Pick up the arguments
 "       movl    4(%esp), %ecx\n"       // %ecx = old_frame
 "       movl    8(%esp), %edx\n"       // %edx = new_frame
@@ -96,18 +94,16 @@ __asm__(
 "       popl    %ebx\n"
 "       popl    %ebp\n"
 "       ret\n"
-"       .size   switch_frame, .-switch_frame\n"
+FSIZE(switch_frame)
 
 
 // frame_t create_frame(void *stack_base, frame_action_t action, void *context)
-".globl  create_frame\n"
-"       .type   create_frame, @function\n"
+FNAME(create_frame)
 
 // On entry have following arguments on stack:
 //   4(%esp)     base of stack to use
 //   8(%esp)     action routine
 //   12(%esp)    context to pass to action routine
-"create_frame:\n"
         // Save the context needed by the action routine and prepare the switch
         // context.  Start by picking up our arguments into registers.
 "       movl    4(%esp), %eax\n"    // %eax = base of stack
@@ -119,8 +115,12 @@ __asm__(
 "       movl    %ecx, -12(%eax)\n"
 "       movl    %edx, -16(%eax)\n"
         // Push variables expected by switch_frame restore, but push 0 for %ebp
-        // to mark base of stack frame list.
-"       movl    $action_entry, -20(%eax)\n" // Where switch_frame will switch to
+        // to mark base of stack frame list.  We use a position independent code
+        // trick so this works on OSX as well.
+"       call    here\n"
+"here:  popl    %edx\n"
+"       leal    action_entry-here(%edx), %edx\n"
+"       movl    %edx, -20(%eax)\n" // Where switch_frame will switch to
 "       movl    $0, -24(%eax)\n"
 "       movl    %ebx, -28(%eax)\n"
 "       movl    %edi, -32(%eax)\n"
@@ -140,4 +140,5 @@ __asm__(
 "       pushl   $0\n"               // Returning is not allowed!
 "       jmp     *%ecx\n"
 
-"       .size   create_frame, .-create_frame\n");
+FSIZE(switch_frame)
+);

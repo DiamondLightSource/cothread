@@ -58,14 +58,12 @@ __asm__(
 "      .text\n"
 
 // void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
-".globl  switch_frame\n"
-"       .type   switch_frame, @function\n"
+FNAME(switch_frame)
 
 // Arguments:
 //   rdi     Address to store saved stack after switch
 //   rsi     New stack pointer
 //   rdx     Argument to pass through to switched frame
-"switch_frame:\n"
         // Push all the registers we need to save
 "       pushq   %rbp\n"
 "       pushq   %r15\n"
@@ -75,10 +73,10 @@ __asm__(
 "       pushq   %rbx\n"
 
         // Save floating point and MMX status.
-"       subq    $8, %rsp\n"            // 2 bytes for x86 CW, 4 for mxcsr
-"       wait\n"                        // Ensure no lingering FP exceptions
-"       fnstcw  4(%rsp)\n"             // Save x86 control word
-"       stmxcsr (%rsp)\n"              // Save MMX control word
+"       subq    $8, %rsp\n"             // 2 bytes for x86 CW, 4 for mxcsr
+"       wait\n"                         // Ensure no lingering FP exceptions
+"       fnstcw  4(%rsp)\n"              // Save x86 control word
+"       stmxcsr (%rsp)\n"               // Save MMX control word
 
         // Switch frame and save current frame
 "       movq    %rsp, (%rdi)\n"
@@ -98,24 +96,24 @@ __asm__(
 "       popq    %r15\n"
 "       popq    %rbp\n"
 "       ret\n"
-"       .size   switch_frame, .-switch_frame\n"
+FSIZE(switch_frame)
 
 
 // frame_t create_frame(void *stack_base, frame_action_t action, void *context)
-".globl  create_frame\n"
-"       .type   create_frame, @function\n"
+FNAME(create_frame)
 
 // Arguments:
 //   rdi     base of stack to use
 //   rsi     action routine
 //   rdx     context to pass to action routine
-"create_frame:\n"
         // Save the extra arguments needed by the new frame
-"       movq    %rdx, -8(%rdi)\n"      // Context for action routine
-"       movq    %rsi, -16(%rdi)\n"     // Action routine to call
+"       andq    $-16, %rdi\n"           // Ensure 16 byte aligned
+"       movq    %rdx, -8(%rdi)\n"       // Context for action routine
+"       movq    %rsi, -16(%rdi)\n"      // Action routine to call
         // Push the frame expected by switch_frame, but store 0 for %rbp.  Set
         // things up to start control at action_entry
-"       movq    $action_entry, -24(%rdi)\n"
+"       leaq    action_entry(%rip), %rdx\n"
+"       movq    %rdx, -24(%rdi)\n"
 "       movq    $0, -32(%rdi)\n"
 "       movq    %r15, -40(%rdi)\n"
 "       movq    %r14, -48(%rdi)\n"
@@ -124,7 +122,7 @@ __asm__(
 "       movq    %rbx, -72(%rdi)\n"
         // Save floating point and MMX status.
 "       wait\n"
-"       fnstcw  -74(%rdi)\n"
+"       fnstcw  -76(%rdi)\n"
 "       stmxcsr -80(%rdi)\n"
         // Save the new frame pointer and we're done
 "       subq    $80, %rdi\n"
@@ -144,4 +142,5 @@ __asm__(
 "       pushq   $0\n"                  // Returning not allowed!
 "       jmp     *%rdx\n"
 
-"       .size   create_frame, .-create_frame\n");
+FSIZE(create_frame)
+);

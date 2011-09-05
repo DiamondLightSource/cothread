@@ -27,9 +27,22 @@
  *      michael.abbott@diamond.ac.uk
  */
 
-#if defined(__i386__)  &&  defined(__unix__)
+#if defined(__APPLE__)
+    #define FNAME(name) \
+        ".globl _" #name "\n_" #name ":\n"
+    #define FSIZE(name)
+#else
+    #define FNAME(name) \
+        ".globl " #name "\n" \
+        ".type " #name " STT_FUNC\n" \
+        #name ":\n"
+    #define FSIZE(name) \
+        ".size " #name ", .-" #name "\n"
+#endif
+
+#if defined(__i386__)
     #include "switch-x86.c"
-#elif defined(__x86_64__)  &&  defined(__unix__)
+#elif defined(__x86_64__)
     #include "switch-x86_64.c"
 #elif defined(__arm__)  &&  defined(__unix__)
     #include "switch-arm.c"
