@@ -42,8 +42,13 @@
 #   ecx     Scratch
 #   edx     Scratch
 #
+# The remaining registers, floating point stack, mm and xmm registers, are all
+# volatile and need not be preserved -- or to be precise, the only constraints
+# are standard conditions on function entry and exit, which are trivially
+# satisfied.
+#
 # Structure of a subroutine call after standard %ebp frame entry for function
-# call of form f(arg_1, ..., arg_n)
+# call of form f(arg_1, ..., arg_n), all arguments are placed on the stack:
 #
 #   4n+4(%ebp)  Argument n
 #               ...
@@ -51,6 +56,9 @@
 #   4(%ebp)     Return link (pushed by call instruction)
 #   0(%ebp)     Saved %ebp
 #   -4(%ebp)    ... local variables
+#
+# An integer result is returned in eax
+# The stack must be 16-byte aligned before the call occurs
 
 
 # void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
@@ -101,19 +109,22 @@ create_frame:
         movl    4(%esp), %eax       # %eax = base of stack
         movl    8(%esp), %edx       # %edx = action routine to call
         movl    12(%esp), %ecx      # %ecx = context for action
-        movl    %ecx, -4(%eax)
-        movl    %edx, -8(%eax)
+        andl    $-16, %eax          # Ensure stack is 16-bit aligned at start
+        movl    $0, -4(%eax)        # Padding to ensure final base of stack on
+        movl    $0, -8(%eax)        #   call to action is 16-byte aligned
+        movl    %ecx, -12(%eax)
+        movl    %edx, -16(%eax)
         # Push variables expected by switch_frame restore, but push 0 for %ebp
         # to mark base of stack frame list.
-        movl    $action_entry, -12(%eax)  # Where switch_frame will switch to
-        movl    $0, -16(%eax)
-        movl    %ebx, -20(%eax)
-        movl    %edi, -24(%eax)
-        movl    %esi, -28(%eax)
+        movl    $action_entry, -20(%eax)  # Where switch_frame will switch to
+        movl    $0, -24(%eax)
+        movl    %ebx, -28(%eax)
+        movl    %edi, -32(%eax)
+        movl    %esi, -36(%eax)
 
         # Save new stack frame and we're all done.
         movl    4(%esp), %edx       # Frame address
-        subl    $28, %eax
+        subl    $36, %eax
         ret
 
 action_entry:
