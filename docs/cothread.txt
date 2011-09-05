@@ -60,12 +60,12 @@ qtapp = cothread.iqt()
 cothread.WaitForQuit()
 ----------------------------
 
-1. +require(\'cothread==1.15\')+.  This statement is required by the way Diamond
+1. +require(\'cothread==1.15')+.  This statement is required by the way Diamond
 Controls modules are managed: it is necessary to specify precisely _which_
 version of a module is to be used.  This means that API changes can be made in
 future releases without breaking existing code.
 +
-Alternatively +require(\'cothread\')+ can be used to request the most recent
+Alternatively +require(\'cothread')+ can be used to request the most recent
 installed version.
 +
 Note that the +require+ statements should only occur once in each application:
@@ -309,6 +309,10 @@ suspended.
 +Signal(value)+::
 Adds the given value to the queue, waking up a waiting cothread if one is
 waiting.  This routine does not suspend the caller.
+
++close()+::
+Marks the queue as closed, after which no more signals can be raised.  Calling
++Wait()+ on a closed queue will cause +StopIteration+ to be raised.
 --
 +
 Example code using iteration over an +EventQueue+.
