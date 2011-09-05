@@ -31,7 +31,6 @@ the standard select module.'''
 
 import time
 import select as _select
-import ctypes
 import cothread
 
 
@@ -57,8 +56,11 @@ __all__ = [
 
 # A helpful routine to ensure that our select() behaves as much as possible
 # like the real thing!
-PyObject_AsFileDescriptor = ctypes.pythonapi.PyObject_AsFileDescriptor
-PyObject_AsFileDescriptor.argtypes = [ctypes.py_object]
+def _AsFileDescriptor(file):
+    if isinstance(file, int) or isinstance(file, long):
+        return file
+    else:
+        return file.fileno()
 
 # We need these names from _select, but unfortunately it has a bad habit of not
 # always providing them, particularly if poll() is broken.  So we define
@@ -203,7 +205,7 @@ class _Poller(object):
         self.events = {}
         self.__ready_list = {}
         for file, events in event_list:
-            file = PyObject_AsFileDescriptor(file)
+            file = _AsFileDescriptor(file)
             self.events[file] = self.events.get(file, 0) | events
 
     def notify_wakeup(self, file, events):
@@ -255,12 +257,12 @@ class poll(object):
     def register(self, file, events = POLLIN | POLLPRI | POLLOUT):
         '''Adds file to the list of objects to be polled.  The default set
         of events is POLLIN|POLLPRI|POLLOUT.'''
-        file = PyObject_AsFileDescriptor(file)
+        file = _AsFileDescriptor(file)
         self.__watch_list[file] = events
 
     def unregister(self, file):
         '''Removes file from the polling list.'''
-        file = PyObject_AsFileDescriptor(file)
+        file = _AsFileDescriptor(file)
         del self.__watch_list[file]
 
     def poll(self, timeout = None):
@@ -308,7 +310,7 @@ def select(iwtd, owtd, ewtd, timeout = None):
     results = ([], [], [])
     for result, input, flag in zip(results, inputs, flag_mapping):
         for object in input:
-            file = PyObject_AsFileDescriptor(object)
+            file = _AsFileDescriptor(object)
             events = poll_result.get(file, 0)
             if events & POLLEXTRA:
                 # If any of the extra events come up, raise an exception.
