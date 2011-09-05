@@ -830,7 +830,7 @@ class ThreadedEventQueue(object):
 class Timer(object):
     '''A cancellable one-shot or auto-retriggering timer.'''
 
-    def __init__(self, timeout, callback, retrigger = False):
+    def __init__(self, timeout, callback, retrigger = False, stack_size = 0):
         '''The callback will be called after the specified timeout.  If
         retrigger is set then the timer will automatically retrigger until
         it is cancelled.'''
@@ -839,7 +839,7 @@ class Timer(object):
         self.__callback = callback
         self.__retrigger = retrigger
         self.__cancel = Event(auto_reset = False)
-        Spawn(self.__timer)
+        Spawn(self.__timer, stack_size = stack_size)
 
     def __timer(self):
         while True:

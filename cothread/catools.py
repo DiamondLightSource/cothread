@@ -46,6 +46,7 @@ Supports the following methods:
 See the documentation for the individual functions for more details on using
 them.'''
 
+import os
 import sys
 import atexit
 import traceback
@@ -65,6 +66,22 @@ __all__ = [
     'camonitor',        # Monitor PVs over channel access
     'connect',          # Establish PV connection
 ] + dbr.__all__ + cadef.__all__
+
+
+def _check_env(name, default):
+    '''For stacks that are created at startup we allow the stack size to be
+    specified in an environment variable for overriding the default.'''
+    return int(os.environ.get(name, default))
+
+# Stack size definitions
+K = 1024
+
+CA_ACTION_STACK = 16 * K     # Used for one shot CA actions
+
+# For CA notify callbacks by default we use the shared stack as arbitrary
+# processing tends to be done in this context.
+CALLBACK_DISPATCH_STACK = _check_env('CATOOLS_CALLBACK_STACK', 0)
+CA_EVENT_STACK = _check_env('CATOOLS_EVENT_STACK', 512 * K)
 
 
 
@@ -345,7 +362,7 @@ class _Subscription(object):
         # connected.
         self.__state = self.__OPENING
         cothread.Spawn(self.__create_subscription,
-            events, datatype, format, count)
+            events, datatype, format, count, stack_size = CA_ACTION_STACK)
 
     def __create_subscription(self, events, datatype, format, count):
         '''Creates the channel subscription with the specified parameters:
@@ -410,7 +427,8 @@ class _Subscription(object):
 
 
 # Ensure the callback dispatcher is running.
-cothread.Spawn(_Subscription._callback_dispatcher)
+_callback_dispatcher = cothread.Spawn(
+    _Subscription._callback_dispatcher, stack_size = CALLBACK_DISPATCH_STACK)
 
 
 def camonitor(pvs, callback, **kargs):
@@ -556,7 +574,9 @@ def caget_array(pvs, **kargs):
     #    The raise_on_wait flag means that any exceptions raised by any of
     # the spawned caget_one() calls will appear as exceptions to WaitForAll().
     return cothread.WaitForAll([
-        cothread.Spawn(caget_one, pv, raise_on_wait = True, **kargs)
+        cothread.Spawn(
+            caget_one, pv, raise_on_wait = True,
+            stack_size = CA_ACTION_STACK, **kargs)
         for pv in pvs])
 
 
@@ -668,7 +688,6 @@ def caget(pvs, **kargs):
 # Callback dispatching for caput callbacks.
 _caput_callback_queue = cothread.EventQueue()
 
-@cothread.Spawn
 def _caput_callback_dispatcher():
     while True:
         callback, result = _caput_callback_queue.Wait()
@@ -677,6 +696,8 @@ def _caput_callback_dispatcher():
         except:
             print 'caput callback on %s raised exception' % result.name
             traceback.print_exc()
+_caput_callback_dispatcher = cothread.Spawn(
+    _caput_callback_dispatcher, stack_size = CALLBACK_DISPATCH_STACK)
 
 
 @cadef.event_handler
@@ -759,7 +780,9 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
     assert len(pvs) == len(values), 'PV and value lists must match in length'
 
     return cothread.WaitForAll([
-        cothread.Spawn(caput_one, pv, value, raise_on_wait = True, **kargs)
+        cothread.Spawn(
+            caput_one, pv, value, raise_on_wait = True,
+            stack_size = CA_ACTION_STACK, **kargs)
         for pv, value in zip(pvs, values)])
 
 
@@ -869,7 +892,9 @@ def connect_one(pv, cainfo = False, wait = True, timeout = 5):
 
 def connect_array(pvs, **kargs):
     return cothread.WaitForAll([
-        cothread.Spawn(connect_one, pv, raise_on_wait = True, **kargs)
+        cothread.Spawn(
+            connect_one, pv, raise_on_wait = True,
+            stack_size = CA_ACTION_STACK, **kargs)
         for pv in pvs])
 
 
@@ -943,11 +968,12 @@ def _catools_atexit():
 cadef.ca_context_create(0)
 
 
-@cothread.Spawn
 def _PollChannelAccess():
     while True:
         cadef.ca_pend_event(1e-9)
         cothread.Sleep(1e-2)
+_PollChannelAccess = cothread.Spawn(
+    _PollChannelAccess, stack_size = CA_EVENT_STACK)
 
 
 # The value of the exception handler below is rather doubtful...
