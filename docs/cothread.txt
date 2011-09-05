@@ -101,8 +101,8 @@ suspension points before control is returned to the suspended cothread.
 
 The following are suspension points in the core +cothread+ library:
 
-+Sleep+, +SleepUntil+:: Note that if a delay of 0 is specified to +Sleep+ or
-if the deadline for +SleepUntil+ has passed the caller will not be suspended.
++Sleep+, +SleepUntil+:: The caller is always suspended, even if the expiry
+time has passed, so +Sleep(0)+ has much the same effect as +Yield()+.
 
 +Yield+::  This suspends the caller until all other active cothreads have run
 to their own suspension points.
