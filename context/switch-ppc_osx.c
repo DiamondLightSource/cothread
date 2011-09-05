@@ -120,7 +120,7 @@ FNAME(create_frame)
 "       bl      here\n"
 "here:  mflr    r2\n"
 "       addi    r2,r2,lo16(action_entry-here)\n"
-"       addis   r0,r2,ha16(action_entry-here)\n"
+"       addis   r0,r2,ha16(action_entry-here)\n"    // am sure don't need this
 
 "       bl      saveRegs\n"
 "       subi    r3,r11,220\n"       /* Allow for red zone in new frame. */

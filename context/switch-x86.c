@@ -98,18 +98,17 @@ FSIZE(switch_frame)
 
 
 // frame_t create_frame(void *stack_base, frame_action_t action, void *context)
-FNAME(create_frame)
-
 // On entry have following arguments on stack:
 //   4(%esp)     base of stack to use
 //   8(%esp)     action routine
 //   12(%esp)    context to pass to action routine
+
+FNAME(create_frame)
         // Save the context needed by the action routine and prepare the switch
         // context.  Start by picking up our arguments into registers.
 "       movl    4(%esp), %eax\n"    // %eax = base of stack
 "       movl    8(%esp), %edx\n"    // %edx = action routine to call
 "       movl    12(%esp), %ecx\n"   // %ecx = context for action
-"       andl    $-16, %eax\n"       // Ensure stack is 16-bit aligned at start
 "       movl    $0, -4(%eax)\n"     // Padding to ensure final base of stack on
 "       movl    $0, -8(%eax)\n"     //   call to action is 16-byte aligned
 "       movl    %ecx, -12(%eax)\n"
@@ -139,6 +138,5 @@ FNAME(create_frame)
 "       pushl   %eax\n"             // Switch result is first argument
 "       pushl   $0\n"               // Returning is not allowed!
 "       jmp     *%ecx\n"
-
-FSIZE(switch_frame)
+FSIZE(create_frame)
 );

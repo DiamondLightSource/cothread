@@ -82,9 +82,29 @@ void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg);
  * guaranteed to be no more than INITIAL_FRAME_SIZE. */
 frame_t create_frame(void *stack_base, frame_action_t action, void *context);
 
+
+/* Architecture dependent definitions.  If necessary, use choices following the
+ * same pattern as in switch.c to make system dependent choices.  For the time
+ * being it seems that all our architectures share the key properties. */
+
 /* This is a safe upper bound on the storage required by create_frame(), a newly
  * created frame is guaranteed to fit into this many bytes. */
-#define INITIAL_FRAME_SIZE      128
+#define INITIAL_FRAME_SIZE      512
+/* For the moment we put all our stacks on a 16 byte alignment. */
+#define STACK_ALIGNMENT     16
+/* Don't actually know an architecture with an upward stack.  If one appears,
+ * used preprocessor symbols here to detect it and ensure STACK_GROWS_DOWNWARD
+ * is not defined.  Also in this case check *all* uses of the symbols below, as
+ * they've never been tested. */
+#define STACK_GROWS_DOWNWARD
+
+#if defined(__APPLE__)
+/* On OSX there is no memalign, but malloc is guaranteed to have sufficent
+ * alignment. */
+#define MALLOC_STACK(size)  malloc(size)
+#else
+#define MALLOC_STACK(size)  memalign(STACK_ALIGNMENT, (size))
+#endif
 
 
 /* Abstractions of stack direction dependent constructions.
@@ -106,11 +126,6 @@ frame_t create_frame(void *stack_base, frame_action_t action, void *context);
  *      first pushed byte.
  */
 
-/* Don't actually know an architecture with an upward stack.  If one appears,
- * used preprocessor symbols here to detect it and ensure STACK_GROWS_DOWNWARD
- * is not defined.  Also in this case check *all* uses of the symbols below, as
- * they've never been tested. */
-#define STACK_GROWS_DOWNWARD
 
 #ifdef STACK_GROWS_DOWNWARD
 #define STACK_BASE(stack_start, length)     ((stack_start) + (length))

@@ -32,6 +32,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#if !defined(__APPLE__)
+#include <malloc.h>
+#endif
 #include <assert.h>
 #include <string.h>
 
@@ -151,8 +155,8 @@ struct frame_action {
 static __attribute__((noreturn))
     void frame_switcher(void *action_, void *context)
 {
-    struct cocore_state *state = GET_TLS(cocore_state);
-    frame_t switcher_coroutine = state->switcher_coroutine;
+    struct cocore_state *state = context;
+    frame_t *switcher_coroutine = &state->switcher_coroutine;
     while (true)
     {
         /* Pull the target coroutine and switch argument from the callers stack
@@ -170,7 +174,7 @@ static __attribute__((noreturn))
         restore_frame(target);
 
         /* Complete activation of new coroutine and wait for next action. */
-        action_ = switch_frame(&switcher_coroutine, target->frame, arg);
+        action_ = switch_frame(switcher_coroutine, target->frame, arg);
     }
 }
 
@@ -214,7 +218,8 @@ static struct stack * create_stack(
     struct cocore *coroutine, size_t stack_size, bool check_stack)
 {
     struct stack *stack = malloc(sizeof(struct stack));
-    void *alloc_base = malloc(stack_size);
+    stack_size = stack_size & -STACK_ALIGNMENT;
+    void *alloc_base = MALLOC_STACK(stack_size);
     stack->stack_base = STACK_BASE(alloc_base, stack_size);
     stack->stack_size = stack_size;
     stack->check_stack = check_stack;
@@ -234,8 +239,8 @@ static struct stack * create_base_stack(struct cocore *coroutine)
     stack->ref_count = 1;
     /* We need to initialise stack_base to something sensible.  It doesn't
      * hugely matter where it is, but placing it at the current stack pointer
-     * seems a good idea. */
-    stack->stack_base = &stack;
+     * seems a good idea.  However, it *is* important to align properly. */
+    stack->stack_base = (void *) ((intptr_t) &stack & -STACK_ALIGNMENT);
     return stack;
 }
 
@@ -314,13 +319,15 @@ static void create_shared_frame(struct cocore *coroutine)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-/* Creates master coroutine for this thread.  Must be called before any other
- * coroutine actions occur.
+/* Creates master coroutine for this thread.  Must be called once per thread
+ * before any other coroutine actions occur.
  *
- * Note that the coroutine structure is leaked when the thread exits unless  */
+ * Note that the coroutine structure is leaked when the thread exits unless
+ * terminate_cocore() is called on completion of the thread. */
 struct cocore * initialise_cocore(void)
 {
     INIT_TLS(cocore_state);
+    assert(GET_TLS(cocore_state) == NULL);
     struct cocore_state *state = calloc(1, sizeof(struct cocore_state));
     SET_TLS(cocore_state, state);
 
@@ -337,8 +344,7 @@ struct cocore * initialise_cocore(void)
      * it. */
     void *stack = STACK_BASE(
         malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
-    state->switcher_coroutine =
-        create_frame(stack, frame_switcher, NULL);
+    state->switcher_coroutine = create_frame(stack, frame_switcher, state);
 
     return coroutine;
 }

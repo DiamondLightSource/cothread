@@ -100,14 +100,13 @@ FSIZE(switch_frame)
 
 
 // frame_t create_frame(void *stack_base, frame_action_t action, void *context)
-FNAME(create_frame)
-
 // Arguments:
 //   rdi     base of stack to use
 //   rsi     action routine
 //   rdx     context to pass to action routine
+
+FNAME(create_frame)
         // Save the extra arguments needed by the new frame
-"       andq    $-16, %rdi\n"           // Ensure 16 byte aligned
 "       movq    %rdx, -8(%rdi)\n"       // Context for action routine
 "       movq    %rsi, -16(%rdi)\n"      // Action routine to call
         // Push the frame expected by switch_frame, but store 0 for %rbp.  Set
@@ -141,6 +140,5 @@ FNAME(create_frame)
 "       movq    %rax, %rdi\n"
 "       pushq   $0\n"                  // Returning not allowed!
 "       jmp     *%rdx\n"
-
 FSIZE(create_frame)
 );
