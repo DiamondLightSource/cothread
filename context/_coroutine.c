@@ -78,7 +78,7 @@ static void * coroutine_wrapper(void *action_, void *arg_)
     /* Call the given action with the passed argument. */
     PyObject *action = *(PyObject **)action_;
     PyObject *arg = arg_;
-    PyObject *result = PyObject_CallFunction(action, "O", arg);
+    PyObject *result = PyObject_CallFunctionObjArgs(action, arg, NULL);
     Py_DECREF(action);
     Py_DECREF(arg);
     return result;
@@ -180,9 +180,9 @@ static PyMethodDef module_methods[] = {
       "_coroutine.getcurrent()\nReturns the current coroutine." },
     { "create", coroutine_create, METH_VARARGS,
       "create(parent, action, stack_size)\n\
-Creates a new coroutine with the given action to invoke.  The parent will\n\
-be switched to when the coroutine exits.  If no stack_size is specified\n\
-the stack is shared with the main stack." },
+Creates a new coroutine with the given action to invoke.  The parent\n\
+will be switched to when the coroutine exits.  If no stack_size is\n\
+specified the stack is shared with the main stack." },
     { "switch", coroutine_switch, METH_VARARGS,
       "result = switch(coroutine, arg)\n\
 Switches control to this coroutine, passing arg to new coroutine.\n\
