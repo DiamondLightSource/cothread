@@ -42,8 +42,6 @@ from ctypes import *
 import cothread
 import coselect
 
-_separate_stacks = cothread._coroutine.separate_stacks
-
 
 __all__ = [
     'iqt',              # Enable interactive Qt loop
@@ -137,7 +135,7 @@ def _run_iqt(QT, poll_interval):
     qt_done.Signal()
 
 
-def iqt(poll_interval = 0.05, use_timer = _separate_stacks, argv = sys.argv):
+def iqt(poll_interval = 0.05, use_timer = True, argv = sys.argv):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
 

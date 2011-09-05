@@ -203,7 +203,5 @@ coroutine terminates." },
 
 void init_coroutine(void)
 {
-    PyObject * module = Py_InitModule("_coroutine", module_methods);
-    Py_INCREF(Py_True);
-    PyModule_AddObject(module, "separate_stacks", Py_True);
+    Py_InitModule("_coroutine", module_methods);
 }

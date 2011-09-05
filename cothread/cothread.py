@@ -74,22 +74,7 @@ import traceback
 import collections
 import thread
 
-# Allow environment to determine which coroutine library we use.  Useful for
-# testing so that import errors aren't hidden.  By default we try both.
-_import = os.environ.get('COTHREAD_IMPORT', '')
-if _import == 'coroutine':
-    import _coroutine
-elif _import == 'greenlet':
-    import greenco as _coroutine
-else:
-    # By preference use our local Python coroutine extension library, but if
-    # that's not available fall back to greenlets.  The greenlet implementation
-    # differs in that it recycles the main process stack, with all the
-    # associated tradeoffs.
-    try:
-        import _coroutine
-    except:
-        import greenco as _coroutine
+import _coroutine
 
 if os.environ.get('COTHREAD_CHECK_STACK', ''):
     _coroutine.enable_check_stack(True)
