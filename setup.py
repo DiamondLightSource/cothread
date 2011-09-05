@@ -29,7 +29,7 @@ setup(
 
     packages = ['cothread', 'cothread/tools'],
     ext_modules = [
-        Extension('cothread/_coroutine',
+        Extension('cothread._coroutine',
             ['context/_coroutine.c', 'context/cocore.c', 'context/switch.c'],
             depends =
                 glob.glob('context/switch-*.c') + glob.glob('context/*.h'))],

@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include "thread.h"
+#include "platform.h"
 #include "cocore.h"
 
 

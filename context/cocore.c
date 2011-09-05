@@ -40,7 +40,7 @@
 #include <string.h>
 
 #include "switch.h"
-#include "thread.h"
+#include "platform.h"
 #include "cocore.h"
 
 
@@ -219,7 +219,7 @@ static struct stack *create_stack(
 {
     struct stack *stack = malloc(sizeof(struct stack));
     stack_size = stack_size & -STACK_ALIGNMENT;
-    void *alloc_base = MALLOC_STACK(stack_size);
+    void *alloc_base = MALLOC_ALIGNED(STACK_ALIGNMENT, stack_size);
     void *stack_base = STACK_BASE(alloc_base, stack_size);
     stack->stack_base = stack_base;
     stack->stack_size = stack_size;
@@ -267,11 +267,11 @@ static void delete_stack(struct stack *stack)
 {
     if (stack->check_stack)
         fprintf(stderr,
-            "Stack frame: %zu of %zu bytes used\n",
+            "Stack frame: %"PRIz"u of %"PRIz"u bytes used\n",
             check_stack_use(stack), stack->stack_size);
     /* Recover allocated base from working stack base and original allocation
      * size. */
-    free(STACK_BASE(stack->stack_base, - stack->stack_size));
+    FREE_ALIGNED(STACK_BASE(stack->stack_base, - stack->stack_size));
     free(stack);
 }
 

@@ -101,15 +101,6 @@ frame_t create_frame(void *stack_base, frame_action_t action, void *context);
  * they've never been tested. */
 #define STACK_GROWS_DOWNWARD
 
-#if defined(__APPLE__)
-/* On OSX there is no memalign, but malloc is guaranteed to have sufficent
- * alignment. */
-#define MALLOC_STACK(size)  malloc(size)
-#else
-#define MALLOC_STACK(size)  memalign(STACK_ALIGNMENT, (size))
-#endif
-
-
 /* Abstractions of stack direction dependent constructions.
  *
  *  STACK_BASE(stack_start, length)

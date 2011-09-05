@@ -27,7 +27,7 @@
  *      michael.abbott@diamond.ac.uk
  */
 
-#if defined(__APPLE__)
+#if defined(__APPLE__)  ||  defined(WIN32)
     #define FNAME(name) \
         ".globl _" #name "\n_" #name ":\n"
     #define FSIZE(name)

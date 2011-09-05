@@ -27,11 +27,15 @@
  *      michael.abbott@diamond.ac.uk
  */
 
+/* Attempting to gather all the peculiar cross-platform dependencies into one
+ * place. */
+
+
 /* Some cross-platform support for thread support.  If we can't use __thread
  * we'll use the posix pthread_{get,set}specific API instead. */
 
 #if defined(__APPLE__)
-/* No __thread support on this platform. */
+/* No __thread support on this platform, instead we use Posix pthread keys. */
 
 #include <pthread.h>
 
@@ -51,4 +55,39 @@
 #define GET_TLS(var)            var##__thread
 #define SET_TLS(var, value)     var##__thread = (value)
 
+#endif
+
+
+/* Allocating stack aligned memory.  Again this is very platform dependent. */
+
+#if defined(__APPLE__)
+/* On OSX there is no memalign, but malloc is guaranteed to have sufficent
+ * alignment. */
+#define MALLOC_ALIGNED(alignment, size) malloc(size)
+#define FREE_ALIGNED(mem)               free(mem)
+
+#elif defined(WIN32)
+/* This is what we have to use on 32-bit Windows. */
+#define MALLOC_ALIGNED(alignment, size) \
+    __mingw_aligned_malloc((size), STACK_ALIGNMENT)
+#define FREE_ALIGNED(mem)   __mingw_aligned_free(mem)
+
+#elif defined(WIN64)
+/* This is what we have to use on 64-bit Windows. */
+#define MALLOC_ALIGNED(alignment, size) \
+    _aligned_malloc((size), STACK_ALIGNMENT)
+#define FREE_ALIGNED(mem)   _aligned_free(mem)
+
+#else
+/* Proper posix system. */
+#define MALLOC_ALIGNED(alignment, size) memalign(STACK_ALIGNMENT, (size))
+#define FREE_ALIGNED(mem)               free(mem)
+#endif
+
+
+/* For size_t print specifiers mostly we can use "z", but not on Windows. */
+#if defined(WIN32)
+#define PRIz        ""
+#else
+#define PRIz        "z"
 #endif
