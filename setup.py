@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 
-from setuptools import setup, Extension
+import glob
+try:
+    # We prefer to use setuptools if possible, but it isn't always available
+    from setuptools import setup, Extension
+
+    setup_args = dict(
+        entry_points = {
+            'console_scripts': [
+                'pvtree.py = cothread.tools.pvtree:main' ] },
+        zip_safe = False)
+
+except ImportError:
+    from distutils.core import setup, Extension
+    setup_args = {}
+
 
 # these lines allow the version to be specified in Makefile.RELEASE
 import os
@@ -12,10 +26,10 @@ setup(
     description = 'Cooperative threading based utilities',
     author = 'Michael Abbott',
     author_email = 'Michael.Abbott@diamond.ac.uk',
-    entry_points = {
-        'console_scripts': [
-            'pvtree.py = cothread.tools.pvtree:main' ] },
 
-    zip_safe = False,
     packages = ['cothread', 'cothread/tools'],
-    package_data = {'cothread': ['_coroutine.so']})
+    ext_modules = [
+        Extension('cothread/_coroutine', [
+            'context/_coroutine.c', 'context/cocore.c', 'context/switch.c'],
+            depends = glob.glob('context/switch-*.c'))],
+    **setup_args)

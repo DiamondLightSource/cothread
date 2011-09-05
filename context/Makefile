@@ -26,6 +26,13 @@
 #      OX11 0DE
 #      michael.abbott@diamond.ac.uk
 
+# Note that this make file is only used for debug and development, use
+#
+#      python setup.py build
+#
+# from the top level directory to properly build the _coroutine Python extension
+# module.
+
 TOP = ..
 include $(TOP)/Makefile.config
 
@@ -34,24 +41,19 @@ CFLAGS += -pthread
 CFLAGS += -Werror -Wall -Wextra
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-missing-field-initializers
+CFLAGS += -Wno-strict-aliasing          # Needed for Python extension code
 CFLAGS += -O2
 # CFLAGS += -g
 
 # Pick up the appropriate flags for building a Python extension
 CPPFLAGS += $(shell $(PYTHON_CONFIG) --includes)
 
-# Compute the appropriate frame switching code to use: this is computed by
-# Makefile.config.in from the currently configured compiler.
-include Makefile.config
 
-
-../cothread/_coroutine.so: _coroutine.c cocore.c $(SWITCH_FRAME)
+_coroutine.so: _coroutine.c cocore.c switch.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC --shared -o $@ $^
 
 clean:
-	rm -f ../cothread/_coroutine.so Makefile.config
+	rm -f _coroutine.so
 
-Makefile.config: Makefile.config.in
-	$(CC) -E -xc $< >$@
 
 .PHONY: clean

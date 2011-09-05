@@ -1,6 +1,6 @@
 /* This file is part of the Diamond cothread library.
  *
- * Copyright (C) 2010 Michael Abbott, Diamond Light Source Ltd.
+ * Copyright (C) 2011 Michael Abbott, Diamond Light Source Ltd.
  *
  * The Diamond cothread library is free software; you can redistribute it
  * and/or modify it under the terms of the GNU General Public License as
@@ -27,18 +27,12 @@
  *      michael.abbott@diamond.ac.uk
  */
 
-/* Makefile configuration.  This is processed by the compiler to discover the
- * appropriate stack frame switching code. */
-
 #if defined(__i386__)
-    SWITCH_FRAME = switch-x86.s
-    CPPFLAGS += -DSTACK_GROWS_DOWNWARD
+    #include "switch-x86.c"
 #elif defined(__x86_64__)
-    SWITCH_FRAME = switch-x86_64.s
-    CPPFLAGS += -DSTACK_GROWS_DOWNWARD
+    #include "switch-x86_64.c"
 #elif defined(__arm__)
-    SWITCH_FRAME = switch-arm.s
-    CPPFLAGS += -DSTACK_GROWS_DOWNWARD
+    #include "switch-arm.c"
 #else
     #error "Don't know how to support this platform"
 #endif

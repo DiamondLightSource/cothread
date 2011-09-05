@@ -105,6 +105,17 @@ frame_t create_frame(void *stack_base, frame_action_t action, void *context);
  *      Returns the indexed character in the stack, with index 0 addressing the
  *      first pushed byte.
  */
+
+#if defined(__i386__)
+#define STACK_GROWS_DOWNWARD
+#elif defined(__x86_64__)
+#define STACK_GROWS_DOWNWARD
+#elif defined(__arm__)
+#define STACK_GROWS_DOWNWARD
+#else
+    #error "Don't know how to support this platform"
+#endif
+
 #ifdef STACK_GROWS_DOWNWARD
 #define STACK_BASE(stack_start, length)     ((stack_start) + (length))
 #define FRAME_START(stack_base, frame)      (frame)
