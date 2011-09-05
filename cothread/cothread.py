@@ -581,7 +581,6 @@ class EventBase(object):
     def _Wakeup(self, wake_all):
         '''Wakes one or all waiting tasks.  Returns False if an aborted wait
         needs to be emulated.'''
-        _validate_thread()
         if self.__wait_abort and not wake_all:
             # This is a special case: an aborted wait needs to be completed.
             # This occurs when waiting needs to be simulated, in which case
