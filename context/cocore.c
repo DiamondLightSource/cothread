@@ -72,6 +72,7 @@ struct cocore {
     cocore_action_t action;     // Action performed by coroutine
     struct cocore *parent;      // Receives control when coroutine exits
     struct cocore *defunct;     // Used to delete exited coroutine
+    struct cocore **thread_id;  // Identify thread via thread local pointer
     /* If the coroutine needs to share a stack frame then the following state
      * is used to save the frame while it is not in use. */
     void *saved_frame;          // Saved stack frame for shared stack
@@ -312,6 +313,7 @@ struct cocore * initialise_cocore(void)
      * running on the main stack, and so everything is initialised slightly
      * differently. */
     struct cocore *coroutine = calloc(1, sizeof(struct cocore));
+    coroutine->thread_id = &current_coroutine;
     coroutine->stack = create_base_stack(coroutine);
     current_coroutine = coroutine;
 
@@ -332,6 +334,13 @@ struct cocore *get_current_cocore(void)
 }
 
 
+/* Checks that the given coroutine exists and is in the same thread. */
+bool check_cocore(struct cocore *coroutine)
+{
+    return coroutine != NULL  &&  coroutine->thread_id == &current_coroutine;
+}
+
+
 /* Creates a new coroutine with the given parent, action and context.  If
  * shared_stack is NULL a fresh stack of stack_size is created, otherwise the
  * stack is shared with the shared_stack coroutine. */
@@ -343,6 +352,7 @@ struct cocore * create_cocore(
     /* To simplify default state, start with everything zero!  We add on enough
      * space to save the requested context area. */
     struct cocore *coroutine = calloc(1, sizeof(struct cocore) + context_size);
+    coroutine->thread_id = &current_coroutine;
     coroutine->action = action;
     coroutine->parent = parent;
     memcpy(coroutine->context, context, context_size);

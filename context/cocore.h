@@ -44,6 +44,9 @@ struct cocore * initialise_cocore(void);
 /* Returns the current coroutine. */
 struct cocore * get_current_cocore(void);
 
+/* Checks that the target coroutine can be switched to. */
+bool check_cocore(struct cocore *coroutine);
+
 /* Creates a new coroutine.  context_size bytes are saved from context[] and
  * passed as the context pointer to action() when it is started. */
 struct cocore * create_cocore(

@@ -56,6 +56,13 @@ static bool check_stack_enabled = false;
 static int get_cocore(PyObject *object, void **result)
 {
     *result = PyCObject_AsVoidPtr(object);
+    /* Check that we've chosen a valid target. */
+    if (*result != NULL  &&  !check_cocore(*result))
+    {
+        printf("Validity check failed on %p\n", *result);
+        PyErr_Format(PyExc_ValueError, "Invalid target coroutine");
+        *result = NULL;
+    }
     return *result != NULL;
 }
 
