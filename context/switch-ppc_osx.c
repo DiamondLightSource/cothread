@@ -75,14 +75,12 @@ __asm__(
 "       .text\n"
 "       .align  2\n"
 
-/* void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg) */
-".globl _switch_frame\n"
-
-/* Arguments on entry:
- *   r3      address of frame to be saved
- *   r4      frame to be loaded
- *   r5      Context argument to pass through  */
-"_switch_frame:\n"
+// void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
+// Arguments on entry:
+//   r3      address of frame to be saved
+//   r4      frame to be loaded
+//   r5      Context argument to pass through
+FNAME(switch_frame)
         /* The Power PC stack usage convention is a little odd.  On entry
          * locations 4(r1) and 8(r1) are available for saving cr and lr
          * respectively, and we have a 224 byte "red zone" below r1 reserved for
@@ -100,17 +98,15 @@ __asm__(
 
 "       mr      r3,r5\n"
 "       b       restRegs\n"
+FSIZE(switch_frame)
 
 
-/* frame_t create_frame(void *stack_base, frame_action_t action, void *context)
- */
-".globl _create_frame\n"
-
-/* Arguments on entry:
- *   r3      initial base of stack
- *   r4      action routine
- *   r5      context argument to action */
-"_create_frame:\n"
+// frame_t create_frame(void *stack_base, frame_action_t action, void *context)
+// Arguments on entry:
+//   r3      initial base of stack
+//   r4      action routine
+//   r5      context argument to action
+FNAME(create_frame)
         /* Compute initial stack frame by allocating 32 bytes and using the red
          * zone for register saves. */
 "       subi    r11,r3,32\n"        /* 32 bytes for stack frame. */
@@ -122,7 +118,7 @@ __asm__(
          * addresses! */
 "       mflr    r4\n"
 "       bl      here\n"
-"here:   mflr    r2\n"
+"here:  mflr    r2\n"
 "       addi    r2,r2,lo16(action_entry-here)\n"
 "       addis   r0,r2,ha16(action_entry-here)\n"
 
@@ -140,6 +136,7 @@ __asm__(
 "       mtlr    r2\n"               /* Ensure callee cannot return. */
 "       mtctr   r0\n"               /* Fake bl to r0. */
 "       bctr\n"
+FSIZE(create_frame)
 
 
 /* Saves all registers in their standard locations taking advantage of the 220
@@ -195,4 +192,5 @@ __asm__(
 "       lfd     f31,-8(r1)\n"
 "       mtcr    r2\n"
 "       mtlr    r0\n"
-"       blr\n");
+"       blr\n"
+);

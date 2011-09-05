@@ -34,31 +34,26 @@ __asm__(
 "       .align  2\n"
 
 // void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg)
-"       .global switch_frame\n"
-"       .type   switch_frame, %function\n"
-
 // Arugments on entry:
 //   r0      address of frame to be saved
 //   r1      frame to be loaded
 //   r2      Context argument to pass through
-"switch_frame:\n"
+
+FNAME(switch_frame)
 "       stmfd   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}\n"
 "       str     sp, [r0]\n"
 "       mov     sp, r1\n"
 "       mov     r0, r2\n"
 "       ldmfd   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}\n"
-"       .size   switch_frame, .-switch_frame\n"
+FSIZE(switch_frame)
 
 
 // frame_t create_frame(void *stack_base, frame_action_t action, void *context)
-"       .global create_frame\n"
-"       .type   create_frame, %function\n"
-
 // Arguments on entry:
 //   r0      initial base of stack
 //   r1      action routine
 //   r2      context argument to action
-"create_frame:\n"
+FNAME(create_frame)
 "       stmfd   r0!, {r1, r2}\n"       // Save arguments for new coroutine
 "       mov     ip, lr\n"              // Save LR so can use same STM slot
 "       ldr     lr, =action_entry\n"
@@ -72,4 +67,5 @@ __asm__(
 "       mov     r1, r3\n"
 "       mov     r14, #0\n"             // Ensure no return from action
 "       bx      r2\n"
-"       .size   create_frame, .-create_frame\n");
+FSIZE(create_frame)
+);
