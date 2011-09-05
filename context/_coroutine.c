@@ -175,6 +175,44 @@ static PyObject* py_stack_use(PyObject *self, PyObject *args)
 }
 
 
+static PyObject *readline_hook_callback;
+
+static int readline_hook(void)
+{
+    PyGILState_STATE state = PyGILState_Ensure();
+    PyObject *result =
+        PyObject_CallFunctionObjArgs(readline_hook_callback, NULL);
+    if (result == NULL)
+    {
+        fprintf(stderr, "Exception caught from readline hook\n");
+        PyErr_PrintEx(0);
+    }
+    else
+    {
+        if (PyObject_IsTrue(result))
+            fprintf(stderr, "Alas can't pass ctrl-C to readline\n");
+//             PyErr_SetInterrupt();
+        Py_DECREF(result);
+    }
+    PyGILState_Release(state);
+
+    return 0;
+}
+
+
+static PyObject* install_readline_hook(PyObject *self, PyObject *arg)
+{
+    Py_XDECREF(readline_hook_callback);
+    Py_INCREF(arg);
+    readline_hook_callback = arg;
+    if (arg == Py_None)
+        PyOS_InputHook = NULL;
+    else
+        PyOS_InputHook = readline_hook;
+    Py_RETURN_NONE;
+}
+
+
 static PyMethodDef module_methods[] = {
     { "get_current", coroutine_getcurrent, METH_NOARGS,
       "_coroutine.getcurrent()\nReturns the current coroutine." },
@@ -193,6 +231,10 @@ Enables verbose stack checking with results written to stderr when each\n\
 coroutine terminates." },
     { "stack_use", py_stack_use, METH_VARARGS,
       "Returns current and maximum stack use." },
+    { "install_readline_hook", install_readline_hook, METH_O,
+      "install_readline_hook(hook)\n\
+Installs hook to be called while the interpreter is waiting for input.\n\
+If the hook function returns true an interrupt will be raised." },
     { NULL, NULL }
 };
 

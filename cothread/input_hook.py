@@ -31,13 +31,10 @@
 for input from the interpreter command line.  Also includes optional support
 for the Qt event loop.'''
 
-import ctypes
 import select
 import sys
 import os
 import traceback
-
-from ctypes import *
 
 import cothread
 import coselect
@@ -51,9 +48,7 @@ __all__ = [
 # When Qt is running in its own stack it really needs quite a bit of room.
 QT_STACK_SIZE = 1024 * 1024
 
-hook_function = CFUNCTYPE(None)
 
-@hook_function
 def _readline_hook():
     '''Runs other cothreads until input is available.'''
     coselect.poll_list([(0, coselect.POLLIN)])
@@ -67,12 +62,11 @@ def _install_readline_hook(enable_hook = True):
     enable_hook parameter to False -- for example, this can be helpful if a
     background activity is causing a nuisance.'''
 
-    PyOS_InputHookP = pointer(hook_function.in_dll(
-        pythonapi, 'PyOS_InputHook'))
+    from _coroutine import install_readline_hook
     if enable_hook:
-        PyOS_InputHookP[0] = _readline_hook
+        install_readline_hook(_readline_hook)
     else:
-        cast(PyOS_InputHookP, POINTER(c_void_p))[0] = 0
+        install_readline_hook(None)
 
 
 
