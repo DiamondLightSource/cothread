@@ -239,11 +239,6 @@ If the hook function returns true an interrupt will be raised." },
 };
 
 
-/* Ugh: the compiler gets all excited about "strict-aliasing rules", broken by
- * the definition of Py_True.  Make it happy. */
-#undef Py_True
-#define Py_True CAST(PyObject *, &_Py_TrueStruct)
-
 void init_coroutine(void)
 {
     INIT_TLS(base_coroutine);

@@ -29,13 +29,22 @@
 
 /* Coroutine frame switching for 32-bit Power PC on OSX
  *
+ * See ABI documentation at
+ *  http://developer.apple.com/library/mac/documentation/DeveloperTools/
+ *  Conceptual/LowLevelABI/100-32-bit_PowerPC_Function_Calling_Conventions/
+ *  32bitPowerPC.html
+ *
+ * and "System V Application Binary Interface, PowerPC Processor Supplement",
+ *  Steve Zucker (SunSoft), Kari Karhi (IBM), Sep 1995.  802-3334-10,
+ *  http://refspecs.freestandards.org/elf/elfspec_ppc.pdf
+ *
  * Registers and their roles:
  *  r0      Scratch
  *  r1      Stack pointer
  *  r2      System reserved register on AIX, volatile on Darwin
  *  r3,r4   Parameter passing and return result
  *  r5-r10  Parameter passing
- *  r11,r12 Scratch
+ *  r11,r12 Scratch (r11 is parent frame for nested functions)
  *  r13     Small data area pointer
  *  r14-r30 Local variables
  *  r31     ? local variable or environment pointer ?
@@ -45,6 +54,9 @@
  *  f9-f13  Scratch
  *  f14-f31 Local variables
  * Plus: cr0 to cr7, lr, ctr, xer, fpscr.
+ *
+ * Note: The Apple documentation also mentions vector registers v20-v31 which
+ * also apparently need to be saved.  Not done in this code.
  *
  * The stack (r1) is always 16-byte aligned.
  *

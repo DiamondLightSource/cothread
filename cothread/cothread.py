@@ -262,7 +262,7 @@ class _Scheduler(object):
         '''Creates the scheduler in its own coroutine and starts it running.
         We switch to the scheduler long enough for it to complete
         initialisation.'''
-        # We run the scheduler in its own greenlet to allow the main task to
+        # We run the scheduler in its own coroutine to allow the main task to
         # participate in scheduling.  This produces its own complications but
         # makes for a more usable system.
         current = _coroutine.get_current()
@@ -307,9 +307,9 @@ class _Scheduler(object):
         self.__yield_queue = _WakeupQueue()
         # List of tasks waiting for a timeout
         self.__timer_queue = _TimerQueue()
-        # Scheduler greenlet: this will be switched to whenever any other
+        # Scheduler coroutine: this will be switched to whenever any other
         # task decides to sleep.
-        self.__greenlet = _coroutine.get_current()
+        self.__coroutine = _coroutine.get_current()
         # Initially the schedule loop will run freely with its own select.
         self.__poll_callback = None
         # Dictionary of waitable descriptors for which polling needs to be
@@ -399,7 +399,7 @@ class _Scheduler(object):
         # schedule, as we may be resuming inside the dispatch loop: in effect
         # the first call to this routine interrupts the original scheduler.
         self.__poll_callback = _coroutine.get_current()
-        result = _coroutine.switch(self.__greenlet, ready_list)
+        result = _coroutine.switch(self.__coroutine, ready_list)
         self.__poll_callback = None
 
         if result == _WAKEUP_INTERRUPT:
@@ -412,7 +412,7 @@ class _Scheduler(object):
     def spawn(self, function, stack_size):
         '''Spawns a new task: function is spawned as a new background task
         as a child of the scheduler task.'''
-        task = _coroutine.create(self.__greenlet, function, stack_size)
+        task = _coroutine.create(self.__coroutine, function, stack_size)
         self.__ready_queue.append((task, _WAKEUP_NORMAL))
 
     def do_yield(self, until):
@@ -448,7 +448,7 @@ class _Scheduler(object):
         # suspending immediately after calling poll_scheduler() control is
         # returned to __select().  This last case expects a list of ready
         # descriptors to be returned, so we have to be compatible with this!
-        result = _coroutine.switch(self.__greenlet, [])
+        result = _coroutine.switch(self.__coroutine, [])
         if result == _WAKEUP_INTERRUPT:
             # We get here if main is suspended and the scheduler decides
             # to die.  Make sure our wakeup is cancelled, and then
@@ -902,8 +902,8 @@ def WaitForAll(event_list, timeout = None):
 #       create a task per event).
 #
 #   The ability to kill a task
-#       This is probably doable with the .throw greenlet method (or even with
-#       a special wakeup value), but may require some care.
+#       This is probably doable with something equivalent to the .throw greenlet
+#       method (or even with a special wakeup value), but may require some care.
 
 
 
