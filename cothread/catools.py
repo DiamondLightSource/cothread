@@ -665,6 +665,20 @@ def caget(pvs, **kargs):
 # ----------------------------------------------------------------------------
 #   caput
 
+# Callback dispatching for caput callbacks.
+_caput_callback_queue = cothread.EventQueue()
+
+@cothread.Spawn
+def _caput_callback_dispatcher():
+    while True:
+        callback, result = _caput_callback_queue.Wait()
+        try:
+            callback(result)
+        except:
+            print 'caput callback on %s raised exception' % result.name
+            traceback.print_exc()
+
+
 @cadef.event_handler
 def _caput_event_handler(args):
     '''Event handler for caput with callback completion.  Returns status
@@ -672,17 +686,20 @@ def _caput_event_handler(args):
 
     # This is called exactly once when a caput request completes.  Extract
     # our context information and discard the context immediately.
-    pv, done = args.usr
+    pv, done, callback = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
 
-    if args.status == cadef.ECA_NORMAL:
-        done.Signal()
-    else:
-        done.SignalException(ca_nothing(pv, args.status))
+    if done is not None:
+        if args.status == cadef.ECA_NORMAL:
+            done.Signal()
+        else:
+            done.SignalException(ca_nothing(pv, args.status))
+    if callback is not None:
+        _caput_callback_queue.Signal((callback, ca_nothing(pv, args.status)))
 
 
 @maybe_throw
-def caput_one(pv, value, datatype=None, wait=False, timeout=5):
+def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
     '''Writes a value to a single pv, waiting for callback on completion if
     requested.'''
 
@@ -701,11 +718,14 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5):
     # dbr_array, a pointer to C memory, has the right lifetime: it has to
     # survive until ca_array_put[_callback] has been called.
     dbrtype, count, dbr_array, value = dbr.value_to_dbr(value, datatype)
-    if wait:
+    if wait or callback is not None:
         # Assemble the callback context and give it an extra reference count
         # to keep it alive until the callback handler sees it.
-        done = cothread.Event()
-        context = (pv, done)
+        if wait:
+            done = cothread.Event()
+        else:
+            done = None
+        context = (pv, done, callback)
         ctypes.pythonapi.Py_IncRef(context)
 
         # caput with callback requested: need to wait for response from
@@ -713,7 +733,8 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5):
         cadef.ca_array_put_callback(
             dbrtype, count, channel, dbr_array,
             _caput_event_handler, ctypes.py_object(context))
-        ca_timeout(done, timeout, pv)
+        if wait:
+            ca_timeout(done, timeout, pv)
     else:
         # Asynchronous caput, just do it now.
         cadef.ca_array_put(dbrtype, count, channel, dbr_array)
@@ -744,7 +765,7 @@ def caput_array(pvs, values, repeat_value=False, **kargs):
 
 def caput(pvs, values, **kargs):
     '''caput(pvs, values,
-        repeat_value = False, datatype = None, wait = False,
+        repeat_value = False, datatype = None, wait = False, callback = None,
         timeout = 5, throw = True)
 
     Writes values to one or more PVs.  If multiple PVs are given together
@@ -766,10 +787,12 @@ def caput(pvs, values, **kargs):
         that a timeout of 0 will timeout immediately if any waiting is
         required.
 
-    wait
-        If wait=True is specified then channel access put with callback is
-        invoked, and the caput operation will wait until the server
-        acknowledges successful completion before returning.
+    wait, callback
+        If wait=True or a callback is specified then channel access put with
+        callback is invoked.  If wait is True then the caput operation will wait
+        until the server acknowledges successful completion before returning, if
+        callback is set then callback(status) is called, where status has fields
+        .ok and .name.  Both wait and callback can be set.
 
     datatype
         If a datatype is specified then the values being written will be

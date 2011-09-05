@@ -181,7 +181,7 @@ Functions
 ~~~~~~~~~
 
 [[caput]]
-+caput(pvs, values, repeat_value=False, datatype=None, wait=False, timeout=5, throw=True)+::
++caput(pvs, values, repeat_value=False, datatype=None, wait=False, timeout=5, callback=None, throw=True)+::
 
 Writes values to one or more PVs.  If +pvs+ is a single string then +values+
 is treated as a single value to be written to the named process variable,
@@ -207,6 +207,17 @@ be done, in particular conversion to and from strings is 'not' automatic!
 If +wait=True+ is specified then channel access put with callback is
 invoked, and the +caput+ operation will wait until the server
 acknowledges successful completion before returning.
+
++callback+::
+If a +callback+ is specified then channel access put with callback is invoked
+and the given +callback+ function will be called with the put response as a
++ca_nothing+ object passed as the only argument.  All +caput+ callbacks will
+will be called on a dedicated caput callback thread.
++
+Unless +wait+ is specified the call to +caput+ will complete as soon as the
+caput has been initiated.  If +wait+ is specified, whether +caput+ returns
+before or after +callback+ is called is unpredictable.
+
 
 +timeout+, +throw+::
 Documented in <<Common, Common Notes>> above.
