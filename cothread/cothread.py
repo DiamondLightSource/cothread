@@ -815,6 +815,10 @@ class ThreadedEventQueue(object):
         self.__values = collections.deque()
         self.wait_descriptor, self.__signal = os.pipe()
 
+    def __len__(self):
+        '''Returns the number of objects waiting on the queue.'''
+        return len(self.__values)
+
     def Wait(self, timeout = None):
         '''Waits for a value to be written to the queue.  This can safely be
         called from either a cothread or another thread: the appropriate form
