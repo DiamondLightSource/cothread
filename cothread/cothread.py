@@ -573,6 +573,7 @@ class EventBase(object):
         # If the deadline has already expired don't call into the scheduler:
         # as a matter of policy, we don't lose control in this case.
         # Otherwise the scheduler will tell us if we've timed out.
+        _validate_thread()
         if (deadline is not None and time.time() >= deadline) or \
                 _scheduler.wait_until(deadline, self.__wait_queue, None):
             raise Timedout('Timed out waiting for event')
@@ -580,6 +581,7 @@ class EventBase(object):
     def _Wakeup(self, wake_all):
         '''Wakes one or all waiting tasks.  Returns False if an aborted wait
         needs to be emulated.'''
+        _validate_thread()
         if self.__wait_abort and not wake_all:
             # This is a special case: an aborted wait needs to be completed.
             # This occurs when waiting needs to be simulated, in which case
@@ -616,6 +618,7 @@ class Spawn(EventBase):
         self.__result = ()
         self.__raise_on_wait = kargs.pop('raise_on_wait', False)
         # Hand control over to the run method in the scheduler.
+        _validate_thread()
         _scheduler.spawn(self.__run, kargs.pop('stack_size', 0))
 
     def __run(self, _):
@@ -678,8 +681,6 @@ class Spawn(EventBase):
 class Event(EventBase):
     '''Any number of tasks can wait for an event to occur.  A single value
     can also be associated with the event.'''
-
-    value = property(fget = lambda self: self.__value)
 
     def __init__(self, auto_reset = True):
         '''An event object is either signalled or reset.  Any task can wait
@@ -947,10 +948,17 @@ _scheduler = _Scheduler.create()
 # only be one) so that we can recognise when we're in another thread.
 _scheduler_thread_id = thread.get_ident()
 
+# Thread validation: ensure cothreads aren't used across threads!
+def _validate_thread():
+    assert _scheduler_thread_id == thread.get_ident(), \
+        'Cannot use cothread with multiple threads.  Consider using ' \
+        'ThreadedEventQueue if necessary.'
+
 
 def SleepUntil(deadline):
     '''Sleep until the specified deadline.  Note that if the deadline has
     already passed then no yield of control will occur.'''
+    _validate_thread()
     _scheduler.wait_until(deadline, None, None)
 
 def Sleep(timeout):
@@ -961,4 +969,5 @@ def Yield(timeout = 0):
     '''Hands control back to the scheduler.  Control is returned either after
     the specified timeout has passed, or as soon as there are no active jobs
     waiting to be run.'''
+    _validate_thread()
     _scheduler.do_yield(Deadline(timeout))
