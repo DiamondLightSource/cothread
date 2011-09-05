@@ -113,17 +113,12 @@ FNAME(create_frame)
         // things up to start control at action_entry
 "       leaq    action_entry(%rip), %rdx\n"
 "       movq    %rdx, -24(%rdi)\n"
-"       movq    $0, -32(%rdi)\n"
-"       movq    %r15, -40(%rdi)\n"
-"       movq    %r14, -48(%rdi)\n"
-"       movq    %r13, -56(%rdi)\n"
-"       movq    %r12, -64(%rdi)\n"
-"       movq    %rbx, -72(%rdi)\n"
-        // Save floating point and MMX status.
+        // Save floating point and MMX control registers.  For this we'd better
+        // save something real, because we're saving control settings.
 "       wait\n"
 "       fnstcw  -76(%rdi)\n"
 "       stmxcsr -80(%rdi)\n"
-        // Save the new frame pointer and we're done
+        // Return the new frame pointer and we're done
 "       subq    $80, %rdi\n"
 "       movq    %rdi, %rax\n"
 "       ret\n"

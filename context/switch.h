@@ -75,6 +75,9 @@ void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg);
 
 /* Establish a new frame in the given stack.  action(arg, context) will be
  * called when the newly created frame is switched to, and it must never return.
+ * The initial segment of the frame (from stack_base for INITIAL_FRAME_SIZE
+ * bytes in the direction defined by STACK_GROWS_DOWNWARD) must be zero on
+ * entry.
  *
  * The initial frame can safely be relocated and started at a different
  * location.  FRAME_START(stack_base, *frame) points to the start of the created
