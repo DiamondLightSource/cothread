@@ -27,12 +27,14 @@
  *      michael.abbott@diamond.ac.uk
  */
 
-#if defined(__i386__)
+#if defined(__i386__)  &&  defined(__unix__)
     #include "switch-x86.c"
-#elif defined(__x86_64__)
+#elif defined(__x86_64__)  &&  defined(__unix__)
     #include "switch-x86_64.c"
-#elif defined(__arm__)
+#elif defined(__arm__)  &&  defined(__unix__)
     #include "switch-arm.c"
+#elif defined(__ppc__)  &&  defined(__APPLE__)
+    #include "switch-ppc_osx.c"
 #else
     #error "Don't know how to support this platform"
 #endif

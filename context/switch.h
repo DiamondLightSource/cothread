@@ -106,15 +106,11 @@ frame_t create_frame(void *stack_base, frame_action_t action, void *context);
  *      first pushed byte.
  */
 
-#if defined(__i386__)
+/* Don't actually know an architecture with an upward stack.  If one appears,
+ * used preprocessor symbols here to detect it and ensure STACK_GROWS_DOWNWARD
+ * is not defined.  Also in this case check *all* uses of the symbols below, as
+ * they've never been tested. */
 #define STACK_GROWS_DOWNWARD
-#elif defined(__x86_64__)
-#define STACK_GROWS_DOWNWARD
-#elif defined(__arm__)
-#define STACK_GROWS_DOWNWARD
-#else
-    #error "Don't know how to support this platform"
-#endif
 
 #ifdef STACK_GROWS_DOWNWARD
 #define STACK_BASE(stack_start, length)     ((stack_start) + (length))
