@@ -41,6 +41,10 @@ typedef void * (*cocore_action_t)(void *context, void *argument);
  * base coroutine. */
 struct cocore * initialise_cocore(void);
 
+/* This will delete the base coroutine.  This must be the last cocore action on
+ * this thread. */
+void terminate_cocore(void);
+
 /* Returns the current coroutine. */
 struct cocore * get_current_cocore(void);
 

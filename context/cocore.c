@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include "switch.h"
+#include "thread.h"
 #include "cocore.h"
 
 
@@ -66,13 +67,14 @@ struct stack {
     unsigned int ref_count;     // Number of sharing coroutines
 };
 
+/* This represents the state of a single coroutine. */
 struct cocore {
     frame_t frame;              // Coroutine frame: saves dynamic state
     struct stack *stack;        // Stack that this cocore belongs to
     cocore_action_t action;     // Action performed by coroutine
     struct cocore *parent;      // Receives control when coroutine exits
     struct cocore *defunct;     // Used to delete exited coroutine
-    struct cocore **thread_id;  // Identify thread via thread local pointer
+    struct cocore_state *state; // Access to thread local state
     /* If the coroutine needs to share a stack frame then the following state
      * is used to save the frame while it is not in use. */
     void *saved_frame;          // Saved stack frame for shared stack
@@ -81,8 +83,15 @@ struct cocore {
     char context[];             // Context saved for coroutine
 };
 
+/* This is the global state of the coroutine for a single thread. */
+struct cocore_state {
+    struct cocore *base_coroutine;      // Master coroutine representing thread
+    struct cocore *current_coroutine;   // Currently active coroutine
+    frame_t switcher_coroutine;         // Switching frame
+};
 
-static __thread struct cocore *current_coroutine;
+
+DECLARE_TLS(struct cocore_state *, cocore_state);
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -130,9 +139,6 @@ static void restore_frame(struct cocore *target)
 }
 
 
-/* Stack frame dedicated to shared frame switching, one per thread. */
-static __thread frame_t switcher_coroutine = NULL;
-
 
 /* Arguments passed to frame_switcher. */
 struct frame_action {
@@ -145,6 +151,8 @@ struct frame_action {
 static __attribute__((noreturn))
     void frame_switcher(void *action_, void *context)
 {
+    struct cocore_state *state = GET_TLS(cocore_state);
+    frame_t switcher_coroutine = state->switcher_coroutine;
     while (true)
     {
         /* Pull the target coroutine and switch argument from the callers stack
@@ -178,7 +186,8 @@ static void *switch_shared_frame(
          * currently using.  We solve this problem by switching control away to
          * a dedicated switching coroutine while we swap the stacks out. */
         struct frame_action action = { .arg = arg, .target = target };
-        return switch_frame(&current->frame, switcher_coroutine, &action);
+        return switch_frame(
+            &current->frame, current->state->switcher_coroutine, &action);
     }
     else
     {
@@ -264,7 +273,7 @@ static __attribute__((noreturn))
     void action_wrapper(void *switch_arg, void *context)
 {
     struct cocore *this = context;
-    current_coroutine = this;
+    this->state->current_coroutine = this;
     void *result = this->action(this->context, switch_arg);
 
     /* We're nearly done.  As soon as control is switched away from this
@@ -305,39 +314,63 @@ static void create_shared_frame(struct cocore *coroutine)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-/* Returns the current coroutine.  On first call a wrapper to represent the main
- * stack is created at the same time. */
+/* Creates master coroutine for this thread.  Must be called before any other
+ * coroutine actions occur.
+ *
+ * Note that the coroutine structure is leaked when the thread exits unless  */
 struct cocore * initialise_cocore(void)
 {
+    INIT_TLS(cocore_state);
+    struct cocore_state *state = calloc(1, sizeof(struct cocore_state));
+    SET_TLS(cocore_state, state);
+
     /* The base coroutine is rather special: it represents the first coroutine
      * running on the main stack, and so everything is initialised slightly
      * differently. */
     struct cocore *coroutine = calloc(1, sizeof(struct cocore));
-    coroutine->thread_id = &current_coroutine;
+    coroutine->state = state;
     coroutine->stack = create_base_stack(coroutine);
-    current_coroutine = coroutine;
+    state->base_coroutine = coroutine;
+    state->current_coroutine = coroutine;
 
     /* Now is also a good time to prepare the switcher coroutine in case we need
      * it. */
     void *stack = STACK_BASE(
         malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
-    switcher_coroutine = create_frame(stack, frame_switcher, NULL);
+    state->switcher_coroutine =
+        create_frame(stack, frame_switcher, NULL);
 
     return coroutine;
+}
+
+
+/* Ensures no dangling resources.  Only safe to call as the last action before
+ * exiting the thread, and only safe to call from the main coroutine. */
+void terminate_cocore(void)
+{
+    struct cocore_state *state = GET_TLS(cocore_state);
+    assert(state->base_coroutine == state->current_coroutine);
+
+    // ...
+    // Probably ought to do some further stuff
+    free(state->base_coroutine);
+    free(state);
+    SET_TLS(cocore_state, NULL);
 }
 
 
 /* Returns current coroutine. */
 struct cocore *get_current_cocore(void)
 {
-    return current_coroutine;
+    struct cocore_state *state = GET_TLS(cocore_state);
+    return state->current_coroutine;
 }
 
 
 /* Checks that the given coroutine exists and is in the same thread. */
 bool check_cocore(struct cocore *coroutine)
 {
-    return coroutine != NULL  &&  coroutine->thread_id == &current_coroutine;
+    return coroutine != NULL  &&  coroutine->state == GET_TLS(cocore_state);
 }
 
 
@@ -352,7 +385,7 @@ struct cocore * create_cocore(
     /* To simplify default state, start with everything zero!  We add on enough
      * space to save the requested context area. */
     struct cocore *coroutine = calloc(1, sizeof(struct cocore) + context_size);
-    coroutine->thread_id = &current_coroutine;
+    coroutine->state = GET_TLS(cocore_state);
     coroutine->action = action;
     coroutine->parent = parent;
     memcpy(coroutine->context, context, context_size);
@@ -396,7 +429,8 @@ static void delete_cocore(struct cocore *coroutine)
  * on stack frame sharing the switching process may be more or less involved. */
 void * switch_cocore(struct cocore *target, void *parameter)
 {
-    struct cocore *this = current_coroutine;
+    assert(target->state == GET_TLS(cocore_state));
+    struct cocore *this = target->state->current_coroutine;
     void *result;
     if (target->stack->current == target)
         /* No stack retargeting required, simply switch to already available
@@ -405,7 +439,7 @@ void * switch_cocore(struct cocore *target, void *parameter)
     else
         /* Need to switch a shared frame at the same time. */
         result = switch_shared_frame(this, target, parameter);
-    current_coroutine = this;
+    this->state->current_coroutine = this;
 
     /* If the coroutine which just gave us control is defunct delete it now. */
     if (this->defunct)
@@ -421,7 +455,7 @@ void stack_use(struct cocore *coroutine, ssize_t *current_use, ssize_t *max_use)
     struct stack *stack = coroutine->stack;
     /* For the active current coroutine use (a proxy for) the current stack
      * pointer, for a saved coroutine use its saved frame. */
-    frame_t current_frame = coroutine == current_coroutine ?
+    frame_t current_frame = coroutine == coroutine->state->current_coroutine ?
         (frame_t) &stack : coroutine->frame;
     *current_use = FRAME_LENGTH(stack->stack_base, current_frame);
     if (stack->check_stack)

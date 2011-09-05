@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#include "thread.h"
 #include "cocore.h"
 
 
@@ -47,7 +48,7 @@
     } )
 
 
-static __thread struct cocore *base_coroutine = NULL;
+DECLARE_TLS(struct cocore *, base_coroutine);
 static bool check_stack_enabled = false;
 
 
@@ -95,7 +96,7 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
         Py_INCREF(action);
         struct cocore * coroutine = create_cocore(
             parent, coroutine_wrapper, &action, sizeof(action),
-            stack_size == 0 ? base_coroutine : NULL,
+            stack_size == 0 ? GET_TLS(base_coroutine) : NULL,
             stack_size, check_stack_enabled);
         return PyCObject_FromVoidPtr(coroutine, NULL);
     }
@@ -138,9 +139,9 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 
 static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
 {
-    if (unlikely(base_coroutine == NULL))
+    if (unlikely(GET_TLS(base_coroutine) == NULL))
         /* First time through initialise the cocore library. */
-        base_coroutine = initialise_cocore();
+        SET_TLS(base_coroutine, initialise_cocore());
     return PyCObject_FromVoidPtr(get_current_cocore(), NULL);
 }
 
@@ -203,5 +204,6 @@ coroutine terminates." },
 
 void init_coroutine(void)
 {
+    INIT_TLS(base_coroutine);
     Py_InitModule("_coroutine", module_methods);
 }
