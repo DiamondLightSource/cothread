@@ -162,7 +162,7 @@ static __attribute__((noreturn))
         /* Pull the target coroutine and switch argument from the callers stack
          * frame before we potentially destroy this information by relocating
          * the frame. */
-        struct frame_action *action = (struct frame_action *) action_;
+        struct frame_action *action = action_;
         void *arg = action->arg;
         struct cocore *target = action->target;
 
@@ -214,7 +214,7 @@ static void *switch_shared_frame(
 
 /* Prepares a brand new stack structure initially owned only by the given
  * coroutine. */
-static struct stack * create_stack(
+static struct stack *create_stack(
     struct cocore *coroutine, size_t stack_size, bool check_stack)
 {
     struct stack *stack = malloc(sizeof(struct stack));
@@ -237,7 +237,7 @@ static struct stack * create_stack(
 
 
 /* Creates the base stack for the current coroutine. */
-static struct stack * create_base_stack(struct cocore *coroutine)
+static struct stack *create_base_stack(struct cocore *coroutine)
 {
     struct stack *stack = calloc(1, sizeof(struct stack));
     stack->current = coroutine;
@@ -330,7 +330,7 @@ static void create_shared_frame(struct cocore *coroutine)
  *
  * Note that the coroutine structure is leaked when the thread exits unless
  * terminate_cocore() is called on completion of the thread. */
-struct cocore * initialise_cocore(void)
+struct cocore *initialise_cocore(void)
 {
     INIT_TLS(cocore_state);
     assert(GET_TLS(cocore_state) == NULL);
@@ -382,14 +382,14 @@ struct cocore *get_current_cocore(void)
 /* Checks that the given coroutine exists and is in the same thread. */
 bool check_cocore(struct cocore *coroutine)
 {
-    return coroutine != NULL  &&  coroutine->state == GET_TLS(cocore_state);
+    return coroutine->state == GET_TLS(cocore_state);
 }
 
 
 /* Creates a new coroutine with the given parent, action and context.  If
  * shared_stack is NULL a fresh stack of stack_size is created, otherwise the
  * stack is shared with the shared_stack coroutine. */
-struct cocore * create_cocore(
+struct cocore *create_cocore(
     struct cocore *parent, cocore_action_t action,
     void *context, size_t context_size,
     struct cocore *shared_stack, size_t stack_size, bool check_stack)
@@ -397,7 +397,7 @@ struct cocore * create_cocore(
     /* To simplify default state, start with everything zero!  We add on enough
      * space to save the requested context area. */
     struct cocore *coroutine = calloc(1, sizeof(struct cocore) + context_size);
-    coroutine->state = GET_TLS(cocore_state);
+    coroutine->state = parent->state;
     coroutine->action = action;
     coroutine->parent = parent;
     memcpy(coroutine->context, context, context_size);
@@ -439,7 +439,7 @@ static void delete_cocore(struct cocore *coroutine)
 
 /* Switches control to target coroutine passing the given parameter.  Depending
  * on stack frame sharing the switching process may be more or less involved. */
-void * switch_cocore(struct cocore *target, void *parameter)
+void *switch_cocore(struct cocore *target, void *parameter)
 {
     assert(target->state == GET_TLS(cocore_state));
     struct cocore *this = target->state->current_coroutine;
@@ -462,7 +462,8 @@ void * switch_cocore(struct cocore *target, void *parameter)
 
 
 /* Stack checking. */
-void stack_use(struct cocore *coroutine, ssize_t *current_use, ssize_t *max_use)
+void stack_use(struct cocore *coroutine,
+    ssize_t *current_use, ssize_t *max_use, size_t *stack_size)
 {
     struct stack *stack = coroutine->stack;
     /* For the active current coroutine use (a proxy for) the current stack
@@ -474,4 +475,5 @@ void stack_use(struct cocore *coroutine, ssize_t *current_use, ssize_t *max_use)
         *max_use = check_stack_use(stack);
     else
         *max_use = -1;      // Error return, cannot compute this value
+    *stack_size = stack->stack_size;
 }

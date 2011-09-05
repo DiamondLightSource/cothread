@@ -167,8 +167,9 @@ static PyObject* py_stack_use(PyObject *self, PyObject *args)
         if (target == NULL)
             target = get_current_cocore();
         ssize_t current_use, max_use;
-        stack_use(target, &current_use, &max_use);
-        return Py_BuildValue("nn", current_use, max_use);
+        size_t stack_size;
+        stack_use(target, &current_use, &max_use, &stack_size);
+        return Py_BuildValue("nnn", current_use, max_use, stack_size);
     }
     else
         return NULL;
