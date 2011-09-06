@@ -1,6 +1,5 @@
 # Makefile for building cothread documentation
 TOP = ..
-ASCIIDOC = asciidoc
 include $(TOP)/Makefile.config
 
 

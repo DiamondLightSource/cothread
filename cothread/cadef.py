@@ -36,10 +36,6 @@ This module is a thin wrapper over the cadef.h file to be found in
     $EPICS_BASE/include/cadef.h
 '''
 
-import ctypes
-import platform
-import os
-
 __all__ = [
     # Event type notification codes for camonitor
     'DBE_VALUE',        # Notify normal value changes
@@ -49,21 +45,9 @@ __all__ = [
 ]
 
 
-# Load libca from configured location.  The file libca_path must be set to
-# point to the full path to libca.so, should be:
-#   $EPICS_BASE/lib/$HOST_ARCH/libca.so
-import libca_path
-if platform.system() == 'Windows':
-    ctypes.windll.LoadLibrary(
-        os.path.join(libca_path.libca_path, 'Com.dll'))
-    libca = ctypes.windll.LoadLibrary(
-        os.path.join(libca_path.libca_path, 'ca.dll'))
-elif platform.system() == 'Darwin':
-    libca = ctypes.cdll.LoadLibrary(
-        os.path.join(libca_path.libca_path, 'libca.dylib'))
-else:
-    libca = ctypes.cdll.LoadLibrary(
-        os.path.join(libca_path.libca_path, 'libca.so'))
+import ctypes
+from load_ca import libca
+
 
 
 # -----------------------------------------------------------------------------

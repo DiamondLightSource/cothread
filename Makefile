@@ -6,13 +6,12 @@ include $(TOP)/Makefile.config
 
 # Extra configuration dependencies.
 DEPENDENCIES = \
-    cothread/libca_path.py \
-    cothread/_coroutine.so
+    $(wildcard cothread/*.py cothread/*/*.py context/*.c context/*.h)
 
 
 default: dist make_docs
 
-dist: setup.py $(wildcard cothread/*.py cothread/*/*.py) $(DEPENDENCIES)
+dist: setup.py $(DEPENDENCIES) cothread/libca_path.py
 	MODULEVER=$(MODULEVER) $(PYTHON) setup.py bdist_egg
 	touch dist
 
@@ -37,8 +36,7 @@ clean_docs:
 
 .PHONY: clean clean_docs install make_docs clean_docs default
 
-cothread/libca_path.py: $(EPICS_BASE)/lib/$(EPICS_HOST_ARCH)
-	echo "libca_path = '$<'" >$@
-
-cothread/_coroutine.so:
-	make -C context
+cothread/libca_path.py:
+	EVAL="$$($(PYTHON) cothread/load_ca.py)"  && \
+        eval "$$EVAL"  && \
+        echo "libca_path = '$$CATOOLS_LIBCA_PATH'" >$@
