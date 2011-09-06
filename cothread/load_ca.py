@@ -50,12 +50,14 @@ else:
 
 
 def _libca_path(load_libca_path):
-    # We can look for libca in three different places:
-    # 1. Specified by a local libca_path module
-    # 2. Bundled with cothread in the this directory, os.dirname(__file__)
-    # 3. Specified by environment variables EPICS_BASE and EPICS_HOST_ARCH
+    # We look for libca in a variety of different places, searched in order:
     #
-    # ? Should the environment variable check come first or last?
+    # 1. Firstly if CATOOLS_LIBCA_PATH is set in the environment we take that as
+    #    gospel.  This allows the remaining search to be overridden.
+    # 2  If the libca_path module is present we accept the value it defines.
+    # 3. Check for local copies of the libca file(s).
+    # 4. Finally check for EPICS_BASE and optionally EPICS_HOST_ARCH, which we
+    #    normally guess if not specified.
 
     # First allow a forced override
     libca_path = os.environ.get('CATOOLS_LIBCA_PATH')
@@ -89,10 +91,10 @@ def _libca_path(load_libca_path):
         system_map = {
             ('Linux',   '32bit', 'i386'):   'linux-x86',
             ('Linux',   '32bit', 'i686'):   'linux-x86',
-            ('Linux',   '64bit', 'i686'):   'linux-x86_64',
+            ('Linux',   '64bit', 'x86_64'): 'linux-x86_64',
             ('Darwin',  '64bit', 'i386'):   'darwin-x86',
-            ('Windows', '32bit', 'i386'):   'win32-x86',
-            ('Windows', '64bit', 'i686'):   'windows-x64',
+            ('Windows', '32bit', 'x86'):    'win32-x86',
+            ('Windows', '64bit', '????'):   'windows-x64',  # Not quite yet!
         }
         bits = platform.architecture()[0]
         machine = platform.machine()
