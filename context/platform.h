@@ -68,19 +68,60 @@
 #elif defined(WIN32)
 /* This is what we have to use on 32-bit Windows. */
 #define MALLOC_ALIGNED(alignment, size) \
-    __mingw_aligned_malloc((size), STACK_ALIGNMENT)
+    __mingw_aligned_malloc((size), alignment)
 #define FREE_ALIGNED(mem)   __mingw_aligned_free(mem)
 
 #elif defined(WIN64)
 /* This is what we have to use on 64-bit Windows. */
 #define MALLOC_ALIGNED(alignment, size) \
-    _aligned_malloc((size), STACK_ALIGNMENT)
+    _aligned_malloc((size), alignment)
 #define FREE_ALIGNED(mem)   _aligned_free(mem)
 
 #else
 /* Proper posix system. */
 #define MALLOC_ALIGNED(alignment, size) memalign(alignment, (size))
 #define FREE_ALIGNED(mem)               free(mem)
+#endif
+
+
+/* Windows vs Posix issues.  Let's try and gather these differences in a single
+ * place as they arise.  Some useful references:
+ *
+ *  http://msdn.microsoft.com/en-us/library/aa366898%28v=vs.85%29.aspx
+ *      MSDN reference for VirtualProtect()
+ *
+ *  http://coding.derkeiler.com/Archive/Assembler/
+ *  comp.lang.asm.x86/2005-05/msg00280.html
+ *      An example of memory protection and exception handling.
+ *
+ *  http://www.genesys-e.org/jwalter/mix4win.htm
+ *      References critical sections for mutual exclusion and system info
+ *      interrogation functions. */
+
+#if defined(WIN32)
+
+#define getpagesize() \
+    ( { \
+        SYSTEM_INFO system_info; \
+        GetSystemInfo(&system_info); \
+        system_info.dwPageSize; \
+    } )
+
+#define mprotect(addr, size, prot) \
+    ( { \
+        DWORD old_protect; \
+        VirtualProtect(addr, size, prot, &old_protect); \
+    } )
+
+#define PROT_NONE       PAGE_NOACCESS
+#define PROT_READWRITE  PAGE_READWRITE
+
+#else
+/* Standard posix stuff.  Mostly we'll try and make Windows look like Posix, but
+ * if we fail stuff needs to go here. */
+
+#define PROT_READWRITE  (PROT_READ | PROT_WRITE)
+
 #endif
 
 

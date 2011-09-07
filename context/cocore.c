@@ -39,7 +39,11 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
+#if defined(WIN32)
+#include <windows.h>
+#else
 #include <sys/mman.h>
+#endif
 
 #include "switch.h"
 #include "platform.h"
@@ -301,7 +305,7 @@ static void delete_stack(struct cocore_state *state, struct stack *stack)
          * be only because it can't be disabled anyway. */
         mprotect(
             FRAME_START(alloc_base + stack->stack_size, alloc_base),
-            stack->guard_size, PROT_READ | PROT_WRITE);
+            stack->guard_size, PROT_READWRITE);
     FREE_ALIGNED(alloc_base);
     free(stack);
 }
