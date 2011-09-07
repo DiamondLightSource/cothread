@@ -90,7 +90,7 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
 {
     struct cocore *parent;
     PyObject *action;
-    size_t stack_size;
+    int stack_size;
     if (PyArg_ParseTuple(args, "O&OI",
             get_cocore, &parent, &action, &stack_size))
     {
