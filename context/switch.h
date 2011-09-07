@@ -61,15 +61,15 @@
  * stack frame. */
 typedef void *frame_t;
 
-/* The action performed by in a new frame takes two arguments: the context
+/* The action performed for a new frame takes two arguments: the context
  * argument passed to create_frame() when this frame was first established and
- * the argument passed in the first activating switch_frame() call.
+ * the argument passed to the first activating switch_frame() call.
  *
  * This routine must never return. */
 typedef __attribute__((noreturn))
     void (*frame_action_t)(void *arg, void *context);
 
-/* Switch to new frame, previously established by create_frame() or an earlier
+/* Switch to new_frame, previously established by create_frame() or an earlier
  * switch_frame().  The caller's stack frame is written to *old_frame. */
 void * switch_frame(frame_t *old_frame, frame_t new_frame, void *arg);
 

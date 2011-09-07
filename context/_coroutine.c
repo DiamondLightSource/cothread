@@ -50,6 +50,7 @@
 
 DECLARE_TLS(struct cocore *, base_coroutine);
 static bool check_stack_enabled = false;
+static int guard_pages = 4;
 
 
 /* Helper function for use with "O&" format to extract the underlying cocore
@@ -97,7 +98,7 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
         struct cocore * coroutine = create_cocore(
             parent, coroutine_wrapper, &action, sizeof(action),
             stack_size == 0 ? GET_TLS(base_coroutine) : NULL,
-            stack_size, check_stack_enabled);
+            stack_size, check_stack_enabled, guard_pages);
         return PyCObject_FromVoidPtr(coroutine, NULL);
     }
     else
@@ -137,6 +138,10 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
 }
 
 
+/* This function has a very important side effect: on first call it initialises
+ * the thread specific part of the coroutine library.  Fortunately the API
+ * published by this module really requires that get_current() be called before
+ * doing anything substantial. */
 static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
 {
     if (unlikely(GET_TLS(base_coroutine) == NULL))

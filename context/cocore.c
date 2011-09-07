@@ -37,7 +37,9 @@
 #include <malloc.h>
 #endif
 #include <assert.h>
+#include <unistd.h>
 #include <string.h>
+#include <sys/mman.h>
 
 #include "switch.h"
 #include "platform.h"
@@ -64,8 +66,9 @@
  * coroutine.  We don't store the start of the allocated memory because this can
  * be recovered when necessary. */
 struct stack {
-    void *stack_base;           // Base of this stack.
+    void *stack_base;           // Base of this stack, initial frame pointer
     size_t stack_size;          // Size of allocated stack.
+    int guard_size;             // Length of the guard area for this stack
     bool check_stack;           // Whether to check consumption on exit
     struct cocore *current;     // Coroutine currently on the stack
     unsigned int ref_count;     // Number of sharing coroutines
@@ -91,7 +94,8 @@ struct cocore {
 struct cocore_state {
     struct cocore *base_coroutine;      // Master coroutine representing thread
     struct cocore *current_coroutine;   // Currently active coroutine
-    frame_t switcher_coroutine;         // Switching frame
+    frame_t switcher_coroutine; // Coroutine to switch a shared stack frame
+    size_t page_size;           // System page size for guard page allocation
 };
 
 
@@ -215,19 +219,35 @@ static void *switch_shared_frame(
 /* Prepares a brand new stack structure initially owned only by the given
  * coroutine. */
 static struct stack *create_stack(
-    struct cocore *coroutine, size_t stack_size, bool check_stack)
+    struct cocore *coroutine, size_t stack_size, bool check_stack,
+    int guard_pages)
 {
+    /* Align the stack either by its minimum alignment or to pages if guard
+     * pages have been requested. */
+    size_t page_size = coroutine->state->page_size;
+    size_t guard_size = guard_pages * page_size;
+    size_t alignment = guard_size == 0 ? STACK_ALIGNMENT : page_size;
+    stack_size = (stack_size + alignment - 1) & -alignment;
+
+    void *alloc_base = MALLOC_ALIGNED(alignment, stack_size + guard_size);
+    if (guard_size > 0)
+        /* Disable access to the guard area. */
+        mprotect(
+            FRAME_START(alloc_base + stack_size, alloc_base),
+            guard_size, PROT_NONE);
+
     struct stack *stack = malloc(sizeof(struct stack));
-    stack_size = stack_size & -STACK_ALIGNMENT;
-    void *alloc_base = MALLOC_ALIGNED(STACK_ALIGNMENT, stack_size);
-    void *stack_base = STACK_BASE(alloc_base, stack_size);
+    void *stack_base = STACK_BASE(alloc_base, stack_size + guard_size);
     stack->stack_base = stack_base;
     stack->stack_size = stack_size;
+    stack->guard_size = guard_size;
+
     stack->check_stack = check_stack;
     stack->current = coroutine;
     stack->ref_count = 1;
     if (check_stack)
-        memset(alloc_base, 0xC5, stack_size);
+        memset(FRAME_START(alloc_base, alloc_base + guard_size),
+            0xC5, stack_size);
     /* Create frame need initial frame to be zeroed. */
     memset(
         FRAME_START(stack_base, stack_base - INITIAL_FRAME_SIZE),
@@ -263,7 +283,7 @@ static size_t check_stack_use(struct stack *stack)
 
 
 /* Called when the last coroutine using this stack has been deleted. */
-static void delete_stack(struct stack *stack)
+static void delete_stack(struct cocore_state *state, struct stack *stack)
 {
     if (stack->check_stack)
         fprintf(stderr,
@@ -271,7 +291,18 @@ static void delete_stack(struct stack *stack)
             check_stack_use(stack), stack->stack_size);
     /* Recover allocated base from working stack base and original allocation
      * size. */
-    FREE_ALIGNED(STACK_BASE(stack->stack_base, - stack->stack_size));
+    void *alloc_base = STACK_BASE(
+        stack->stack_base, - stack->stack_size - stack->guard_size);
+    if (stack->guard_size > 0)
+        /* Restore the original protection on the memory region before freeing
+         * it back to the memory pool.  Actually we have a snag here: don't know
+         * in general whether PROT_EXEC was enabled, maybe need some system
+         * option to discover this.  Chances are it wasn't, and if it was that'd
+         * be only because it can't be disabled anyway. */
+        mprotect(
+            FRAME_START(alloc_base + stack->stack_size, alloc_base),
+            stack->guard_size, PROT_READ | PROT_WRITE);
+    FREE_ALIGNED(alloc_base);
     free(stack);
 }
 
@@ -352,6 +383,9 @@ struct cocore *initialise_cocore(void)
         malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
     state->switcher_coroutine = create_frame(stack, frame_switcher, state);
 
+    /* Similarly now let's learn the system page size. */
+    state->page_size = getpagesize();
+
     return coroutine;
 }
 
@@ -392,7 +426,8 @@ bool check_cocore(struct cocore *coroutine)
 struct cocore *create_cocore(
     struct cocore *parent, cocore_action_t action,
     void *context, size_t context_size,
-    struct cocore *shared_stack, size_t stack_size, bool check_stack)
+    struct cocore *shared_stack,
+    size_t stack_size, bool check_stack, int guard_pages)
 {
     /* To simplify default state, start with everything zero!  We add on enough
      * space to save the requested context area. */
@@ -414,7 +449,8 @@ struct cocore *create_cocore(
     {
         /* Coroutine is created in its own stack frame.  This is the easiest
          * case, the frame can be created in place. */
-        coroutine->stack = create_stack(coroutine, stack_size, check_stack);
+        coroutine->stack = create_stack(
+            coroutine, stack_size, check_stack, guard_pages);
         coroutine->frame = create_frame(
             coroutine->stack->stack_base, action_wrapper, coroutine);
     }
@@ -428,7 +464,7 @@ static void delete_cocore(struct cocore *coroutine)
     struct stack *stack = coroutine->stack;
     stack->ref_count -= 1;
     if (stack->ref_count == 0)
-        delete_stack(stack);
+        delete_stack(coroutine->state, stack);
     else if (stack->current == coroutine)
         /* Whoops: we're still marked as using the the stack.  This won't do. */
         stack->current = NULL;

@@ -69,7 +69,8 @@ bool check_cocore(struct cocore *coroutine);
 struct cocore *create_cocore(
     struct cocore *parent, cocore_action_t action,
     void *context, size_t context_size,
-    struct cocore *shared_stack, size_t stack_size, bool check_stack);
+    struct cocore *shared_stack,
+    size_t stack_size, bool check_stack, int guard_pages);
 
 /* Idea: Could have an at-exit hook to be called just before a defuct coroutine
  * is destroyed, and a private data mechanism to help _coroutine manage the

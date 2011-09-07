@@ -61,9 +61,8 @@
 /* Allocating stack aligned memory.  Again this is very platform dependent. */
 
 #if defined(__APPLE__)
-/* On OSX there is no memalign, but malloc is guaranteed to have sufficent
- * alignment. */
-#define MALLOC_ALIGNED(alignment, size) malloc(size)
+/* On OSX there is no memalign, and valloc is mostly what we want anyway. */
+#define MALLOC_ALIGNED(alignment, size) valloc(size)
 #define FREE_ALIGNED(mem)               free(mem)
 
 #elif defined(WIN32)
@@ -80,7 +79,7 @@
 
 #else
 /* Proper posix system. */
-#define MALLOC_ALIGNED(alignment, size) memalign(STACK_ALIGNMENT, (size))
+#define MALLOC_ALIGNED(alignment, size) memalign(alignment, (size))
 #define FREE_ALIGNED(mem)               free(mem)
 #endif
 
