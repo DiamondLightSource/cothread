@@ -39,11 +39,8 @@
 
 #include <pthread.h>
 
-#define DECLARE_TLS(type, var) \
-    static pthread_key_t var##__key; \
-    static pthread_once_t var##__once = PTHREAD_ONCE_INIT; \
-    static void var##__init(void) { pthread_key_create(&var##__key, NULL); }
-#define INIT_TLS(var)           pthread_once(&var##__once, var##__init)
+#define DECLARE_TLS(type, var)  static pthread_key_t var##__key
+#define INIT_TLS(var)           pthread_key_create(&var##__key, NULL)
 #define GET_TLS(var)            pthread_getspecific(var##__key)
 #define SET_TLS(var, value)     pthread_setspecific(var##__key, value)
 

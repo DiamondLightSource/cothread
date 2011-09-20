@@ -31,6 +31,10 @@
 
 struct cocore;
 
+/* Initialises the cocore library, must be called exactly once before using this
+ * library. */
+void initialise_cocore(void);
+
 /* The coroutine action is passed a pointer to itself together with the argument
  * passed to the first switch_cocore() routine used to activate it.  The
  * returned result will be passed through to the registered parent. */
@@ -39,11 +43,11 @@ typedef void *(*cocore_action_t)(void *context, void *argument);
 /* Initialises the master coroutine for the calling thread.  Must be called (per
  * thread) before any other coroutine actions.  Returns the newly initialised
  * base coroutine. */
-struct cocore *initialise_cocore(void);
+struct cocore *initialise_cocore_thread(void);
 
 /* This will delete the base coroutine.  This must be the last cocore action on
  * this thread. */
-void terminate_cocore(void);
+void terminate_cocore_thread(void);
 
 /* Returns the current coroutine. */
 struct cocore *get_current_cocore(void);

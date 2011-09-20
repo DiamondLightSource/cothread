@@ -146,7 +146,7 @@ static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
 {
     if (unlikely(GET_TLS(base_coroutine) == NULL))
         /* First time through initialise the cocore library. */
-        SET_TLS(base_coroutine, initialise_cocore());
+        SET_TLS(base_coroutine, initialise_cocore_thread());
     return PyCObject_FromVoidPtr(get_current_cocore(), NULL);
 }
 
@@ -248,5 +248,6 @@ If the hook function returns true an interrupt will be raised." },
 void init_coroutine(void)
 {
     INIT_TLS(base_coroutine);
+    initialise_cocore();
     Py_InitModule("_coroutine", module_methods);
 }

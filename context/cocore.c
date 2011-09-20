@@ -99,10 +99,10 @@ struct cocore_state {
     struct cocore *base_coroutine;      // Master coroutine representing thread
     struct cocore *current_coroutine;   // Currently active coroutine
     frame_t switcher_coroutine; // Coroutine to switch a shared stack frame
-    size_t page_size;           // System page size for guard page allocation
 };
 
 
+static size_t page_size;        // System page size for guard page allocation
 DECLARE_TLS(struct cocore_state *, cocore_state);
 
 
@@ -228,7 +228,6 @@ static struct stack *create_stack(
 {
     /* Align the stack either by its minimum alignment or to pages if guard
      * pages have been requested. */
-    size_t page_size = coroutine->state->page_size;
     size_t guard_size = guard_pages * page_size;
     size_t alignment = guard_size == 0 ? STACK_ALIGNMENT : page_size;
     stack_size = (stack_size + alignment - 1) & -alignment;
@@ -354,14 +353,20 @@ static void create_shared_frame(struct cocore *coroutine)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
+void initialise_cocore(void)
+{
+    INIT_TLS(cocore_state);
+    page_size = getpagesize();
+}
+
+
 /* Creates master coroutine for this thread.  Must be called once per thread
  * before any other coroutine actions occur.
  *
  * Note that the coroutine structure is leaked when the thread exits unless
- * terminate_cocore() is called on completion of the thread. */
-struct cocore *initialise_cocore(void)
+ * terminate_cocore_thread() is called on completion of the thread. */
+struct cocore *initialise_cocore_thread(void)
 {
-    INIT_TLS(cocore_state);
     assert(GET_TLS(cocore_state) == NULL);
     struct cocore_state *state = calloc(1, sizeof(struct cocore_state));
     SET_TLS(cocore_state, state);
@@ -381,16 +386,13 @@ struct cocore *initialise_cocore(void)
         malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
     state->switcher_coroutine = create_frame(stack, frame_switcher, state);
 
-    /* Similarly now let's learn the system page size. */
-    state->page_size = getpagesize();
-
     return coroutine;
 }
 
 
 /* Ensures no dangling resources.  Only safe to call as the last action before
  * exiting the thread, and only safe to call from the main coroutine. */
-void terminate_cocore(void)
+void terminate_cocore_thread(void)
 {
     struct cocore_state *state = GET_TLS(cocore_state);
     assert(state->base_coroutine == state->current_coroutine);
