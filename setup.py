@@ -27,6 +27,11 @@ version = os.environ.get('MODULEVER', 'unknown')
 _coroutine = Extension('cothread._coroutine',
     ['context/_coroutine.c', 'context/cocore.c', 'context/switch.c'],
     depends = glob.glob('context/switch-*.c') + glob.glob('context/*.h'))
+ext_modules = [_coroutine]
+
+if platform.system() == 'Windows':
+    _winlib = Extension('cothread._winlib', ['context/_winlib.c'])
+    ext_modules.append(_winlib)
 
 setup(
     name = 'cothread',
@@ -38,5 +43,5 @@ setup(
     license = 'GPL2',
 
     packages = ['cothread', 'cothread.tools'],
-    ext_modules = [_coroutine],
+    ext_modules = ext_modules,
     **setup_args)

@@ -33,7 +33,7 @@
 #   http://sourceforge.net/projects/pywin32/
 # import win32file
 # import win32pipe
-import win32event
+import _winlib
 import msvcrt
 import time
 
@@ -44,7 +44,7 @@ def poll_block_win32(poll_list, timeout = None):
     if poll_list:
         # Convert timeout into Windows wait compatible form.
         if timeout is None:
-            timeout = win32event.INFINITE
+            timeout = _winlib.INFINITE
         else:
             timeout = int(1000 * timeout)
 
@@ -56,7 +56,7 @@ def poll_block_win32(poll_list, timeout = None):
         # whatever Windows gives us and pretend that whatever the user was
         # really waiting for is ready.  Not great, but perhaps a start...
         handles = [msvcrt.get_osfhandle(h) for (h, mask) in poll_list]
-        ready = win32event.WaitForMultipleObjects(handles, 0, timeout)
+        ready = _winlib.WaitForMultipleObjects(handles, 0, timeout)
         if 0 <= ready < len(poll_list):
             # Normal case, something is ready, we don't know about the rest but
             # can at least report the first ready item.  Unfortunately we don't
