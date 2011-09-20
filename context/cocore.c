@@ -254,15 +254,22 @@ static struct stack *create_stack(
 }
 
 
-/* Creates the base stack for the current coroutine. */
+/* Creates the base stack for the current thread. */
 static struct stack *create_base_stack(struct cocore *coroutine)
 {
     struct stack *stack = calloc(1, sizeof(struct stack));
     stack->current = coroutine;
     stack->ref_count = 1;
-    /* We need to initialise stack_base to something sensible.  It doesn't
-     * hugely matter where it is, but placing it at the current stack pointer
-     * seems a good idea.  However, it *is* important to align properly. */
+
+    /* The allocation of the base of the master stack is straightforward but
+     * slightly delicate.  It doesn't hugely matter where it is, so long as it's
+     * within the active stack frame and properly aligned.
+     *
+     * As to *why* it doesn't matter, even when we share the stack frame: the
+     * start of stack for all coroutines sharing this stack frame will be placed
+     * at this base except for the master coroutine.  This means that memory
+     * above this point is properly managed and shared, and memory below this
+     * point is exclusive to the master coroutine. */
     stack->stack_base = (void *) ((intptr_t) &stack & -STACK_ALIGNMENT);
     return stack;
 }
