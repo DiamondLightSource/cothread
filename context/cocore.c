@@ -241,8 +241,7 @@ static struct stack *create_stack(
             guard_size, PROT_NONE);
 
     struct stack *stack = malloc(sizeof(struct stack));
-    void *stack_base = STACK_BASE(alloc_base, stack_size + guard_size);
-    stack->stack_base = stack_base;
+    stack->stack_base = STACK_BASE(alloc_base, stack_size + guard_size);
     stack->stack_size = stack_size;
     stack->guard_size = guard_size;
 
@@ -252,10 +251,6 @@ static struct stack *create_stack(
     if (check_stack)
         memset(FRAME_START(alloc_base, alloc_base + guard_size),
             0xC5, stack_size);
-    /* Create frame need initial frame to be zeroed. */
-    memset(
-        FRAME_START(stack_base, stack_base - INITIAL_FRAME_SIZE),
-        0, INITIAL_FRAME_SIZE);
     return stack;
 }
 
@@ -338,7 +333,6 @@ static void create_shared_frame(struct cocore *coroutine)
     /* Create a temporary frame right here on the stack. */
     char initial_frame[INITIAL_FRAME_SIZE];
     void *initial_base = STACK_BASE(initial_frame, INITIAL_FRAME_SIZE);
-    memset(initial_frame, 0, INITIAL_FRAME_SIZE);
     frame_t frame = create_frame(initial_base, action_wrapper, coroutine);
 
     /* Relocate the new frame into a saved frame area for this coroutine. */

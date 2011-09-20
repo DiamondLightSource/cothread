@@ -110,6 +110,8 @@ FNAME(create_frame)
 "       movl    4(%esp), %eax\n"    // %eax = base of stack
 "       movl    8(%esp), %edx\n"    // %edx = action routine to call
 "       movl    12(%esp), %ecx\n"   // %ecx = context for action
+"       movl    $0, -4(%eax)\n"     // Padding to ensure final base of stack on
+"       movl    $0, -8(%eax)\n"     //   call to action is 16-byte aligned
 "       movl    %ecx, -12(%eax)\n"
 "       movl    %edx, -16(%eax)\n"
         // Push variables expected by switch_frame restore, but push 0 for %ebp
@@ -119,6 +121,10 @@ FNAME(create_frame)
 "here:  popl    %edx\n"
 "       leal    action_entry-here(%edx), %edx\n"
 "       movl    %edx, -20(%eax)\n" // Where switch_frame will switch to
+"       movl    $0, -24(%eax)\n"
+"       movl    %ebx, -28(%eax)\n"
+"       movl    %edi, -32(%eax)\n"
+"       movl    %esi, -36(%eax)\n"
 
         // Save new stack frame and we're all done.
 "       movl    4(%esp), %edx\n"    // Frame address
