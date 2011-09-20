@@ -31,33 +31,45 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "coroutine.h"
+#include "cocore.h"
 
 #define STACK_SIZE      (1 << 16)
 
-coroutine_t c0, c1, c2;
+struct context { int x; };
 
-void * coroutine_1(void *context, void *arg)
+struct cocore *c0, *c1, *c2;
+
+#define N   2
+
+void *coroutine_1(void *_context, void *arg)
 {
-    printf("coroutine_1 started: %p, %p\n", context, arg);
-    for (int i = 0; i < 5; i++)
+    struct context *context = _context;
+    printf("coroutine_1 started: %p (%d), %p\n", context, context->x, arg);
+    for (int i = 0; i < N + 1; i++)
     {
+        char x[4096];
+        memset(x, 0x55, sizeof(x));
         printf("switching to coroutine_2: %d, %p\n", i, arg);
-        arg = switch_coroutine(c2, (void*)((long) arg + 1));
+        arg = switch_cocore(c2, (void*)((long) arg + 1));
         printf("coroutine_1 in control: %d, %p\n", i, arg);
     }
     printf("coroutine_1 returning %p\n", arg);
     return arg;
 }
 
-void * coroutine_2(void *context, void *arg)
+void *coroutine_2(void *_context, void *arg)
 {
-    printf("coroutine_2 started: %p, %p\n", context, arg);
-    for (int i = 0; i < 4; i ++)
+    struct context *context = _context;
+    printf("coroutine_2 started: %p (%d), %p\n", context, context->x, arg);
+    for (int i = 0; i < N; i ++)
     {
-        printf("switching to coroutine_1: %d, %p\n", i, arg);
-        arg = switch_coroutine(c1, (void*)((long) arg + 1));
+        char x[4096];
+        memset(x, 0, sizeof(x));
+        printf("switching to master: %d, %p\n", i, arg);
+        arg = switch_cocore(c0, (void*)((long) arg + 1));
         printf("coroutine_2 in control: %d, %p\n", i, arg);
     }
     printf("coroutine_2 returning %p\n", arg);
@@ -66,11 +78,22 @@ void * coroutine_2(void *context, void *arg)
 
 int main(int argc, char **argv)
 {
-    c0 = get_current_coroutine();
-    c1 = create_coroutine(c0, coroutine_1, (void*)101, NULL, STACK_SIZE, true);
-    c2 = create_coroutine(c1, coroutine_2, (void*)102, NULL, STACK_SIZE, true);
+    initialise_cocore();
+    c0 = initialise_cocore_thread();
+    c1 = create_cocore(c0, coroutine_1,
+       &(struct context) { .x = 101 }, sizeof(struct context),
+       NULL, STACK_SIZE, true, 4);
+    c2 = create_cocore(c1, coroutine_2,
+       &(struct context) { .x = 102 }, sizeof(struct context),
+       c0, STACK_SIZE, true, 4);
 
-    printf("About to start\n");
-    void * n = switch_coroutine(c1, (void *)1);
-    printf("All done: %p\n", n);
+    printf("About to start: %p, %p, %p\n", c0, c1, c2);
+    void *arg = (void *) 1;
+    for (int i = 0; i < N + 1; i ++)
+    {
+        printf("switching to coroutine_1: %d, %p\n", i, arg);
+        arg = switch_cocore(c1, (void *) ((long) arg + 1));
+        printf("master in control: %d, %p\n", i, arg);
+    }
+    printf("All done: %p\n", arg);
 }
