@@ -1,4 +1,4 @@
-#!/bin/env python2.4
+#!/bin/env python2.6
 
 '''Channel Access Get Structure'''
 

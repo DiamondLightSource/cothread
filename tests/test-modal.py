@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python2.6
 
 import require
 import cothread
@@ -28,12 +28,18 @@ if False:
             Sleep(0.2)
             os.write(w, str(n))
 
-iqt(use_timer = int(sys.argv[1]))
+if len(sys.argv) > 1:
+    poll_interval = float(sys.argv[1])
+else:
+    poll_interval = 0.05
+iqt(poll_interval = poll_interval)
 
 try:
     from qt import QMessageBox
+    print 'Using Qt3'
 except ImportError:
     from PyQt4.QtGui import QMessageBox
+    print 'Using Qt4'
 
 @Spawn
 def MessageBox():
@@ -42,6 +48,12 @@ def MessageBox():
     QMessageBox.information(None, 'My caption', 'This is a test')
     print 'Message box done'
 
+@Spawn
+def Ticker():
+    while True:
+        print 'tick'
+        Sleep(1)
 
-x = raw_input('> ')
+
+x = raw_input('# ')
 print 'read', repr(x)

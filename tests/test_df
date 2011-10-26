@@ -1,9 +1,12 @@
 #!/bin/sh
 
+: ${1:?Specify PV to test}
+
+EXAMPLES="$(dirname "$0")/../examples"
 for f in $(seq 0 2); do
     for d in $(seq 0 6); do
         echo ./caget.py -n3 -d$d -f$f $1
-        ./caget.py -n3 -d$d -f$f $1
+        "$EXAMPLES"/caget.py -n3 -d$d -f$f $1 || exit
         echo
     done
 done

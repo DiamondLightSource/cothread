@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python2.6
 
 # Testing coselect
 
@@ -38,7 +38,4 @@ Spawn(Listener, queue, 1)
 Spawn(Listener, queue, 2)
 Spawn(Ticker, 0.5)
 
-
 WaitForQuit()
-
-

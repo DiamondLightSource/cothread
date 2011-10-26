@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python2.6
 
 '''camonitor minimal example'''
 
@@ -10,6 +10,6 @@ def callback(value):
     '''monitor callback'''
     print value.name, value
 
-camonitor('SR21C-DI-EBPM-01:FR:WFX', callback)
+camonitor('TS-DI-EBPM-01:FR:WFX', callback)
 
 WaitForQuit()
