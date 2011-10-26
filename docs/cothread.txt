@@ -45,7 +45,7 @@ followed in the top level application:
 ----------------------------
 # First the version of cothread library must be specified
 from pkg_resources import require
-require('cothread==1.15')    # or just require('cothread')
+require('cothread==2.0')    # or just require('cothread')
 
 # Import the cothread library in each module that uses it.
 import cothread
@@ -60,7 +60,7 @@ qtapp = cothread.iqt()
 cothread.WaitForQuit()
 ----------------------------
 
-1. +require(\'cothread==1.15')+.  This statement is required by the way Diamond
+1. +require(\'cothread==2.0')+.  This statement is required by the way Diamond
 Controls modules are managed: it is necessary to specify precisely _which_
 version of a module is to be used.  This means that API changes can be made in
 future releases without breaking existing code.
@@ -214,7 +214,7 @@ exception is retained and returned when +Wait+ is called.
 
 If a non-zero +stack_size+ is specified the new cothread is allocated its own
 stack, otherwise it will share the main process stack.  The tradeoffs involved
-in whether to allocate a stack are subtle -- by default it is safest to leave
+in whether to allocate a stack are subtle.  By default it is safest to leave
 this parameter unset.
 --
 +
