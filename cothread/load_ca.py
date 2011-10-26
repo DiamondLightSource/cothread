@@ -110,8 +110,15 @@ if __name__ == '__main__':
     print 'LIB_FILES=\'%s\'' % ' '.join(lib_files)
 
 else:
-    # Finally load the library (or libraries, if there are dependencies to
-    # resolve).
-    libca_path = _libca_path(True)
-    for lib in lib_files:
-        libca = load_library(os.path.join(libca_path, lib))
+    # Load the library (or libraries).
+    try:
+        # First try loading the libraries directly without searching anywhere.
+        # In this case we'll pick up from the path or anything already loaded
+        # into the interpreter.
+        for lib in lib_files:
+            libca = load_library(lib)
+    except OSError:
+        # Ok, now go searching.  _libca_path() has all the tricks.
+        libca_path = _libca_path(True)
+        for lib in lib_files:
+            libca = load_library(os.path.join(libca_path, lib))
