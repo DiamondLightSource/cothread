@@ -358,9 +358,9 @@ The various arguments control the behaviour of +connect+ as follows:
 +
 --
 +wait+::
-Normally the connect routine will not return until the requested
+Normally the +connect+ routine will not return until the requested
 connection is established.  If +wait=False+ is set then a connection
-request will be queued and connect will unconditionally succeed.
+request will be queued and +connect+ will unconditionally succeed.
 
 +cainfo+::
 +

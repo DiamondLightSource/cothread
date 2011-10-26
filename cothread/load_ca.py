@@ -75,7 +75,7 @@ def _libca_path(load_libca_path):
             pass
 
     # If no libca_path, how about local copies of the files?
-    libca_path = os.path.dirname(__file__)
+    libca_path = os.path.abspath(os.path.dirname(__file__))
     if os.access(os.path.join(libca_path, lib_files[-1]), os.R_OK):
         # Yes, there seems to be something locally installed.
         return libca_path
