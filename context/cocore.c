@@ -86,12 +86,14 @@ struct cocore {
     struct cocore *parent;      // Receives control when coroutine exits
     struct cocore *defunct;     // Used to delete exited coroutine
     struct cocore_state *state; // Access to thread local state
+
     /* If the coroutine needs to share a stack frame then the following state
      * is used to save the frame while it is not in use. */
     void *saved_frame;          // Saved stack frame for shared stack
+    size_t max_saved_length;    // Size of saved_frame area
     size_t saved_length;        // Bytes saved in saved_frame
 
-    char context[];             // Context saved for coroutine
+    char context[];             // Context saved for coroutine startup
 };
 
 /* This is the global state of the coroutine for a single thread. */
@@ -129,7 +131,13 @@ static void save_frame(struct cocore *target)
         frame_size = 0;
     else
     {
-        target->saved_frame = malloc(frame_size);
+        if (frame_size > target->max_saved_length)
+        {
+            /* Ensure we have enough room for the required save area. */
+            free(target->saved_frame);
+            target->saved_frame = malloc(frame_size);
+            target->max_saved_length = frame_size;
+        }
         memcpy(
             target->saved_frame, FRAME_START(stack->stack_base, target->frame),
             frame_size);
@@ -145,8 +153,6 @@ static void restore_frame(struct cocore *target)
     memcpy(
         FRAME_START(stack->stack_base, target->frame),
         target->saved_frame, target->saved_length);
-    free(target->saved_frame);
-    target->saved_frame = NULL;
     stack->current = target;
 }
 
@@ -344,6 +350,7 @@ static void create_shared_frame(struct cocore *coroutine)
     /* Relocate the new frame into a saved frame area for this coroutine. */
     size_t frame_length = FRAME_LENGTH(initial_base, frame);
     coroutine->saved_frame = malloc(frame_length);
+    coroutine->max_saved_length = frame_length;
     coroutine->saved_length = frame_length;
     memcpy(coroutine->saved_frame,
         FRAME_START(initial_base, frame), frame_length);
