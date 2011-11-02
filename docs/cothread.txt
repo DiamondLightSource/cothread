@@ -429,3 +429,10 @@ corresponding mask of ready events.
 This isn't true yet, but it's a good idea.  Unfortunately it's an incompatible
 API change.
 //////
+
+
++select_hook()+::
+
+This function will replace the +select+ and +poll+ methods in the +select+
+module with the non-blocking cothread compatible functions defined here.  Do
+not use this if other threads need to use functions from the +select+ module.
