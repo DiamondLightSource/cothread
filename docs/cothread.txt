@@ -390,13 +390,13 @@ modal dialogs do not work properly with `cothread` when using Qt4.
 
 
 
-Coselect Functions
-~~~~~~~~~~~~~~~~~~
+Coselect and Cosocket Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To enable cothreaded access to sockets and other external event generating
-sources the +cothread.coselect+ library provides coperative implementations of
-+select+ and +poll+ from the Python library +select+ module.  This module
-provides the following functions.
+sources cothread provides coperative implementations of +select+, +poll+ and
++socket+ from the Python library +select+ and +socket+ modules.  The following
+methods and classes are provided:
 
 
 +select(iwtd, owtd, ewtd, timeout=None)+::
@@ -431,8 +431,27 @@ API change.
 //////
 
 
++socket(...)+::
+
+This is a cooperative non-blocking wrapper of the standard +socket+ class.
+This can be imported directly from +cothread+ and used with constants and most
+methods from the standard +socket+ module, or alternatively +socket_hook()+
+can be called before importing the +socket+ module.
+
+
 +select_hook()+::
 
 This function will replace the +select+ and +poll+ methods in the +select+
 module with the non-blocking cothread compatible functions defined here.  Do
 not use this if other threads need to use functions from the +select+ module.
+
+
++socket_hook()+::
+
+This function will replace +socket+ in the +socket+ module with
++cothread.socket+.  This will convert most Python socket library functions
+into cooperative socket functions and allows all of the helper functions in
+the +socket+ module to be used.
++
+Note that this function will affect all threads, so if the application
+contains a non-cothread thread using sockets this function must not be used.
