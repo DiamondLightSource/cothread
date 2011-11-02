@@ -143,7 +143,7 @@ which they were created with no other cothreads intervening.
 
 * Cothreads waiting on an event will be woken strictly in the sequence in
 which waiting takes place, just so long as no timeout occurs.  Cothreads woken
-by timeouts generally execute after all all processing is complete.
+by timeouts generally execute after all other processing is complete.
 
 This ordering of processing together with the fact that cothreads are only
 suspended when control needs to be lost means that certain guarantees about
@@ -364,9 +364,12 @@ complete.  If +timeout+ expires then an exception is raised.
 
 +Quit()+, +WaitForQuit(catch_interrupt=True)+::
 
-The routine +WaitForQuit+ blocks until +Quit+ is called, or until interrupted
-by an exception.  By default (if +catch_interrupt=True+ is set) the keyboard
-interrupt is silently caught, but still causes +WaitForQuit+ to exit.
+The routine +WaitForQuit+ blocks until one of the following occurrs: +Quit()+ is
+called, +SIGINT+ is received (by pressing control-C), or the last Qt window is
+closed.  By default (if +catch_interrupt=True+ is set) keyboard interrupts are
+handled by a signal handler.  This means that the only way to interrupt a loop
+without a suspension point is to use another signal such as +SIGQUIT+
+(control-\).
 +
 This is designed to be used as the final blocking call at the end of the main
 program so that other event loops can run.

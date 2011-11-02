@@ -914,18 +914,17 @@ def Quit():
     _QuitEvent.Signal()
 
 def WaitForQuit(catch_interrupt = True):
-    '''Waits for the quit event to be signalled.'''
-    try:
-        _QuitEvent.Wait()
-    except KeyboardInterrupt:
-        if catch_interrupt:
-            # As a courtesy we quietly catch and discard the keyboard
-            # interrupt.  Unfortunately we don't have full control over where
-            # this is going to be caught, but if we get it we can exit
-            # quietly.
-            pass
-        else:
-            raise
+    '''Waits for the quit event to be signalled.  If catch_interrupt is True
+    then control-C will only signal the quit event and will not generate an
+    exception; this does mean that the only way to interrupt a misbehaving loop
+    is to use another signal such as SIGQUIT (C-\)'''
+    if catch_interrupt:
+        import signal
+        def quit(signum, frame):
+            _QuitEvent.Signal()
+        signal.signal(signal.SIGINT, quit)
+
+    _QuitEvent.Wait()
 
 
 # There is only the one scheduler, which we create right away.  A dedicated
