@@ -2,13 +2,15 @@
 
 '''minimal Qt example'''
 
-import require
+if __name__ == '__main__':
+    import require
+
 import cothread
 from cothread.catools import *
 
 from PyQt4.QtGui import QLabel
 
-cothread.iqt(use_timer = True)
+cothread.iqt()
 
 
 # make a label widget (None is the parent, this is top-level widget)
@@ -19,8 +21,9 @@ label.show()
 
 # animate label
 def signal(value):
-    if value.ok:
-        label.setText('DCCT %f %s' % (value, value.units))
+    label.setText('DCCT %f %s' % (value, value.units))
 
 camonitor('SR21C-DI-DCCT-01:SIGNAL', signal, format = FORMAT_CTRL)
-cothread.WaitForQuit()
+
+if __name__ == '__main__':
+    cothread.WaitForQuit()
