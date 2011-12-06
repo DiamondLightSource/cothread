@@ -1,7 +1,6 @@
 *.pyc
 *.so
-/docs/*.html
-/docs/pydoc/
+/docs/html
 /cothread/libca_path.py
 /context/tests/testco
 

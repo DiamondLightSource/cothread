@@ -30,10 +30,10 @@ install: dist
             --script-dir=$(SCRIPT_DIR) dist/*.egg
 
 docs: cothread/_coroutine.so
-	$(MAKE) -C docs
+	sphinx-build -b html docs docs/html
 
 clean_docs:
-	$(MAKE) -C docs clean
+	rm -rf docs/html
 
 .PHONY: default clean install docs clean_docs
 
