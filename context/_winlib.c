@@ -35,6 +35,11 @@
 #include <windows.h>
 
 
+/* Wraps Windows WaitForMultipleObjects().  Takes three arguments:
+ *  objects     List of waitable object handles to wait for
+ *  wait_all    Whether to wait for any one or all objects
+ *  timeout     Wait timeout in milliseconds
+ * On success returns the index of the first ready item in the list. */
 static PyObject *winlib_waitformultiple(PyObject *self, PyObject *args)
 {
     PyObject *objects;
@@ -56,7 +61,7 @@ static PyObject *winlib_waitformultiple(PyObject *self, PyObject *args)
                 if (ok)
                 {
                     long handle = PyInt_AsLong(object);
-                    ok = handle != -1  &&  !PyErr_Occurred();
+                    ok = ! (handle == -1  &&  PyErr_Occurred());
                     handles[i] = (void *) handle;
                 }
             }
