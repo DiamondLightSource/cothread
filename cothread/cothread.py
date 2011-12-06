@@ -841,44 +841,72 @@ class ThreadedEventQueue(object):
 class Timer(object):
     '''A cancellable one-shot or auto-retriggering timer.'''
 
-    def __init__(self, timeout, callback, retrigger = False, stack_size = 0):
-        '''The callback will be called after the specified timeout.  If
-        retrigger is set then the timer will automatically retrigger until
-        it is cancelled.'''
+    def __init__(self, timeout, callback,
+            retrigger = False, reuse = False, stack_size = 0):
+        '''The callback will be called (with no argumentes) after the specified
+        timeout.  If retrigger is set then the timer will automatically
+        retrigger until it is cancelled.  Unless reuse is set the timer will be
+        cancelled once it fires and cannot be reused.'''
         assert callable(callback), 'Ensure the callback is callable'
+        if retrigger:   reuse = True    # Retriggering counts as reuse
         self.__timeout = timeout
         self.__callback = callback
         self.__retrigger = retrigger
-        self.__cancel = Event(auto_reset = False)
+        self.__reuse = reuse
+        self.__control = Event()
+        self.__fire = True
+        self.__retry = retrigger
+        self.__active = False
         Spawn(self.__timer, stack_size = stack_size)
 
     def __timer(self):
         while True:
             try:
-                self.__cancel.Wait(self.__timeout)
+                self.__control.Wait(self.__timeout)
             except Timedout:
-                # There can be a race between cancelling and timing out:
-                # ensure that if we were cancelled before being fired we do
-                # nothing.
-                if self.__cancel:
-                    return
-                self.__callback()
-            if not self.__retrigger:
-                return
+                # The __fire flag is used to ensure that the callback doesn't
+                # fire if the timer has been queued for timeout handling but a
+                # control method has been called before this cothread was
+                # dispatched.
+                if self.__fire:
+                    self.__active = True
+                    self.__callback()
+                    self.__active = False
+
+            # If the timer is not be reused we're done and should clean up
+            if not self.__reuse:
+                break
+            # If retry has not been set (and we're being reused) then just wait
+            # for the next control signal.
+            if not self.__retry:
+                self.__timeout = None
+
+            # Reset control flags to their standard values for next try
+            self.__fire = True
+            self.__retry = self.__retrigger
+
+        del self.__callback     # Try to avoid reference loops
 
     def cancel(self):
         '''Cancels the timer: the timer is guaranteed not to fire once this
-        call has been made.'''
-        self.__retrigger = False
-        self.__cancel.Signal()
-        del self.__callback
+        call has been made.  A cancelled timer cannot be reset.'''
+        self.__fire = False
+        self.__retry = False
+        self.__reuse = False
+        self.__control.Signal()
 
-    def reset(self, timeout = None, retrigger = False):
-        '''Resets the timer.  If it hasn't fired yet then the timeout is reset
-        to the given timeout (or its original timeout by default).  ???
-        '''
-        assert False, 'Got to write this yet...'
-
+    def reset(self, timeout, retrigger=None):
+        '''Resets the timer.  The timeout is reset to the given timeout and the
+        timer is restarted.  A timeout of None can be used to temporarily
+        suspend a timer.'''
+        assert self.__reuse, 'Cannot reuse this timer'
+        self.__timeout = timeout
+        if retrigger is not None:
+            self.__retrigger = retrigger
+        self.__fire = False
+        self.__retry = True
+        if not self.__active:
+            self.__control.Signal()
 
 
 def WaitForAll(event_list, timeout = None):

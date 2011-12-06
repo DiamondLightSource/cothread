@@ -381,15 +381,35 @@ be waited on using the standard +select+ or +poll+ functions.  Note that this
 file handle must _only_ be used for waiting, and must not be read!
 
 
-+Timer(timeout, callback, retrigger=False)+::
++Timer(timeout, callback, retrigger=False, reuse=False, stack_size=0)+::
 
-This triggers a call to +callback+ after a delay of at least +timeout+
-seconds.  If +retrigger+ is +True+ then after +callback+ completes the timer
-will be reenabled and the cycle will repeat, otherwise only one call will
-occur.
+This triggers a call to +callback+, with no arguments, when +timeout+ expires.
+If +retrigger+ is +True+ then after +callback+ completes the timer will be
+reenabled and the cycle will repeat, in which case +timeout+ must be a
+relative timeout, otherwise only one call will occur.  If +retrigger+ is
++False+ then once the timer has fired it cannot be reused unless +reuse+ is
+set to +True+, see +.reset+ below.
 +
-The timer can be cancelled at any time before it has triggered by calling
-+.cancel()+ on the timer object created by calling +Timer()+.
+The following two methods can be used to control the timer object:
++
+--
++.cancel()+::
+The timer can be cancelled at any time by calling the +.cancel()+ method.
+The timer will not fire after this call and will no longer be reusable.  To
+avoid memory leaks +.cancel()+ should be called on timers with either
++retrigger+ or +reuse+ set once they are no longer needed.
+
++.reset(timeout, retrigger=None)+::
+This method allows a reusable timer to be controlled.  This applies to any
+timer created with either +retrigger+ or +reuse+ set, but this method cannot
+be called after +.cancel()+ has been called.
++
+A +timeout+ of +None+ can be specified to suspend the timer, otherwise a new
+timeout must always be specified when calling +.reset()+.  Any pending timeout
+will be cancelled when +.reset()+ is called.
++
+A new value for the +retrigger+ flag can also be specified.
+--
 
 
 +WaitForAll(event_list, timeout=None)+::
