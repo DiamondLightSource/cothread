@@ -108,28 +108,33 @@ time has passed, so +Sleep(0)+ has much the same effect as +Yield()+.
 to their own suspension points.
 
 event++.Wait++:: On a +Spawn+, +Event+ or +EventQueue+ object the +Wait+
-method will only suspend the caller if the event object is not yet ready and
-any specified timeout has not yet expired.
+method will suspend the caller precisely when the event object is not yet
+ready, independently of whether the timeout has already expired.  To determine
+whether an event object is ready without risking suspension call `bool()` on
+the object.
++
+NOTE: this is an incompatible change from cothread version 2.0 and earlier.
+In earlier versions of cothread suspension does not occur on an expired
+timeout, but unfortunately this can easily lead to starvation of other
+cothreads.
 
 
 The +coselect+ module adds the following suspension points:
 
-+select+, +poll+, +poll_list+:: All of these routines suspend the caller until
-at least one file descriptor in a monitored list is ready.  The caller will be
-suspended even if the ready condition is already met unless the timeout has
-already expired.
++select+, +poll+, +poll_list+:: These are all always suspension points.
 
 In the +catools+ module the following routines can cause suspension (note
 that +camonitor+ is the only routine guaranteed not to suspend):
 
-+caget+:: This always suspends the caller until the requested
-channel access data has arrived (or a timeout occurs), the only exception
-being if an expired timeout is specified.
++caget+:: This always a suspension point.
 
 +caput+:: This routine will normally cause the caller to suspend.  To avoid
 suspension, only put to one PV, use +wait=False+, and ensure that the channel
 is already connected -- this will be the case if it has already been
 successfully used in any +catools+ method.
+
+The +cosocket+ module makes most socket operations into suspension points when
+the corresponding socket operation is not yet ready.
 
 
 Order of Execution

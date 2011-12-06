@@ -564,13 +564,10 @@ class EventBase(object):
     def _WaitUntil(self, timeout):
         '''Suspends the calling task until _Wakeup() is called.  Raises an
         exception if a timeout occurs first.'''
-        deadline = GetDeadline(timeout)
-        # If the deadline has already expired don't call into the scheduler:
-        # as a matter of policy, we don't lose control in this case.
-        # Otherwise the scheduler will tell us if we've timed out.
+        # If the event object is not ready we always yield control to ensure
+        # that other ready cothreads get the opportunity to run.
         _validate_thread()
-        if (deadline is not None and time.time() >= deadline) or \
-                _scheduler.wait_until(deadline, self.__wait_queue, None):
+        if _scheduler.wait_until(GetDeadline(timeout), self.__wait_queue, None):
             raise Timedout('Timed out waiting for event')
 
     def _Wakeup(self, wake_all):
@@ -641,6 +638,10 @@ class Spawn(EventBase):
             del self.__result
         # See wait_until() for an explanation of this return value.
         return []
+
+    def __nonzero__(self):
+        '''Tests whether the event is signalled.'''
+        return bool(self.__result)
 
     def Wait(self, timeout = None):
         '''Waits until the task has completed.  May raise an exception if the
@@ -982,8 +983,8 @@ def _validate_thread():
 
 
 def SleepUntil(deadline):
-    '''Sleep until the specified deadline.  Note that if the deadline has
-    already passed then no yield of control will occur.'''
+    '''Sleep until the specified deadline.  Control will always be yielded,
+    even if the timeout has already passed.'''
     _validate_thread()
     _scheduler.wait_until(deadline, None, None)
 
