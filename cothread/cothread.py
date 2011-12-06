@@ -574,6 +574,7 @@ class EventBase(object):
             self.__wait_abort -= 1
             return False
         else:
+            self.__wait_abort = 0
             self.__wait_queue.wake(wake_all)
             return True
 
@@ -625,7 +626,7 @@ class Spawn(EventBase):
                     'raised uncaught exception'
                 traceback.print_exc()
                 self.__result = (True, None)
-        if not self._Wakeup(True):
+        if not self._Wakeup(False):
             # Aborted wakeup: consume the result now
             del self.__result
         # See wait_until() for an explanation of this return value.

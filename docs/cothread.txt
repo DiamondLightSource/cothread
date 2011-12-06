@@ -227,7 +227,7 @@ It is possible to wait for the completion of a spawned cothread by calling its
 This blocks until the spawned cothread completes, either by returning from its
 function call, or by raising an exception.  If the cothread was created with
 +raise_on_wait+ set to +True+ then any exception raised by the cothread will
-be re-raised when +Wait+ is called.
+be re-raised when +Wait+ is called.  Note that only one waiter will be woken.
 --
 
 
