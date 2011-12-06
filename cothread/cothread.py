@@ -95,6 +95,9 @@ __all__ = [
     'WaitForAll',       # Wait for all events to become ready
 
     'AbsTimeout',       # Converts timeout into absolute deadline format
+    'GetDeadline',      # Returns deadline associated with timeout
+    'Deadline',         # Converts deadline into timeout format
+
     'Timedout',         # Timeout exception raised by event waiting
 
     'Quit',             # Immediate process quit
@@ -532,12 +535,19 @@ def AbsTimeout(timeout):
     else:
         return (timeout + time.time(),)
 
-def Deadline(timeout):
-    '''Converts a timeout into a deadline.'''
+def GetDeadline(timeout):
+    '''Returns the deadline associated with the given timeout, or None if there
+    is no deadline.'''
     if timeout is None:
         return None
+    elif isinstance(timeout, tuple):
+        return timeout[0]
     else:
-        return AbsTimeout(timeout)[0]
+        return timeout + time.time()
+
+def Deadline(deadline):
+    '''Converts a deadline into a timeout.'''
+    return (deadline,)
 
 
 class EventBase(object):
@@ -554,7 +564,7 @@ class EventBase(object):
     def _WaitUntil(self, timeout):
         '''Suspends the calling task until _Wakeup() is called.  Raises an
         exception if a timeout occurs first.'''
-        deadline = Deadline(timeout)
+        deadline = GetDeadline(timeout)
         # If the deadline has already expired don't call into the scheduler:
         # as a matter of policy, we don't lose control in this case.
         # Otherwise the scheduler will tell us if we've timed out.
@@ -951,11 +961,11 @@ def SleepUntil(deadline):
 
 def Sleep(timeout):
     '''Sleep until the specified timeout has expired.'''
-    SleepUntil(Deadline(timeout))
+    SleepUntil(GetDeadline(timeout))
 
 def Yield(timeout = 0):
     '''Hands control back to the scheduler.  Control is returned either after
     the specified timeout has passed, or as soon as there are no active jobs
     waiting to be run.'''
     _validate_thread()
-    _scheduler.do_yield(Deadline(timeout))
+    _scheduler.do_yield(GetDeadline(timeout))

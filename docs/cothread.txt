@@ -183,6 +183,43 @@ Other callbacks will depend on the library generating them, but it's safest to
 treat them as ``blocking'' in the sense described above.
 
 
+Timeouts and Deadlines
+~~~~~~~~~~~~~~~~~~~~~~
+
+All of the waiting methods in the `cothread` library take a _timeout_ argument.
+This can be in one of three forms:
+
+`None`::
+A timeout of `None` means that the timeout will never complete, so for example
+a call to `Sleep(None)` will never return, and so is not useful, but this
+option is useful in other cases when no timeout is wanted.
+
+Timeout interval in seconds::
+A numerical argument is interpreted as a timeout interval in seconds from the
+time of call.  Note that although a timeout of 0 will immediately timeout,
+cothread suspension will still occur.
+
+`(` deadline in seconds `,)`::
+A tuple containing one numerical value is interpreted as a timeout deadline in
+seconds in the `time.time()` epoch.  If the deadline has already passed the
+call will timeout, but cothread suspension will occur first.
+
+The following helper functions are available for working with timeouts:
+
+`AbsTimeout(timeout)`::
+Takes a timeout and returns a timeout, ensuring that `timeout` is in deadline
+format (or `None`).  If repeated wait functions are to be called with the same
+desired timeout this should be used to ensure the timeout is a deadline.
+
+`Deadline(deadline)`::
+Converts a deadline in `time.time()` epoch seconds into a `cothread` timeout
+format.
+
+`GetDeadline(timeout)`::
+Returns the associated deadline in seconds, or returns `None` if `timeout` is
+`None`.
+
+
 Cothread API
 ------------
 

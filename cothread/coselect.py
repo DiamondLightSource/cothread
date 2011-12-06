@@ -249,7 +249,7 @@ def poll_list(event_list, timeout = None):
     constants).  This routine will cooperatively block until any descriptor
     signals a selected event (or any event from HUP, ERR, NVAL) or until
     the timeout (in seconds) occurs.'''
-    until = cothread.Deadline(timeout)
+    until = cothread.GetDeadline(timeout)
     if until is not None and time.time() >= until:
         # If timed out then probe the devices directly anyway.  This bypasses
         # the cothread scheduler ensuring we actually look at the devices (if
