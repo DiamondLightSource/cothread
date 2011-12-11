@@ -46,6 +46,8 @@ Supports the following methods:
 See the documentation for the individual functions for more details on using
 them.'''
 
+from __future__ import print_function
+
 import os
 import sys
 import atexit
@@ -345,10 +347,10 @@ class _Subscription(object):
                 # We try and be robust about exceptions in handlers, but to
                 # prevent a perpetual storm of exceptions, we close the
                 # subscription after reporting the problem.
-                print >>sys.stderr, \
-                    'Subscription %s callback raised exception' % self.name
+                print('Subscription %s callback raised exception' % self.name,
+                    file = sys.stderr)
                 traceback.print_exc()
-                print >>sys.stderr, 'Subscription %s closed' % self.name
+                print('Subscription %s closed' % self.name, file = sys.stderr)
                 self.close()
 
 
@@ -981,6 +983,6 @@ if False:
     @exception_handler
     def catools_exception(args):
         '''print ca exception message'''
-        print >>sys.stderr, 'catools_exception:', \
-            args.ctx, cadef.ca_message(args.stat)
+        print('catools_exception:', args.ctx, cadef.ca_message(args.stat),
+            file = sys.stderr)
     cadef.ca_add_exception_event(catools_exception, 0)

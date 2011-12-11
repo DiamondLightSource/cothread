@@ -66,6 +66,8 @@ Similarly the EventQueue can be used for communication.
 # It might be worth taking a close look at:
 #   http://wiki.secondlife.com/wiki/Eventlet
 
+from __future__ import print_function
+
 import sys
 import os
 import time
@@ -638,9 +640,9 @@ class Spawn(EventBase):
                 # No good.  We can't allow this exception to propagate, as
                 # doing so will kill the scheduler.  Instead report the
                 # traceback right here.
-                print >>sys.stderr, 'Spawned task', \
-                    getattr(self.__function, '__name__', '(unknown)'), \
-                    'raised uncaught exception'
+                print('Spawned task',
+                    getattr(self.__function, '__name__', '(unknown)'),
+                    'raised uncaught exception', file = sys.stderr)
                 traceback.print_exc()
                 self.__result = (True, None)
         if not self._Wakeup(False):
@@ -883,8 +885,8 @@ class _Callback:
                 try:
                     action(*args)
                 except:
-                    print >>sys.stderr, \
-                        'Asynchronous callback raised uncaught exception'
+                    print('Asynchronous callback raised uncaught exception',
+                        file = sys.stderr)
                     traceback.print_exc()
 
     def __call__(self, action, *args):
