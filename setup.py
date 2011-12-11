@@ -31,10 +31,8 @@ extra_compile_args = [
     '-Wno-unused-parameter',
     '-Wno-missing-field-initializers',
     '-Wundef',
-    '-Wshadow',
     '-Wcast-align',
     '-Wwrite-strings',
-    '-Wredundant-decls',
     '-Wmissing-prototypes',
     '-Wmissing-declarations',
     '-Wstrict-prototypes']
