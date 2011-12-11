@@ -102,7 +102,7 @@ class ca_nothing(Exception):
     def __str__(self):
         return '%s: %s' % (self.name, cadef.ca_message(self.errorcode))
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.ok
 
     def __iter__(self):
@@ -193,7 +193,7 @@ class Channel(object):
 
         chid = ctypes.c_void_p()
         cadef.ca_create_channel(
-            name, self.on_ca_connect, ctypes.py_object(self),
+            name.encode(), self.on_ca_connect, ctypes.py_object(self),
             0, ctypes.byref(chid))
         # Setting this allows a channel object to autoconvert into the chid
         # when passed to ca_ functions.
