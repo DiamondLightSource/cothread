@@ -650,18 +650,20 @@ class Spawn(EventBase):
         if not self.__result:
             self._WaitUntil(timeout)
         ok, result = self.__result
-        # Delete the result before returning to avoid cycles: in particular,
-        # if the result is an exception the associated traceback needs to be
-        # dropped now.
-        del self.__result
         if ok:
             return result
         else:
-            # Re-raise the exception that actually killed the task here where
-            # it can be received by whoever waits on the task.
-            # There's a real reference count looping problem here -- can't
-            # make the task go away when it's finished with...
-            raise result[0], result[1], result[2]
+            try:
+                # Re-raise the exception that actually killed the task here
+                # where it can be received by whoever waits on the task.
+                raise result[0], result[1], result[2]
+            finally:
+                # In this case result and self.__result contain a traceback.  To
+                # avoid circular references which will delay garbage collection,
+                # ensure these variables are deleted before the exception is
+                # caught.
+                del self.__result
+                del result
 
     def AbortWait(self):
         '''Called instead of performing a proper wait to release any resources
