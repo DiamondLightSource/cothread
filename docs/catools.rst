@@ -625,10 +625,12 @@ The following fields are present in all values if :const:`FORMAT_TIME` or
 
     EPICS alarm severity, normally one of the values listed below.
 
-    0 => No alarm
-    1 => Alarm condition, minor severity
-    2 => Alarm condition, major severity.
-    3 => Invalid value.
+    =  ==================================
+    0  No alarm
+    1  Alarm condition, minor severity
+    2  Alarm condition, major severity.
+    3  Invalid value.
+    =  ==================================
 
 ..  attribute:: .status
 
