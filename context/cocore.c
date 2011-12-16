@@ -131,7 +131,7 @@ static void save_frame(struct cocore *target)
         frame_size = 0;
     else
     {
-        if (frame_size > target->max_saved_length)
+        if ((size_t) frame_size > target->max_saved_length)
         {
             /* Ensure we have enough room for the required save area. */
             free(target->saved_frame);

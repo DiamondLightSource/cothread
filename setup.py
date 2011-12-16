@@ -24,13 +24,30 @@ version = os.environ.get('MODULEVER', 'unknown')
 
 # Extension module providing core coroutine functionality.  Very similar in
 # spirit to greenlet.
+extra_compile_args = [
+    '-Werror',
+    '-Wall',
+    '-Wextra',
+    '-Wno-unused-parameter',
+    '-Wno-missing-field-initializers',
+    '-Wundef',
+    '-Wshadow',
+    '-Wcast-align',
+    '-Wwrite-strings',
+    '-Wredundant-decls',
+    '-Wmissing-prototypes',
+    '-Wmissing-declarations',
+    '-Wstrict-prototypes']
 _coroutine = Extension('cothread._coroutine',
     ['context/_coroutine.c', 'context/cocore.c', 'context/switch.c'],
+    extra_compile_args = extra_compile_args,
     depends = glob.glob('context/switch-*.c') + glob.glob('context/*.h'))
 ext_modules = [_coroutine]
 
 if platform.system() == 'Windows':
-    _winlib = Extension('cothread._winlib', ['context/_winlib.c'])
+    _winlib = Extension(
+        'cothread._winlib', ['context/_winlib.c'],
+        extra_compile_args = extra_compile_args)
     ext_modules.append(_winlib)
 
 setup(

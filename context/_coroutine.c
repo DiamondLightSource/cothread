@@ -245,6 +245,7 @@ If the hook function returns true an interrupt will be raised." },
 };
 
 
+extern void init_coroutine(void);
 void init_coroutine(void)
 {
     INIT_TLS(base_coroutine);
