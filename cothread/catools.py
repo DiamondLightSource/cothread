@@ -330,9 +330,10 @@ class _Subscription(object):
         if self.__state == self.__OPEN:
             self.channel._remove_subscription(self)
             cadef.ca_clear_subscription(self)
-            del self._as_parameter_
+            # Delete the callback to avoid any circular references that might
+            # otherwise arise, drop the channel in case we ever decide to
+            # garbage collect them (weak references would be the way).
             del self.channel
-            del self.__value
             del self.callback
         self.__state = self.__CLOSED
 
