@@ -70,17 +70,6 @@ def _install_readline_hook(enable_hook = True):
 
 
 
-def _poll_iqt(poll_interval):
-    from PyQt4 import QtCore
-    while True:
-        try:
-            QtCore.QTimer.singleShot(poll_interval * 1e3, _qapp.quit)
-            _qapp.exec_()
-            cothread.Yield(poll_interval)
-        except KeyboardInterrupt:
-            print 'caught keyboard interrupt'
-
-
 # This is used by the _run_iqt timeout() function to avoid nested returns.
 _global_timeout_depth = 0
 
@@ -111,47 +100,36 @@ def _timer_iqt(poll_interval):
     return timer
 
 
-def _run_iqt(poll_interval):
-    # Start the cothread polling timer before handing control over to Qt.  Note
-    # that we need to hang onto the timer, otherwise it will go away!
-    timer = _timer_iqt(poll_interval)
-    _qapp.exec_()
-
-
-def iqt(poll_interval = 0.05, use_timer = True, run_exec = True, argv = None):
+def iqt(poll_interval = 0.05, run_exec = True, argv = None):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
 
-    global _qapp
+    from PyQt4 import QtCore, QtGui
+    global _qapp, _timer
+
+    # Repeated calls to iqt() are (silent) no-ops.  Is it more friendly do this
+    # than to assert fail?  Not sure to be honest.
     if _qapp is not None:
         return _qapp
 
-    from PyQt4 import QtCore, QtGui
-
-    # Enusre that there is a QtApplication instance.
+    # Ensure that there is a QtApplication instance, creating one if necessary.
     _qapp = QtCore.QCoreApplication.instance()
     if _qapp is None:
         if argv is None:
             argv = sys.argv
         _qapp = QtGui.QApplication(argv)
 
-    # Ensure we get a Quit event when the last window goes.  This allows the
+    # Arrange to get a Quit event when the last window goes.  This allows the
     # application to simply rest on WaitForQuit().
     _qapp.lastWindowClosed.connect(cothread.Quit)
 
+    # Create timer.  Hang onto the timer to prevent it from vanishing.
+    _timer = _timer_iqt(poll_interval)
+
+    # Finally, unless we've been told not to, spawn our own exec loop.
     if run_exec:
-        # We run our own exec loop.
-        if use_timer:
-            iqt_thread = _run_iqt
-        else:
-            iqt_thread = _poll_iqt
-        cothread.Spawn(iqt_thread, poll_interval, stack_size = QT_STACK_SIZE)
+        cothread.Spawn(_qapp.exec_, stack_size = QT_STACK_SIZE)
         cothread.Yield()
-    else:
-        # There is, presumably, an exec loop already running elsewhere.
-        assert use_timer, 'Cannot use polling without own exec loop'
-        global _timer
-        _timer = _timer_iqt(poll_interval)
 
     return _qapp
 
