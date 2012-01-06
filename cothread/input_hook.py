@@ -70,12 +70,12 @@ def _install_readline_hook(enable_hook = True):
 
 
 
-def _poll_iqt(QT, poll_interval):
+def _poll_iqt(poll_interval):
+    from PyQt4 import QtCore
     while True:
         try:
-            QT.QTimer.singleShot(
-                poll_interval * 1e3, QT.QCoreApplication.quit)
-            QT.exec_()
+            QtCore.QTimer.singleShot(poll_interval * 1e3, _qapp.quit)
+            _qapp.exec_()
             cothread.Yield(poll_interval)
         except KeyboardInterrupt:
             print 'caught keyboard interrupt'
@@ -84,7 +84,7 @@ def _poll_iqt(QT, poll_interval):
 # This is used by the _run_iqt timeout() function to avoid nested returns.
 _global_timeout_depth = 0
 
-def _timer_iqt(QT, poll_interval):
+def _timer_iqt(poll_interval):
     def timeout():
         # To avoid nested returns from timeout (which effectively means we
         # would resume the main Qt thread from within a Qt message box -- not
@@ -103,38 +103,19 @@ def _timer_iqt(QT, poll_interval):
 
     # Set up a timer so that Qt polls cothread.  All the timer needs to do
     # is to yield control to the coroutine system.
-    timer = QT.QTimer()
-    QT.QCoreApplication.connect(timer, QT.SIGNAL('timeout()'), timeout)
+    from PyQt4 import QtCore
+    timer = QtCore.QTimer()
+    timer.timeout.connect(timeout)
     timer.start(poll_interval * 1e3)
 
     return timer
 
 
-def _run_iqt(QT, poll_interval):
-    # Start the cothread polling timer.  Note that we need to hang onto the
-    # timer, otherwise it will go away!
-    timer = _timer_iqt(QT, poll_interval)
-
-    # To ensure we shut down cleanly a little delicacy is required before we
-    # dive into the QT exec loop.
-    #   First of all, we register an atexit method to tell Qt to quit on
-    # program exit.  This enables Qt to do most of its cleaning up, and we
-    # handshake with the Qt exit to ensure this completes.
-    def at_exit():
-        QT.QCoreApplication.quit()
-        qt_done.Wait(5) # Give up after five seconds if no response
-
-    qt_done = cothread.Event()
-    import atexit
-    atexit.register(at_exit)
-
-    # Hand control over to Qt -- we'll now get it back through periodic calls
-    # to timeout().
-    QT.exec_()
-    # This is a hack to hopefully eliminate the annoying message on exit:
-    #   Mutex destroy failure: Device or resource busy
-    QT.unlock()
-    qt_done.Signal()
+def _run_iqt(poll_interval):
+    # Start the cothread polling timer before handing control over to Qt.  Note
+    # that we need to hang onto the timer, otherwise it will go away!
+    timer = _timer_iqt(poll_interval)
+    _qapp.exec_()
 
 
 def iqt(poll_interval = 0.05, use_timer = True, run_exec = True, argv = None):
@@ -145,45 +126,18 @@ def iqt(poll_interval = 0.05, use_timer = True, run_exec = True, argv = None):
     if _qapp is not None:
         return _qapp
 
-    # Unfortunately there are some annoying incompatibilities between the Qt3
-    # and Qt4 interfaces.  This little class captures the fragments we need
-    # from one or the other library in a common interface.
-    class QT:
-        try:
-            from PyQt4.QtCore import QCoreApplication, QTimer, SIGNAL
-            from PyQt4.QtGui import QApplication
+    from PyQt4 import QtCore, QtGui
 
-            instance = QCoreApplication.instance
-            exec_ = QCoreApplication.exec_
-
-            @classmethod
-            def unlock(cls):    pass
-
-            # Remove the PyQt input hook, which messes us up!
-            from PyQt4 import QtCore
-            QtCore.pyqtRemoveInputHook()
-            _install_readline_hook(True)
-
-        except ImportError:
-            import qt
-            from qt import SIGNAL, QTimer, QApplication
-            QCoreApplication = qt.qApp
-
-            @classmethod
-            def instance(cls):  return cls.QCoreApplication
-
-            exec_ = QCoreApplication.exec_loop
-            unlock = QCoreApplication.unlock
-
-    # Enusre that there is a QT instance.
-    _qapp = QT.instance()
+    # Enusre that there is a QtApplication instance.
+    _qapp = QtCore.QCoreApplication.instance()
     if _qapp is None:
         if argv is None:
             argv = sys.argv
-        _qapp = QT.QApplication(argv)
+        _qapp = QtGui.QApplication(argv)
 
-    QT.QCoreApplication.connect(
-        QT.instance(), QT.SIGNAL('lastWindowClosed()'), cothread.Quit)
+    # Ensure we get a Quit event when the last window goes.  This allows the
+    # application to simply rest on WaitForQuit().
+    _qapp.lastWindowClosed.connect(cothread.Quit)
 
     if run_exec:
         # We run our own exec loop.
@@ -191,14 +145,13 @@ def iqt(poll_interval = 0.05, use_timer = True, run_exec = True, argv = None):
             iqt_thread = _run_iqt
         else:
             iqt_thread = _poll_iqt
-        cothread.Spawn(
-            iqt_thread, QT, poll_interval, stack_size = QT_STACK_SIZE)
+        cothread.Spawn(iqt_thread, poll_interval, stack_size = QT_STACK_SIZE)
         cothread.Yield()
     else:
         # There is, presumably, an exec loop already running elsewhere.
         assert use_timer, 'Cannot use polling without own exec loop'
         global _timer
-        _timer = _timer_iqt(QT, poll_interval)
+        _timer = _timer_iqt(poll_interval)
 
     return _qapp
 
