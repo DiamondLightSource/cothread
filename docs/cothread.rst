@@ -473,7 +473,7 @@ signal), while an :class:`EventQueue` can hold a list of unbounded length.
         change from cothread 2.0 and earlier.
 
 
-..  function:: iqt(poll_interval=0.05, use_timer=True, argv=sys.argv)
+..  function:: iqt(poll_interval=0.05, use_timer=True, run_exec=True, argv=None)
 
     If Qt is to be used then this routine must be called during initialisation
     to enable the Qt event loop and create the initial Qt application instance.
@@ -484,6 +484,10 @@ signal), while an :class:`EventQueue` can hold a list of unbounded length.
     closed immediately, or else will block the the scheduling of other
     cothreads, depending on whether `use_timer` is :const:`False` or
     :const:`True`.
+
+    If :mod:`cothread` is used in a context where there is no control over the
+    Qt event loop then `run_exec` can be set to :const:`False` to ensure that
+    :mod:`cothread` doesn't try to run the event loop.
 
 
 Coselect and Cosocket Functions

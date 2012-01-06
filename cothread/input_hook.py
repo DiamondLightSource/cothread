@@ -84,7 +84,7 @@ def _poll_iqt(QT, poll_interval):
 # This is used by the _run_iqt timeout() function to avoid nested returns.
 _global_timeout_depth = 0
 
-def _run_iqt(QT, poll_interval):
+def _timer_iqt(QT, poll_interval):
     def timeout():
         # To avoid nested returns from timeout (which effectively means we
         # would resume the main Qt thread from within a Qt message box -- not
@@ -101,21 +101,29 @@ def _run_iqt(QT, poll_interval):
 
         _global_timeout_depth -= 1
 
-    def at_exit():
-        QT.QCoreApplication.quit()
-        qt_done.Wait(5) # Give up after five seconds if no response
-
     # Set up a timer so that Qt polls cothread.  All the timer needs to do
     # is to yield control to the coroutine system.
     timer = QT.QTimer()
     QT.QCoreApplication.connect(timer, QT.SIGNAL('timeout()'), timeout)
     timer.start(poll_interval * 1e3)
 
+    return timer
+
+
+def _run_iqt(QT, poll_interval):
+    # Start the cothread polling timer.  Note that we need to hang onto the
+    # timer, otherwise it will go away!
+    timer = _timer_iqt(QT, poll_interval)
+
     # To ensure we shut down cleanly a little delicacy is required before we
     # dive into the QT exec loop.
     #   First of all, we register an atexit method to tell Qt to quit on
     # program exit.  This enables Qt to do most of its cleaning up, and we
     # handshake with the Qt exit to ensure this completes.
+    def at_exit():
+        QT.QCoreApplication.quit()
+        qt_done.Wait(5) # Give up after five seconds if no response
+
     qt_done = cothread.Event()
     import atexit
     atexit.register(at_exit)
@@ -129,9 +137,13 @@ def _run_iqt(QT, poll_interval):
     qt_done.Signal()
 
 
-def iqt(poll_interval = 0.05, use_timer = True, argv = sys.argv):
+def iqt(poll_interval = 0.05, use_timer = True, run_exec = True, argv = None):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
+
+    global _qapp
+    if _qapp is not None:
+        return _qapp
 
     # Unfortunately there are some annoying incompatibilities between the Qt3
     # and Qt4 interfaces.  This little class captures the fragments we need
@@ -163,22 +175,34 @@ def iqt(poll_interval = 0.05, use_timer = True, argv = sys.argv):
             exec_ = QCoreApplication.exec_loop
             unlock = QCoreApplication.unlock
 
-    global _qapp
-    assert QT.QCoreApplication.startingUp(), \
-        'Must use iqt() to create initial QApplication object.'
-    _qapp = QT.QApplication(argv)
+    # Enusre that there is a QT instance.
+    _qapp = QT.instance()
+    if _qapp is None:
+        if argv is None:
+            argv = sys.argv
+        _qapp = QT.QApplication(argv)
 
     QT.QCoreApplication.connect(
         QT.instance(), QT.SIGNAL('lastWindowClosed()'), cothread.Quit)
 
-    if use_timer:
-        iqt_thread = _run_iqt
+    if run_exec:
+        # We run our own exec loop.
+        if use_timer:
+            iqt_thread = _run_iqt
+        else:
+            iqt_thread = _poll_iqt
+        cothread.Spawn(
+            iqt_thread, QT, poll_interval, stack_size = QT_STACK_SIZE)
+        cothread.Yield()
     else:
-        iqt_thread = _poll_iqt
-    cothread.Spawn(iqt_thread,  QT, poll_interval, stack_size = QT_STACK_SIZE)
-    cothread.Yield()
+        # There is, presumably, an exec loop already running elsewhere.
+        assert use_timer, 'Cannot use polling without own exec loop'
+        global _timer
+        _timer = _timer_iqt(QT, poll_interval)
 
     return _qapp
+
+_qapp = None
 
 
 # Automatically install the readline hook.  This is the safest thing to do.
