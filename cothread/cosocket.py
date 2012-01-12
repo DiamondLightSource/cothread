@@ -87,7 +87,7 @@ class socket:
         # before discovering the true result.
         try:
             self.__socket.connect(address)
-        except _socket.error, error:
+        except _socket.error as error:
             if error.errno != errno.EINPROGRESS:
                 raise
         self.__poll(coselect.POLLOUT)
@@ -99,7 +99,7 @@ class socket:
         try:
             self.connect(address)
             return 0
-        except _socket.error, error:
+        except _socket.error as error:
             return error.errno
 
 
@@ -111,7 +111,7 @@ class socket:
         while True:
             try:
                 return action(*args)
-            except _socket.error, error:
+            except _socket.error as error:
                 if error.errno != errno.EAGAIN:
                     raise
             self.__poll(poll)

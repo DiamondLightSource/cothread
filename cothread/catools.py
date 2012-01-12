@@ -125,11 +125,11 @@ def maybe_throw(function):
             # will be raised anyway, which seems fair enough!
             try:
                 return function(pv, *args, **kargs)
-            except ca_nothing, error:
+            except ca_nothing as error:
                 return error
-            except cadef.CAException, error:
+            except cadef.CAException as error:
                 return ca_nothing(pv, error.status)
-            except cadef.Disconnected, error:
+            except cadef.Disconnected:
                 return ca_nothing(pv, cadef.ECA_DISCONN)
 
     # Make sure the wrapped function looks like its original self.
