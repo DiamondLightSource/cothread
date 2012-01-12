@@ -76,12 +76,14 @@ def _check_env(name, default):
 # Stack size definitions
 K = 1024
 
-CA_ACTION_STACK = 16 * K     # Used for one shot CA actions
-
 # For CA notify callbacks by default we use the shared stack as arbitrary
 # processing tends to be done in this context.
 CALLBACK_DISPATCH_STACK = _check_env('CATOOLS_CALLBACK_STACK', 0)
-CA_EVENT_STACK = _check_env('CATOOLS_EVENT_STACK', 512 * K)
+# This stack is used for running the channel access library.
+CA_EVENT_STACK          = _check_env('CATOOLS_EVENT_STACK', 512 * K)
+# Miscellaneous channel access operations are created using this stack size.  By
+# default we use the shared stack to avoid accidents.
+CA_ACTION_STACK         = _check_env('CATOOLS_ACTION_STACK', 0)
 
 
 
