@@ -117,43 +117,51 @@ class _TimerQueue(object):
     # cheerful to implement and runs fast enough.
 
     def __init__(self):
-        # The queue is a list of (timeout, task) pairs -- it's important that
-        # the timeout is first so that bisect searching of the queue works
-        # properly.
-        self.__queue = []
+        # We maintain the list of timeouts and the associated tasks separately
+        # so that bisect searching can safely search the timeouts list without
+        # trying to compare wakeups.
+        self.__timeouts = []
+        self.__wakeups = []
         self.__garbage = 0
 
     def put(self, task, timeout):
         '''Adds value to the queue with the specified timeout.'''
-        index = bisect.bisect(self.__queue, (timeout, None))
-        self.__queue.insert(index, (timeout, task))
+        index = bisect.bisect(self.__timeouts, timeout)
+        self.__timeouts.insert(index, timeout)
+        self.__wakeups.insert(index, task)
 
     def timeout(self):
         '''Returns the timeout of the queue.  Only valid if queue not empty.'''
-        return self.__queue[0][0]
+        return self.__timeouts[0]
 
     def wake_expired(self):
-        index = bisect.bisect_right(self.__queue, (time.time(), None))
-        expired = self.__queue[:index]
-        del self.__queue[:index]
+        index = bisect.bisect_right(self.__timeouts, time.time())
+        expired = self.__wakeups[:index]
+        del self.__timeouts[:index]
+        del self.__wakeups[:index]
 
-        for _, task in expired:
+        for task in expired:
             if not task.wakeup(_WAKEUP_TIMEOUT):
                 self.__garbage -= 1
         assert 0 <= self.__garbage <= len(self)
 
     def __len__(self):
         '''Returns the number of entries on the queue.'''
-        return len(self.__queue)
+        return len(self.__timeouts)
 
     def cancel(self):
         '''This is called to cancel a timeout.  We add this to our garbage
         count, triggering a garbage collect if appropriate.'''
         self.__garbage += 1
         if 2 * self.__garbage > len(self):
-            self.__queue = [entry
-                for entry in self.__queue
-                if not entry[1].woken()]
+            timeouts = []
+            wakeups = []
+            for timeout, task in zip(self.__timeouts, self.__wakeups):
+                if not task.woken():
+                    timeouts.append(timeout)
+                    wakeups.append(task)
+            self.__timeouts = timeouts
+            self.__wakeups = wakeups
             self.__garbage = 0
 
 
