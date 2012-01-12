@@ -169,6 +169,9 @@ class Channel(object):
 
         self = cadef.ca_puser(args.chid)
         op = args.op
+        _dispatch(self.on_ca_connect_, op)
+
+    def on_ca_connect_(self, op):
         assert op in [cadef.CA_OP_CONN_UP, cadef.CA_OP_CONN_DOWN]
         connected = op == cadef.CA_OP_CONN_UP
 
@@ -194,6 +197,7 @@ class Channel(object):
         # Setting this allows a channel object to autoconvert into the chid
         # when passed to ca_ functions.
         self._as_parameter_ = chid.value
+        _flush_io()
 
     def __del__(self):
         '''Ensures the associated channel access is closed.'''
@@ -288,13 +292,13 @@ class _Subscription(object):
 
         if args.status == cadef.ECA_NORMAL:
             # Good data: extract value from the dbr.
-            self.__signal(dbr.dbr_to_value(
+            _dispatch(self.__signal, dbr.dbr_to_value(
                 args.raw_dbr, args.type, args.count, self.channel.name,
                 self.as_string))
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, but only if
             # they've requested disconnect nofication.
-            self.__signal(ca_nothing(self.channel.name, args.status))
+            _dispatch(self.__signal, ca_nothing(self.channel.name, args.status))
 
     def __signal(self, value):
         if self.all_updates:
@@ -332,10 +336,7 @@ class _Subscription(object):
         if self.__state == self.__OPEN:
             self.channel._remove_subscription(self)
             cadef.ca_clear_subscription(self)
-            # Delete the callback to avoid any circular references that might
-            # otherwise arise, drop the channel in case we ever decide to
-            # garbage collect them (weak references would be the way).
-            del self.channel
+            # Delete the callback to avoid possible circular references.
             del self.callback
         self.__state = self.__CLOSED
 
@@ -392,6 +393,7 @@ class _Subscription(object):
                 ctypes.byref(event_id))
             self._as_parameter_ = event_id.value
             self.__state = self.__OPEN
+            _flush_io()
 
 
     # By default all subscription events are queued onto this queue which is
@@ -522,10 +524,10 @@ def _caget_event_handler(args):
     ctypes.pythonapi.Py_DecRef(args.usr)
 
     if args.status == cadef.ECA_NORMAL:
-        done.Signal(dbr.dbr_to_value(
+        _dispatch(done.Signal, dbr.dbr_to_value(
             args.raw_dbr, args.type, args.count, pv, as_string))
     else:
-        done.SignalException(ca_nothing(pv, args.status))
+        _dispatch(done.SignalException, ca_nothing(pv, args.status))
 
 
 @maybe_throw
@@ -568,6 +570,7 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     cadef.ca_array_get_callback(
         dbr.type_to_dbr(datatype, format), count, channel,
         _caget_event_handler, ctypes.py_object(context))
+    _flush_io()
     return ca_timeout(done, timeout, pv)
 
 
@@ -715,11 +718,12 @@ def _caput_event_handler(args):
 
     if done is not None:
         if args.status == cadef.ECA_NORMAL:
-            done.Signal()
+            _dispatch(done.Signal)
         else:
-            done.SignalException(ca_nothing(pv, args.status))
+            _dispatch(done.SignalException, ca_nothing(pv, args.status))
     if callback is not None:
-        _caput_callback_queue.Signal((callback, ca_nothing(pv, args.status)))
+        _dispatch(_caput_callback_queue.Signal,
+            (callback, ca_nothing(pv, args.status)))
 
 
 @maybe_throw
@@ -757,6 +761,7 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
         cadef.ca_array_put_callback(
             dbrtype, count, channel, dbr_array,
             _caput_event_handler, ctypes.py_object(context))
+        _flush_io()
         if wait:
             ca_timeout(done, timeout, pv)
     else:
@@ -968,15 +973,55 @@ def _catools_atexit():
     _channel_cache.purge()
     cadef.ca_context_destroy()
 
-cadef.ca_context_create(0)
+
+# EPICS Channel Access event dispatching needs to done with a little care.  In
+# previous versions the solution was to repeatedly call ca_pend_event() in
+# polling mode, but this does not appear to be efficient enough when receiving
+# large amounts of data.  Instead we enable preemptive Channel Access callbacks,
+# which means we need to cope with all of our channel access events occuring
+# asynchronously.
+cadef.ca_context_create(1)
 
 
-def _PollChannelAccess():
+# Asynchronous CA callbacks are handled by being passed through a
+# ThreadedEventQueue to synchronise them with the cothread thread, and so we
+# have a dedicated event dispatching cothread.
+#
+_dispatch_queue = cothread.ThreadedEventQueue()
+def _dispatch_events():
     while True:
-        cadef.ca_pend_event(1e-9)
-        cothread.Sleep(1e-2)
-_PollChannelAccess = cothread.Spawn(
-    _PollChannelAccess, stack_size = CA_EVENT_STACK)
+        action, args = _dispatch_queue.Wait()
+        try:
+            action(*args)
+        except:
+            print 'EPICS callback raised uncaught exception'
+            traceback.print_exc()
+cothread.Spawn(_dispatch_events, stack_size = CA_ACTION_STACK)
+
+def _dispatch(action, *args):
+    '''This can be called from within any Python thread to arrange for
+    action(*args) to be called in the context of the cothread thread.'''
+    _dispatch_queue.Signal((action, args))
+
+
+# Another delicacy arising from relying on asynchronous CA event dispatching is
+# that we need to manually flush IO events such as caget commands.  To ensure
+# that large blocks of channel access activity really are aggregated we ensure
+# that ca_flush_io() is only called once in any scheduling cycle by requesting
+# IO flushing via a _flush_io_event object.
+#
+_flush_io_event = cothread.Event()
+def _dispatch_flush_io():
+    while True:
+        _flush_io_event.Wait()
+        cadef.ca_flush_io()
+cothread.Spawn(_dispatch_flush_io, stack_size = CA_ACTION_STACK)
+
+def _flush_io():
+    '''This should be called after any Channel Access method which generates
+    buffered requests.  ca_flush_io() will now be called during the next
+    scheduler cycle.'''
+    _flush_io_event.Signal()
 
 
 # The value of the exception handler below is rather doubtful...
