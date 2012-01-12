@@ -47,6 +47,13 @@
         __u.b; \
     } )
 
+#define CAPSULE_NAME    "cothread.coroutine"
+#ifndef Py_CAPSULE_H
+#define PyCapsule_GetPointer(object, name) \
+    PyCObject_AsVoidPtr(object)
+#define PyCapsule_New(object, name, delete) \
+    PyCObject_FromVoidPtr(object, delete)
+#endif
 
 DECLARE_TLS(struct cocore *, base_coroutine);
 static bool check_stack_enabled = false;
@@ -57,7 +64,7 @@ static int guard_pages = 4;
  * object from the wrapping Python object. */
 static int get_cocore(PyObject *object, void **result)
 {
-    *result = PyCObject_AsVoidPtr(object);
+    *result = PyCapsule_GetPointer(object, CAPSULE_NAME);
     /* Check that we've chosen a valid target. */
     if (*result != NULL  &&  !check_cocore(*result))
     {
@@ -99,7 +106,7 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
             parent, coroutine_wrapper, &action, sizeof(action),
             stack_size == 0 ? GET_TLS(base_coroutine) : NULL,
             stack_size, check_stack_enabled, guard_pages);
-        return PyCObject_FromVoidPtr(coroutine, NULL);
+        return PyCapsule_New(coroutine, CAPSULE_NAME, NULL);
     }
     else
         return NULL;
@@ -147,7 +154,7 @@ static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
     if (unlikely(GET_TLS(base_coroutine) == NULL))
         /* First time through initialise the cocore library. */
         SET_TLS(base_coroutine, initialise_cocore_thread());
-    return PyCObject_FromVoidPtr(get_current_cocore(), NULL);
+    return PyCapsule_New(get_current_cocore(), CAPSULE_NAME, NULL);
 }
 
 
@@ -245,10 +252,32 @@ If the hook function returns true an interrupt will be raised." },
 };
 
 
+#define MODULE_DOC  "Core coroutine module for cothread"
+
+#if PY_MAJOR_VERSION > 2
+static PyModuleDef coroutine_module = {
+    PyModuleDef_HEAD_INIT,
+    .m_name = "_coroutine",
+    .m_doc = MODULE_DOC,
+    .m_size = -1,
+    .m_methods = module_methods
+};
+#endif
+
+
+#if PY_MAJOR_VERSION == 2
 extern void init_coroutine(void);
 void init_coroutine(void)
+#else
+extern void PyInit__coroutine(void);
+void PyInit__coroutine(void)
+#endif
 {
     INIT_TLS(base_coroutine);
     initialise_cocore();
-    Py_InitModule("_coroutine", module_methods);
+#if PY_MAJOR_VERSION == 2
+    Py_InitModule3("_coroutine", module_methods, MODULE_DOC);
+#else
+    PyModule_Create(&coroutine_module);
+#endif
 }
