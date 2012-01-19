@@ -51,6 +51,7 @@ import sys
 import atexit
 import traceback
 import ctypes
+import threading
 
 import cothread
 import cadef
@@ -283,6 +284,8 @@ class _Subscription(object):
     __OPEN    = 1       # Normally active
     __CLOSED  = 2       # Closed but not yet deleted
 
+    __lock = threading.Lock()   # Used for update merging.
+
     @cadef.event_handler
     def __on_event(args):
         '''This is called each time the subscribed value changes.  As this is
@@ -292,31 +295,53 @@ class _Subscription(object):
 
         if args.status == cadef.ECA_NORMAL:
             # Good data: extract value from the dbr.
-            cothread.Callback(self.__signal, dbr.dbr_to_value(
+            value = dbr.dbr_to_value(
                 args.raw_dbr, args.type, args.count, self.channel.name,
-                self.as_string))
+                self.as_string)
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, but only if
             # they've requested disconnect nofication.
-            cothread.Callback(
-                self.__signal, ca_nothing(self.channel.name, args.status))
-
-    def __signal(self, value):
-        if self.all_updates:
-            # If all_updates is requested then every incoming update directly
-            # generates a corresponding callback call.
-            value.update_count = 1
-            self.__callback_queue.Signal((self, self.callback, value))
+            value = ca_nothing(self.channel.name, args.status)
         else:
-            # If merged updates are requested then we hang onto the latest
-            # value and only schedule a callback if there isn't one already
-            # in the queue.
-            self.__value = value
-            if self.__update_count == 0:
-                # First update since last reported.
-                self.__callback_queue.Signal((
-                    self, self.__merged_callback, None))
-            self.__update_count += 1
+            return
+
+        if self.all_updates:
+            value.update_count = 1
+            cothread.Callback(self.__signal, self.callback, value)
+        else:
+            with self.__lock:
+                self.__value = value
+                if self.__update_count == 0:
+                    cothread.Callback(
+                        self.__signal, self.__merged_callback, None)
+                self.__update_count += 1
+
+    def __merged_callback(self, _):
+        '''Called on notification of update when merging multiple updates.
+        The user's callback is fired with the latest value.'''
+        with self.__lock:
+            value = self.__value
+            value.update_count = self.__update_count
+            self.__value = None
+            self.__update_count = 0
+        self.callback(value)
+
+    def __signal(self, callback, value):
+        '''Wrapper for performing callbacks safely: only performs the callback
+        if the subscription is open and reports and handles any exceptions that
+        might arise.'''
+        if self.__state == self.__OPEN:
+            try:
+                callback(value)
+            except:
+                # We try and be robust about exceptions in handlers, but to
+                # prevent a perpetual storm of exceptions, we close the
+                # subscription after reporting the problem.
+                print 'Subscription %s callback raised exception' % self.name
+                traceback.print_exc()
+                print 'Subscription %s closed' % self.name
+                self.close()
+
 
     def _on_connect(self, connected):
         '''This is called each time the connection state of the underlying
@@ -395,46 +420,6 @@ class _Subscription(object):
             self._as_parameter_ = event_id.value
             self.__state = self.__OPEN
             _flush_io()
-
-
-    # By default all subscription events are queued onto this queue which is
-    # dispatched by the callback dispatcher in its own thread.
-    __callback_queue = cothread.EventQueue()
-
-    @classmethod
-    def _callback_dispatcher(cls):
-        '''The default event handler expects a callback and a value on
-        the queue and simply fires the callback.  This runs as a continous
-        background process to dispatch subscription events.'''
-        while True:
-            self, callback, value = cls.__callback_queue.Wait()
-            # Only perform callbacks on open subscriptions.
-            if self.__state == self.__OPEN:
-                try:
-                    callback(value)
-                except:
-                    # We try and be robust about exceptions in handlers, but
-                    # to prevent a perpetual storm of exceptions, we close the
-                    # subscription after reporting the problem.
-                    print 'Subscription %s callback raised exception' % \
-                        self.name
-                    traceback.print_exc()
-                    print 'Subscription %s closed' % self.name
-                    self.close()
-
-    def __merged_callback(self, _):
-        '''Called on notification of update when merging multiple updates.
-        The user's callback is fired with the latest value.'''
-        value = self.__value
-        self.__value = None
-        value.update_count = self.__update_count
-        self.__update_count = 0
-        self.callback(value)
-
-
-# Ensure the callback dispatcher is running.
-_callback_dispatcher = cothread.Spawn(
-    _Subscription._callback_dispatcher, stack_size = CALLBACK_DISPATCH_STACK)
 
 
 def camonitor(pvs, callback, **kargs):
