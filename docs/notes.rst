@@ -47,3 +47,19 @@ of appearance in the code).
   of :func:`.wait_until`.  We have to pass an empty list (to be compatible
   with the :func:`.poll_scheduler` switch), and a wakeup reason should be
   returned.
+
+
+Callback
+--------
+
+The new :func:`Callback` mechanism raises some issues.
+
+1.  It is possible for the callback queue to grow without limit, and this is
+    invisible to the poor users.  This can happen if too much time is spent in
+    processing updates.
+
+2.  The callback queue is processed without yielding.  If the callback queue is
+    very long this can cause unresponsive behaviour.  Unfortunately inserting a
+    yield on every callback is surprisingly costly.
+
+3.  We lack any mechanism for observing what's going on inside the library.
