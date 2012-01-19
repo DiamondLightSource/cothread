@@ -957,19 +957,23 @@ cadef.ca_context_create(1)
 # that large blocks of channel access activity really are aggregated we ensure
 # that ca_flush_io() is only called once in any scheduling cycle by requesting
 # IO flushing via a _flush_io_event object.
-#
-_flush_io_event = cothread.Event()
-def _dispatch_flush_io():
-    while True:
-        _flush_io_event.Wait()
-        cadef.ca_flush_io()
-cothread.Spawn(_dispatch_flush_io, stack_size = CA_ACTION_STACK)
+class _FlushIo:
+    def __init__(self):
+        self._flush_io_event = cothread.Event()
+        cothread.Spawn(self._dispatch_flush_io, stack_size = CA_ACTION_STACK)
 
-def _flush_io():
-    '''This should be called after any Channel Access method which generates
-    buffered requests.  ca_flush_io() will now be called during the next
-    scheduler cycle.'''
-    _flush_io_event.Signal()
+    def _dispatch_flush_io(self):
+        while True:
+            self._flush_io_event.Wait()
+            cadef.ca_flush_io()
+
+    def _flush_io(self):
+        '''This should be called after any Channel Access method which generates
+        buffered requests.  ca_flush_io() will now be called during the next
+        scheduler cycle.'''
+        self._flush_io_event.Signal()
+
+_flush_io = _FlushIo()._flush_io
 
 
 # The value of the exception handler below is rather doubtful...

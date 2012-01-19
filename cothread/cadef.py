@@ -368,8 +368,8 @@ ca_pend_event.argtypes = [ctypes.c_double]
 
 #   ca_flush_io()
 #
-# Flushes the send buffer and processes background activities until the
-# specified timeout (in seconds) expires.
+# Flush outstanding IO requests to the server.  Needs to be called after CA
+# calls which require interaction with a CA server.
 ca_flush_io = libca.ca_flush_io
 ca_flush_io.argtypes = []
 ca_flush_io.errcheck = expect_ECA_NORMAL
