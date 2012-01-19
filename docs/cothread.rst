@@ -400,7 +400,9 @@ signal), while an :class:`EventQueue` can hold a list of unbounded length.
     is designed to be used to communicate between a Python thread outside of
     the cothread library and a cothread.  Communication can occur in either
     direction: an outside thread can call :meth:`Signal` on a threaded event
-    queue while a cothread calls :meth:`Wait`, or vice versa.
+    queue while a cothread calls :meth:`Wait`, or vice versa.  Note however that
+    for communicating from Python threads to cothread it is more efficient to
+    use :func:`Callback`.
 
     If a thread calls :meth:`Wait` it will block until a cothread (or another
     thread) calls :meth:`Signal`.  If this is undesirable then the field

@@ -851,6 +851,50 @@ class ThreadedEventQueue(object):
 
 
 
+# Implements asynchronous (and "lock free") synchronisation from any Python
+# thread to the main cothread thread.  Technically the Python Global Interpreter
+# Lock (GIL) plays an essential role in this code by serialising all the actions
+# here and ensuring that collections.deque actions are atomic (which follows
+# from its implementation as a C extension).
+#
+# Note that the signalling from Callback() to the callback_events() loop is
+# rather delicate.  Care is taken here to reduce the number of os.read/write
+# actions as these involve costly system calls, but without the hazard of losing
+# events which would result in deadlock.
+class _Callback:
+    COTHREAD_CALLBACK_STACK = \
+        int(os.environ.get('COTHREAD_CALLBACK_STACK', 1024 * 1024))
+
+    def __init__(self):
+        self.values = collections.deque()
+        self.wait, self.signal = os.pipe()
+        self.waiting = False
+        Spawn(self.callback_events, stack_size = self.COTHREAD_CALLBACK_STACK)
+
+    def callback_events(self):
+        while True:
+            self.waiting = True
+            while not self.values:
+                coselect.poll_list([(self.wait, coselect.POLLIN)])
+                os.read(self.wait, 4096)    # Consume all pending wakeups
+
+            while self.values:
+                action, args = self.values.popleft()
+                try:
+                    action(*args)
+                except:
+                    print 'Asynchronous callback raised uncaught exception'
+                    traceback.print_exc()
+
+    def Callback(self, action, *args):
+        '''This can be called from within any Python thread to arrange for
+        action(*args) to be called in the context of the cothread thread.'''
+        self.values.append((action, args))
+        if self.waiting:
+            self.waiting = False
+            os.write(self.signal, '-')
+
+
 class Timer(object):
     '''A cancellable one-shot or auto-retriggering timer.'''
 
@@ -973,11 +1017,15 @@ _scheduler = _Scheduler.create()
 # only be one) so that we can recognise when we're in another thread.
 _scheduler_thread_id = thread.get_ident()
 
+
 # Thread validation: ensure cothreads aren't used across threads!
 def _validate_thread():
     assert _scheduler_thread_id == thread.get_ident(), \
         'Cannot use cothread with multiple threads.  Consider using ' \
         'ThreadedEventQueue if necessary.'
+
+# This is the asynchronous callback method.
+Callback = _Callback().Callback
 
 
 def SleepUntil(deadline):
@@ -996,24 +1044,3 @@ def Yield(timeout = 0):
     waiting to be run.'''
     _validate_thread()
     _scheduler.do_yield(GetDeadline(timeout))
-
-
-# Support for callback synchronisation.
-
-COTHREAD_CALLBACK_STACK = \
-    int(os.environ.get('COTHREAD_CALLBACK_STACK', 1024 * 1024))
-_callback_queue = ThreadedEventQueue()
-def _callback_events():
-    while True:
-        action, args = _callback_queue.Wait()
-        try:
-            action(*args)
-        except:
-            print 'Asynchronous callback raised uncaught exception'
-            traceback.print_exc()
-Spawn(_callback_events, stack_size = COTHREAD_CALLBACK_STACK)
-
-def Callback(action, *args):
-    '''This can be called from within any Python thread to arrange for
-    action(*args) to be called in the context of the cothread thread.'''
-    _callback_queue.Signal((action, args))
