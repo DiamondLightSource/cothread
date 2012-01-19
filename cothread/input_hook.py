@@ -107,6 +107,10 @@ def iqt(poll_interval = 0.05, run_exec = True, argv = None):
     from PyQt4 import QtCore, QtGui
     global _qapp, _timer
 
+    # Importing PyQt4 has an unexpected side effect: it removes the input hook!
+    # So we put it back again...
+    _install_readline_hook(True)
+
     # Repeated calls to iqt() are (silent) no-ops.  Is it more friendly do this
     # than to assert fail?  Not sure to be honest.
     if _qapp is not None:
