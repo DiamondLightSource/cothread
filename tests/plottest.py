@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env dls-python2.6
 
 import sys
 
@@ -6,8 +6,8 @@ import require
 from cothread import *
 from cothread.catools import *
 
-from pkg_resources import require as Require
-Require('matplotlib')
+import pkg_resources
+pkg_resources.require('matplotlib')
 
 from pylab import *
 from numpy import *
@@ -20,7 +20,7 @@ ALL_BPMS = [
     for cell in range(24)
     for n in range(7)]
 
-ALL_BPMS = ['SR01C-DI-EBPM-%02d' % (cell+1) for cell in range(2)]
+ALL_BPMS = ['BR01C-DI-EBPM-%02d' % (cell+1) for cell in range(2)]
 
 
 pvs = ['%s:%s' % (bpm, pv)
@@ -33,26 +33,17 @@ def do_plot(xs):
 
 def update_plot(l, x):
     l.set_ydata(x)
-#    draw()
+    draw()
 
     from cothread import catools
-    print (len(catools._Subscription._Subscription__callback_queue),
-        x.update_count),
+    print (len(Callback.im_self.values), x.update_count),
     sys.stdout.flush()
+    Yield()     # Needed here or in Callback queue
 
-def timer():
-    while True:
-        Sleep(0.5)
-        print 'tick'
-        draw()
-
-#ioff()
 ll = do_plot(caget(pvs, timeout = 10))
-m = camonitor(pvs,
-    lambda x, n:
-        update_plot(ll[n], x),
-    all_updates = False)
+show()
 
-Spawn(timer)
+print pvs
+m = camonitor(pvs, lambda x, n: update_plot(ll[n], x))
 
 WaitForQuit()

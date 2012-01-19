@@ -3,9 +3,6 @@
 
 Testing = True
 
-from pkg_resources import require
-require('numpy')
-
 if Testing:
     import sys
     import os
