@@ -472,6 +472,15 @@ signal), while an :class:`EventQueue` can hold a list of unbounded length.
         This use of `catch_interrupt` to set a signal handler is an incompatible
         change from cothread 2.0 and earlier.
 
+..  function:: Callback(action, *args)
+
+    This function can be called from any Python thread to arrange for
+    ``action(*args)`` to be called in the cothread's own thread.
+
+    Note that all callbacks are called in sequence and so any individual
+    ``action()`` should return as soon as possible to avoid blocking subsequent
+    callbacks -- if more work needs to be done, call ``Spawn()``.
+
 
 ..  function:: iqt(poll_interval=0.05, run_exec=True, argv=None)
 

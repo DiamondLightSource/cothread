@@ -169,7 +169,7 @@ class Channel(object):
 
         self = cadef.ca_puser(args.chid)
         op = args.op
-        _dispatch(self.on_ca_connect_, op)
+        cothread.Callback(self.on_ca_connect_, op)
 
     def on_ca_connect_(self, op):
         assert op in [cadef.CA_OP_CONN_UP, cadef.CA_OP_CONN_DOWN]
@@ -292,13 +292,14 @@ class _Subscription(object):
 
         if args.status == cadef.ECA_NORMAL:
             # Good data: extract value from the dbr.
-            _dispatch(self.__signal, dbr.dbr_to_value(
+            cothread.Callback(self.__signal, dbr.dbr_to_value(
                 args.raw_dbr, args.type, args.count, self.channel.name,
                 self.as_string))
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, but only if
             # they've requested disconnect nofication.
-            _dispatch(self.__signal, ca_nothing(self.channel.name, args.status))
+            cothread.Callback(
+                self.__signal, ca_nothing(self.channel.name, args.status))
 
     def __signal(self, value):
         if self.all_updates:
@@ -524,10 +525,10 @@ def _caget_event_handler(args):
     ctypes.pythonapi.Py_DecRef(args.usr)
 
     if args.status == cadef.ECA_NORMAL:
-        _dispatch(done.Signal, dbr.dbr_to_value(
+        cothread.Callback(done.Signal, dbr.dbr_to_value(
             args.raw_dbr, args.type, args.count, pv, as_string))
     else:
-        _dispatch(done.SignalException, ca_nothing(pv, args.status))
+        cothread.Callback(done.SignalException, ca_nothing(pv, args.status))
 
 
 @maybe_throw
@@ -691,21 +692,6 @@ def caget(pvs, **kargs):
 # ----------------------------------------------------------------------------
 #   caput
 
-# Callback dispatching for caput callbacks.
-_caput_callback_queue = cothread.EventQueue()
-
-def _caput_callback_dispatcher():
-    while True:
-        callback, result = _caput_callback_queue.Wait()
-        try:
-            callback(result)
-        except:
-            print 'caput callback on %s raised exception' % result.name
-            traceback.print_exc()
-_caput_callback_dispatcher = cothread.Spawn(
-    _caput_callback_dispatcher, stack_size = CALLBACK_DISPATCH_STACK)
-
-
 @cadef.event_handler
 def _caput_event_handler(args):
     '''Event handler for caput with callback completion.  Returns status
@@ -718,12 +704,11 @@ def _caput_event_handler(args):
 
     if done is not None:
         if args.status == cadef.ECA_NORMAL:
-            _dispatch(done.Signal)
+            cothread.Callback(done.Signal)
         else:
-            _dispatch(done.SignalException, ca_nothing(pv, args.status))
+            cothread.Callback(done.SignalException, ca_nothing(pv, args.status))
     if callback is not None:
-        _dispatch(_caput_callback_queue.Signal,
-            (callback, ca_nothing(pv, args.status)))
+        cothread.Callback(callback, ca_nothing(pv, args.status))
 
 
 @maybe_throw
@@ -981,28 +966,6 @@ def _catools_atexit():
 # which means we need to cope with all of our channel access events occuring
 # asynchronously.
 cadef.ca_context_create(1)
-
-
-# Asynchronous CA callbacks are handled by being passed through a
-# ThreadedEventQueue to synchronise them with the cothread thread, and so we
-# have a dedicated event dispatching cothread.
-#
-_dispatch_queue = cothread.ThreadedEventQueue()
-def _dispatch_events():
-    while True:
-        action, args = _dispatch_queue.Wait()
-        try:
-            action(*args)
-        except:
-            print 'EPICS callback raised uncaught exception'
-            traceback.print_exc()
-cothread.Spawn(_dispatch_events, stack_size = CA_ACTION_STACK)
-
-def _dispatch(action, *args):
-    '''This can be called from within any Python thread to arrange for
-    action(*args) to be called in the context of the cothread thread.'''
-    _dispatch_queue.Signal((action, args))
-
 
 # Another delicacy arising from relying on asynchronous CA event dispatching is
 # that we need to manually flush IO events such as caget commands.  To ensure

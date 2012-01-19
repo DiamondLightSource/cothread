@@ -104,6 +104,7 @@ __all__ = [
     'WaitForQuit',      # Wait until Quit() is called
 
     'Timer',            # One-shot cancellable timer
+    'Callback',         # Simple asynchronous synchronisation
 ]
 
 
@@ -944,7 +945,6 @@ def WaitForAll(event_list, timeout = None):
 #       method (or even with a special wakeup value), but may require some care.
 
 
-
 _QuitEvent = Event(auto_reset = False)
 
 def Quit():
@@ -996,3 +996,24 @@ def Yield(timeout = 0):
     waiting to be run.'''
     _validate_thread()
     _scheduler.do_yield(GetDeadline(timeout))
+
+
+# Support for callback synchronisation.
+
+COTHREAD_CALLBACK_STACK = \
+    int(os.environ.get('COTHREAD_CALLBACK_STACK', 1024 * 1024))
+_callback_queue = ThreadedEventQueue()
+def _callback_events():
+    while True:
+        action, args = _callback_queue.Wait()
+        try:
+            action(*args)
+        except:
+            print 'Asynchronous callback raised uncaught exception'
+            traceback.print_exc()
+Spawn(_callback_events, stack_size = COTHREAD_CALLBACK_STACK)
+
+def Callback(action, *args):
+    '''This can be called from within any Python thread to arrange for
+    action(*args) to be called in the context of the cothread thread.'''
+    _callback_queue.Signal((action, args))

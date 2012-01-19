@@ -46,7 +46,7 @@ __all__ = [
 
 
 # When Qt is running in its own stack it really needs quite a bit of room.
-QT_STACK_SIZE = 1024 * 1024
+QT_STACK_SIZE = int(os.environ.get('COTHREAD_QT_STACK', 1024 * 1024))
 
 
 def _readline_hook():
