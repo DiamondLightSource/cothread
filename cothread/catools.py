@@ -286,6 +286,10 @@ class _Subscription(object):
 
     __lock = threading.Lock()   # Used for update merging.
 
+    # Create our own callback queue so that camonitor() callbacks can be handled
+    # concurrently with other asynchronous callbacks.
+    __Callback = cothread._Callback().Callback
+
     @cadef.event_handler
     def __on_event(args):
         '''This is called each time the subscribed value changes.  As this is
@@ -307,12 +311,12 @@ class _Subscription(object):
 
         if self.all_updates:
             value.update_count = 1
-            cothread.Callback(self.__signal, self.callback, value)
+            self.__Callback(self.__signal, self.callback, value)
         else:
             with self.__lock:
                 self.__value = value
                 if self.__update_count == 0:
-                    cothread.Callback(
+                    self.__Callback(
                         self.__signal, self.__merged_callback, None)
                 self.__update_count += 1
 
