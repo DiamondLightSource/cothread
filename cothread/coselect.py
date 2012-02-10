@@ -55,10 +55,6 @@ __all__ = [
     'select_hook',      # Replaces select methods
 ]
 
-# Pick up copies of the select methods we might modify when hooking.
-_select_select = _select.select
-_select_poll = _select.poll
-
 
 def select_hook():
     '''Replaces the blocking methods in the select module with the non-blocking
@@ -166,8 +162,10 @@ def poll_block_select(poll_list, timeout = None):
     return result.items()
 
 
+_select_select = _select.select     # Keep a copy of original select for hooking
 import platform as _platform
 if hasattr(_select, 'poll'):
+    _select_poll = _select.poll     # Similarly get copy of original poll
     if _platform.system() == 'Darwin':
         # Unfortunately it would appear that Apple's implementation of the
         # poll() system call is incomplete: it returns POLLNVAL for devices!
