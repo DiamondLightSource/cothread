@@ -741,6 +741,7 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
     else:
         # Asynchronous caput, just do it now.
         cadef.ca_array_put(dbrtype, count, channel, dbr_array)
+        _flush_io()
 
     # Return a success code for compatibility with throw=False code.
     return ca_nothing(pv)
