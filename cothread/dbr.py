@@ -150,8 +150,13 @@ class ca_float(float):
     __doc__ = ca_doc_string
 
 
-# The EPICS epoch begins 1st January 1990.
-EPICS_epoch = int(time.mktime((1990, 1, 1, 0, 0, 0, 0, 0, 0)))
+# The EPICS epoch begins midnight first thing on 1st January 1990 and is in UTC.
+# We convert all EPICS timestamps to the Python epoch.  This is not defined in
+# the language documentation but in practice is the ANSI epoch, midnight 1st
+# January 1970.  Strictly we should compute
+#   EPICS_epoch = calendar.timegm((1990, 1, 1, 0, 0, 0, 0, 0, 0))
+# but that pulls in an extra module dependency and the number is constant:
+EPICS_epoch = 631152000             # Seconds from 1970 to 1990
 
 
 class ca_timestamp(ctypes.Structure):
