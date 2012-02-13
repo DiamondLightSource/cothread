@@ -886,7 +886,7 @@ class _Callback:
                     print 'Asynchronous callback raised uncaught exception'
                     traceback.print_exc()
 
-    def Callback(self, action, *args):
+    def __call__(self, action, *args):
         '''This can be called from within any Python thread to arrange for
         action(*args) to be called in the context of the cothread thread.'''
         self.values.append((action, args))
@@ -1025,7 +1025,7 @@ def _validate_thread():
         'ThreadedEventQueue if necessary.'
 
 # This is the asynchronous callback method.
-Callback = _Callback().Callback
+Callback = _Callback()
 
 
 def SleepUntil(deadline):

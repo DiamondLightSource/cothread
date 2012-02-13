@@ -288,7 +288,7 @@ class _Subscription(object):
 
     # Create our own callback queue so that camonitor() callbacks can be handled
     # concurrently with other asynchronous callbacks.
-    __Callback = cothread._Callback().Callback
+    __Callback = cothread._Callback()
 
     @cadef.event_handler
     def __on_event(args):
@@ -972,13 +972,13 @@ class _FlushIo:
             self._flush_io_event.Wait()
             cadef.ca_flush_io()
 
-    def _flush_io(self):
+    def __call__(self):
         '''This should be called after any Channel Access method which generates
         buffered requests.  ca_flush_io() will now be called during the next
         scheduler cycle.'''
         self._flush_io_event.Signal()
 
-_flush_io = _FlushIo()._flush_io
+_flush_io = _FlushIo()
 
 
 # The value of the exception handler below is rather doubtful...
