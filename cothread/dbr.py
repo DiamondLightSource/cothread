@@ -34,6 +34,7 @@ header file db_access.h
 import ctypes
 import numpy
 import time
+import datetime
 
 
 __all__ = [
@@ -73,6 +74,7 @@ ca_extra_fields = [
     # Timestamp specific fields
     'raw_stamp',    # Unformatted timestamp in separate seconds and nsecs
     'timestamp',    # Timestamp in seconds
+    'datetime',     # Timestamp converted to datetime
     # Control specific fields
     'units',        # Units for display
     'upper_disp_limit',
@@ -131,23 +133,31 @@ If control values requested and datatype is DBR_ENUM:
     enums (list of possible enumeration strings)
 '''
 
+@property
+def timestamp_to_datetime(self):
+    return datetime.datetime.fromtimestamp(self.timestamp)
+
 # Augmented array used for all return values with more than one element.
 class ca_array(numpy.ndarray):
     __doc__ = ca_doc_string
+    datetime = timestamp_to_datetime
     def __pos__(self):
         return numpy.array(self)
 
 # Augmented basic Python types used for scalar values.
 class ca_str(str):
     __doc__ = ca_doc_string
+    datetime = timestamp_to_datetime
     def __pos__(self):
         return str(self)
 
 class ca_int(int):
     __doc__ = ca_doc_string
+    datetime = timestamp_to_datetime
 
 class ca_float(float):
     __doc__ = ca_doc_string
+    datetime = timestamp_to_datetime
 
 
 # The EPICS epoch begins midnight first thing on 1st January 1990 and is in UTC.

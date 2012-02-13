@@ -610,12 +610,22 @@ specified.
     the nearest microsecond: for nanosecond precision use :attr:`.raw_stamp`
     instead.
 
-    To compute the timestamp in :class:`datetime` format, which can be more
-    suitable for display applications, it can be added to the value by
-    computing::
+..  attribute:: .datetime
 
-        import datetime
-        value.datetime = datetime.datetime.fromtimestamp(value.timestamp)
+    This is a dynamic property which returns :attr:`timestamp` as a
+    :class:`datetime` value by computing ::
+
+        datetime.datetime.fromtimestamp(value.timestamp)
+
+    from the :attr:`timestamp` attribute.  This calculation takes local time
+    into account.
+
+    ..  note::
+
+        This is an incompatible change from cothread version 2.3 and earlier.
+        In earlier versions this field did not exist but could be assigned to,
+        in this release :attr:`datetime` is a read-only property which cannot
+        be assigned to.
 
 
 The following fields are present in all values if :const:`FORMAT_TIME` or
