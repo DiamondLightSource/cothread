@@ -874,7 +874,7 @@ class _Callback:
     def callback_events(self):
         while True:
             self.waiting = True
-            while not self.values:
+            if not self.values:
                 coselect.poll_list([(self.wait, coselect.POLLIN)])
                 os.read(self.wait, 4096)    # Consume all pending wakeups
 
