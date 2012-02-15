@@ -341,9 +341,10 @@ class _Subscription(object):
                 # We try and be robust about exceptions in handlers, but to
                 # prevent a perpetual storm of exceptions, we close the
                 # subscription after reporting the problem.
-                print 'Subscription %s callback raised exception' % self.name
+                print >>sys.stderr, \
+                    'Subscription %s callback raised exception' % self.name
                 traceback.print_exc()
-                print 'Subscription %s closed' % self.name
+                print >>sys.stderr, 'Subscription %s closed' % self.name
                 self.close()
 
 
@@ -987,6 +988,6 @@ if False:
     @exception_handler
     def catools_exception(args):
         '''print ca exception message'''
-        print >> sys.stderr, 'catools_exception:', \
+        print >>sys.stderr, 'catools_exception:', \
             args.ctx, cadef.ca_message(args.stat)
     cadef.ca_add_exception_event(catools_exception, 0)

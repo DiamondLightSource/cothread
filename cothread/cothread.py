@@ -638,7 +638,7 @@ class Spawn(EventBase):
                 # No good.  We can't allow this exception to propagate, as
                 # doing so will kill the scheduler.  Instead report the
                 # traceback right here.
-                print 'Spawned task', \
+                print >>sys.stderr, 'Spawned task', \
                     getattr(self.__function, '__name__', '(unknown)'), \
                     'raised uncaught exception'
                 traceback.print_exc()
@@ -883,7 +883,8 @@ class _Callback:
                 try:
                     action(*args)
                 except:
-                    print 'Asynchronous callback raised uncaught exception'
+                    print >>sys.stderr, \
+                        'Asynchronous callback raised uncaught exception'
                     traceback.print_exc()
 
     def __call__(self, action, *args):
