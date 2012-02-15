@@ -308,35 +308,35 @@ class _Subscription(object):
             value = ca_nothing(self.channel.name, args.status)
         else:
             return
+        self.__maybe_signal(value)
 
+    def __maybe_signal(self, value):
+        '''Performs update merging and callback notification if appropriate.'''
         if self.all_updates:
             value.update_count = 1
-            self.__Callback(self.__signal, self.callback, value)
+            self.__Callback(self.__signal, value)
         else:
             with self.__lock:
                 self.__value = value
                 if self.__update_count == 0:
-                    self.__Callback(
-                        self.__signal, self.__merged_callback, None)
+                    self.__Callback(self.__signal, None)
                 self.__update_count += 1
 
-    def __merged_callback(self, _):
-        '''Called on notification of update when merging multiple updates.
-        The user's callback is fired with the latest value.'''
-        with self.__lock:
-            value = self.__value
-            value.update_count = self.__update_count
-            self.__value = None
-            self.__update_count = 0
-        self.callback(value)
-
-    def __signal(self, callback, value):
+    def __signal(self, value):
         '''Wrapper for performing callbacks safely: only performs the callback
         if the subscription is open and reports and handles any exceptions that
         might arise.'''
         if self.__state == self.__OPEN:
+            if value is None:
+                # This arises from a merged update.
+                with self.__lock:
+                    value = self.__value
+                    value.update_count = self.__update_count
+                    self.__value = None
+                    self.__update_count = 0
+
             try:
-                callback(value)
+                self.callback(value)
             except:
                 # We try and be robust about exceptions in handlers, but to
                 # prevent a perpetual storm of exceptions, we close the
@@ -352,7 +352,8 @@ class _Subscription(object):
         channel changes.  Note that this is also called asynchronously.'''
         if not connected and self.notify_disconnect:
             # Channel has become disconnected: tell the subscriber.
-            self.__signal(ca_nothing(self.channel.name, cadef.ECA_DISCONN))
+            self.__maybe_signal(
+                ca_nothing(self.channel.name, cadef.ECA_DISCONN))
 
     def __del__(self):
         '''On object deletion ensure that the associated subscription is
