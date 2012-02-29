@@ -504,7 +504,12 @@ used to control the type of the data returned:
     5.  One of the special values :const:`DBR_CHAR_STR` or
         :const:`DBR_CHAR_UNICODE`.  This is used to request a char array which
         is then converted to a Python string or Unicode string on receipt.  It
-        is not sensible to specify `count` with this option.
+        is not sensible to specify `count` with this option.  The option
+        :const:`DBR_CHAR_UNICODE` is meaningless and not supported
+        for :func:`caput`.
+
+        Note that if the PV name ends in ``$`` and `datatype` is not specified
+        then :const:`DBR_CHAR_STR` will be used.
 
     6.  For :func:`caget` and :func:`camonitor` two further special values are
         supported.  In both of these cases `format` is ignored:

@@ -697,16 +697,11 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
     channel = _channel_cache[pv]
     channel.Wait(timeout)
 
-    # Special handling of strings as character arrays, but only if server is
-    # expecting it.
-    if datatype is None and pv[-1] == '$' and \
-            cadef.ca_field_type(channel) == DBR_CHAR:
-        datatype = DBR_CHAR_STR
-
     # Note: the unused value returned below needs to be retained so that
     # dbr_array, a pointer to C memory, has the right lifetime: it has to
     # survive until ca_array_put[_callback] has been called.
-    dbrtype, count, dbr_array, value = dbr.value_to_dbr(value, datatype)
+    dbrtype, count, dbr_array, value = \
+        dbr.value_to_dbr(channel, datatype, value)
     if wait or callback is not None:
         # Assemble the callback context and give it an extra reference count
         # to keep it alive until the callback handler sees it.
