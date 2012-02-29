@@ -32,6 +32,8 @@
 # This file can also be run as a standalone script to discover the path to
 # libca.
 
+from __future__ import print_function
+
 import ctypes
 import platform
 import os
@@ -106,8 +108,8 @@ if __name__ == '__main__':
     # If run standalone we are a helper script.  Write out the relevant
     # definitions for the use of our caller.
     libca_path = _libca_path(False)
-    print 'CATOOLS_LIBCA_PATH=\'%s\'' % libca_path
-    print 'LIB_FILES=\'%s\'' % ' '.join(lib_files)
+    print('CATOOLS_LIBCA_PATH=\'%s\'' % libca_path)
+    print('LIB_FILES=\'%s\'' % ' '.join(lib_files))
 
 else:
     # Load the library (or libraries).
