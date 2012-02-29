@@ -35,7 +35,8 @@ import ctypes
 import numpy
 import time
 import datetime
-import cadef
+
+from . import cadef
 
 
 __all__ = [

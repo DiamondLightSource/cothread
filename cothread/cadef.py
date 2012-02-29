@@ -46,7 +46,7 @@ __all__ = [
 
 
 import ctypes
-from load_ca import libca
+from .load_ca import libca
 
 
 
