@@ -502,11 +502,11 @@ used to control the type of the data returned:
     4.  Any :class:`numpy.dtype` compatible with any of the above values.
 
     5.  One of the special values :const:`DBR_CHAR_STR` or
-        :const:`DBR_CHAR_UNICODE`.  This is used to request a char array which
-        is then converted to a Python string or Unicode string on receipt.  It
-        is not sensible to specify `count` with this option.  The option
-        :const:`DBR_CHAR_UNICODE` is meaningless and not supported
-        for :func:`caput`.
+        :const:`DBR_CHAR_BYTES`.  This is used to request a char array which is
+        then converted to a Python string or :class:`bytes` string on receipt.
+        It is not sensible to specify `count` with this option.  The option
+        :const:`DBR_CHAR_BYTES` is meaningless and not supported for
+        :func:`caput`.
 
         Note that if the PV name ends in ``$`` and `datatype` is not specified
         then :const:`DBR_CHAR_STR` will be used.
