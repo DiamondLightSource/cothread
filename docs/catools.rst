@@ -501,8 +501,9 @@ used to control the type of the data returned:
 
     4.  Any :class:`numpy.dtype` compatible with any of the above values.
 
-    5.  The special value :const:`DBR_CHAR_STR`.  This is used to request a
-        char array which is then converted to a Python string on receipt.  It
+    5.  One of the special values :const:`DBR_CHAR_STR` or
+        :const:`DBR_CHAR_UNICODE`.  This is used to request a char array which
+        is then converted to a Python string or Unicode string on receipt.  It
         is not sensible to specify `count` with this option.
 
     6.  For :func:`caget` and :func:`camonitor` two further special values are

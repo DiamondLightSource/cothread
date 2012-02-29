@@ -35,6 +35,7 @@ import ctypes
 import numpy
 import time
 import datetime
+import cadef
 
 
 __all__ = [
@@ -49,6 +50,7 @@ __all__ = [
     'DBR_DOUBLE',       # 64 bit float
 
     'DBR_CHAR_STR',     # Long strings as char arrays
+    'DBR_CHAR_UNICODE', # Long unicode strings as char arrays
 
     'DBR_PUT_ACKT',     # Configure global alarm acknowledgement
     'DBR_PUT_ACKS',     # Acknowledge global alarm
@@ -151,6 +153,12 @@ class ca_str(str):
     def __pos__(self):
         return str(self)
 
+class ca_unicode(unicode):
+    __doc__ = ca_doc_string
+    datetime = timestamp_to_datetime
+    def __pos__(self):
+        return unicode(self)
+
 class ca_int(int):
     __doc__ = ca_doc_string
     datetime = timestamp_to_datetime
@@ -225,7 +233,6 @@ str_dtype = numpy.dtype('S%d' % MAX_STRING_SIZE)
 # Base DBR types
 class dbr_string(ctypes.Structure):
     dtype = str_dtype
-    scalar = ca_str
     copy_attributes = copy_attributes_none
     _fields_ = [('raw_value', (ctypes.c_byte * MAX_STRING_SIZE) * 1)]
 
@@ -269,7 +276,6 @@ class dbr_double(ctypes.Structure):
 
 class dbr_time_string(ctypes.Structure):
     dtype = str_dtype
-    scalar = ca_str
     copy_attributes = copy_attributes_time
     _fields_ = [
         ('status',    ctypes.c_int16),
@@ -457,7 +463,6 @@ class dbr_ctrl_double(ctypes.Structure):
 
 class dbr_stsack_string(ctypes.Structure):
     dtype = str_dtype
-    scalar = ca_str
     _fields_ = [
         ('status',              ctypes.c_int16),
         ('severity',            ctypes.c_int16),
@@ -502,6 +507,7 @@ DBR_STSACK_STRING = 37
 DBR_CLASS_NAME = 38
 
 # Special value for DBR_CHAR as str special processing.
+DBR_CHAR_UNICODE = 998
 DBR_CHAR_STR = 999
 
 
@@ -560,10 +566,13 @@ NumpyCharCodeToDbr = {
     'H':    DBR_SHORT,      # ushort = uint16
     'I':    DBR_LONG,       # uintc  = uint32
 
+    # Unicode is supported by decoding from DBR_STRING
+    'U':    DBR_STRING,     # str => unicode
+
     # The following type codes are not supported at all:
     #   q   longlong        Q   ulonglong       g   longfloat
     #   F   csingle         D   complex_        G   clongfloat
-    #   O   object_         U   unicode_        V   void
+    #   O   object_         V   void
 }
 
 
@@ -604,7 +613,7 @@ def _datatype_to_dtype(datatype):
                 'Datatype "%s" cannot be used for channel access' % datatype)
 
 
-def type_to_dbr(datatype, format):
+def _type_to_dbr(datatype, format):
     '''Converts a datatype and format request to a dbr value, or raises an
     exception if this cannot be done.
 
@@ -617,7 +626,7 @@ def type_to_dbr(datatype, format):
       - FORMAT_CTRL: retrieve limit and control data
     '''
     if datatype not in BasicDbrTypes:
-        if datatype == DBR_CHAR_STR:
+        if datatype == DBR_CHAR_STR or datatype == DBR_CHAR_UNICODE:
             datatype = DBR_CHAR     # Retrieve this type using char array
         elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
             return datatype         # format is meaningless in this case
@@ -643,30 +652,62 @@ def type_to_dbr(datatype, format):
         raise InvalidDatatype('Format not recognised')
 
 
-def dbr_to_value(raw_dbr, datatype, count, name, as_string):
+def type_to_dbr(channel, datatype, format):
+    '''Converts data request into the appropriate dbr code and conversion.  If
+    the datatype is none then the channel must be ready.'''
+
+    if datatype is None:
+        datatype = cadef.ca_field_type(channel)
+        if datatype == DBR_CHAR and channel.name[-1] == '$':
+            datatype = DBR_CHAR_STR
+    return _type_to_dbr(datatype, format), datatype
+
+
+def dbr_to_value(raw_dbr, dbrcode, count, name, convert):
     '''Convert a raw DBR structure into a packaged Python value.  All values
     are returned as augmented types.'''
 
     # Reinterpret the raw_dbr as a pointer to the appropriate structure as
-    # identified by the given datatype.  We can then cast the raw_dbr
-    # structure into an instance of this datatype: the data we want is then
-    # available in the .raw_dbr field of this structure.
-    dbr_type = DbrCodeToType[datatype]
+    # identified by the given dbrcode.  We can then cast the raw_dbr structure
+    # into an instance of this dbr: the data we want is then available in the
+    # .raw_dbr field of this structure.
+    dbr_type = DbrCodeToType[dbrcode]
     raw_dbr = ctypes.cast(raw_dbr, ctypes.POINTER(dbr_type))[0]
 
-    if as_string and raw_dbr.dtype is numpy.uint8:
+    dtype = raw_dbr.dtype
+    if dtype is numpy.uint8 and (
+            convert == DBR_CHAR_STR or convert == DBR_CHAR_UNICODE):
         # Special case hack for long strings returned as DBR_CHAR arrays.
         # Need string_at() twice to ensure string is size limited *and* null
         # terminated.
-        result = ca_str(ctypes.string_at(
-            ctypes.string_at(raw_dbr.raw_value, count)))
+        result = ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
+        if convert == DBR_CHAR_STR:
+            result = ca_str(result)
+        else:
+            result = ca_unicode(result.decode('UTF-8'))
+    elif dtype is str_dtype:
+        # Strings need special handling.  First extract the array of strings,
+        # convert to unicode if necessary, then convert to the appropriate
+        # wrapped result type (ca_str or ca_unicode).
+        p_raw_value = ctypes.pointer(raw_dbr.raw_value[0])
+        strings = [ctypes.string_at(p_raw_value[n]) for n in range(count)]
+        if convert is unicode:
+            strings = [s.decode('UTF-8') for s in strings]
+            scalar = ca_unicode
+            dtype = 'U'
+        else:
+            scalar = ca_str
+            dtype = 'S'
+        if count == 1:
+            result = scalar(strings[0])
+        else:
+            n = max(len(s) for s in strings)
+            result = ca_array((count,), dtype = '%s%d' % (dtype, n))
+            for i, s in enumerate(strings):
+                result[i] = s
     elif count == 1:
         # Single scalar values can be created directly from the raw value
-        result = raw_dbr.raw_value[0]
-        if dbr_type.dtype is str_dtype:
-            # string_at() ensures the string is properly null terminated.
-            result = ctypes.string_at(result)
-        result = raw_dbr.scalar(result)
+        result = raw_dbr.scalar(raw_dbr.raw_value[0])
     else:
         # Build a fresh ca_array to receive a copy of the raw data in the
         # dbr.  We have to take a copy, because the dbr is transient, and it
@@ -675,17 +716,7 @@ def dbr_to_value(raw_dbr, datatype, count, name, as_string):
         #     It is essential that the dtype correctly matches the memory
         # layout of the raw dbr, and of course that the count is accurate.
         result = ca_array(shape = (count,), dtype = dbr_type.dtype)
-
-        if dbr_type.dtype is str_dtype:
-            # Copy strings one by one so that we can ensure that each string
-            # is properly null terminated.
-            p_raw_value = ctypes.pointer(raw_dbr.raw_value[0])
-            for i in range(count):
-                result[i] = ctypes.string_at(p_raw_value[i])
-        else:
-            # For normal waveforms copy the underlying data directly.
-            ctypes.memmove(
-                result.ctypes.data, raw_dbr.raw_value, result.nbytes)
+        ctypes.memmove(result.ctypes.data, raw_dbr.raw_value, result.nbytes)
 
     # Finally copy across any attributes together with the pv name and a
     # success indicator.

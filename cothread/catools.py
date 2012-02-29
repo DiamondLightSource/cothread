@@ -269,7 +269,7 @@ class _Subscription(object):
     __slots__ = [
         'name',             # Name of the PV subscribed to
         'callback',         # The user callback function
-        'as_string',        # Automatic type conversion of data to strings
+        '__convert',        # Controls char array conversion
         'channel',          # The associated channel object
         '__state',          # Whether the subscription is active
         '_as_parameter_',   # Associated channel access subscription handle
@@ -301,7 +301,7 @@ class _Subscription(object):
             # Good data: extract value from the dbr.
             value = dbr.dbr_to_value(
                 args.raw_dbr, args.type, args.count, self.channel.name,
-                self.as_string)
+                self.__convert)
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, but only if
             # they've requested disconnect nofication.
@@ -376,14 +376,10 @@ class _Subscription(object):
             events = DBE_VALUE,
             datatype = None, format = FORMAT_RAW, count = 0,
             all_updates = False, notify_disconnect = False):
-        '''Subscription initialisation: callback and context are used to
-        frame values written to the queue;  events selects which types of
-        update are notified;  datatype, format, count and as_string define
-        the format of returned data.'''
+        '''Subscription initialisation.'''
 
         self.name = name
         self.callback = callback
-        self.as_string = datatype == DBR_CHAR_STR
         self.all_updates = all_updates
         self.notify_disconnect = notify_disconnect
         self.__update_count = 0
@@ -406,13 +402,12 @@ class _Subscription(object):
         to become connected if datatype is not specified (None).'''
 
         if datatype is None:
-            # If no datatype has been specified then try and pick up the
-            # datatype associated with the connected channel.
-            # First wait for the channel to connect
+            # If no datatype has been specified ensure the channel is connected
+            # so that type_to_dbr() can discover the underlying channel type.
             self.channel.Wait()
-            datatype = cadef.ca_field_type(self.channel)
         # Can now convert the datatype request into the subscription datatype.
-        datatype = dbr.type_to_dbr(datatype, format)
+        dbrcode, self.__convert = \
+            dbr.type_to_dbr(self.channel, datatype, format)
 
         # Finally create the subscription with all the requested properties
         # and hang onto the returned event id as our implicit ctypes
@@ -420,7 +415,7 @@ class _Subscription(object):
         if self.__state == self.__OPENING:
             event_id = ctypes.c_void_p()
             cadef.ca_create_subscription(
-                datatype, count, self.channel, events,
+                dbrcode, count, self.channel, events,
                 self.__on_event, ctypes.py_object(self),
                 ctypes.byref(event_id))
             self._as_parameter_ = event_id.value
@@ -512,12 +507,12 @@ def _caget_event_handler(args):
     # We are called exactly once, so can consume the context right now.  Note
     # that we have to do some manual reference counting on the user context,
     # as this is a python object that is invisible to the C api.
-    pv, as_string, done = args.usr
+    pv, convert, done = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
 
     if args.status == cadef.ECA_NORMAL:
         cothread.Callback(done.Signal, dbr.dbr_to_value(
-            args.raw_dbr, args.type, args.count, pv, as_string))
+            args.raw_dbr, args.type, args.count, pv, convert))
     else:
         cothread.Callback(done.SignalException, ca_nothing(pv, args.status))
 
@@ -541,26 +536,18 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     if count > 0:
         count = min(count, cadef.ca_element_count(channel))
 
-    # If no datatype has been specified, use the channel's default
-    if datatype is None:
-        datatype = cadef.ca_field_type(channel)
-        if datatype == DBR_CHAR and pv[-1] == '$':
-            # The default datatype for PVs ending in $ is to return the value as
-            # a string, but we need to check that the data is coming over the
-            # wire as a char array first.
-            datatype = DBR_CHAR_STR
-
     # Assemble the callback context.  Note that we need to explicitly
     # increment the reference count so that the context survives until the
     # callback routine gets to see it.
+    dbrcode, convert = dbr.type_to_dbr(channel, datatype, format)
     done = cothread.Event()
-    context = (pv, datatype == DBR_CHAR_STR, done)
+    context = (pv, convert, done)
     ctypes.pythonapi.Py_IncRef(context)
 
     # Perform the actual put as a non-blocking operation: we wait to be
     # informed of completion, or time out.
     cadef.ca_array_get_callback(
-        dbr.type_to_dbr(datatype, format), count, channel,
+        dbrcode, count, channel,
         _caget_event_handler, ctypes.py_object(context))
     _flush_io()
     return ca_timeout(done, timeout, pv)
