@@ -36,8 +36,8 @@ import sys
 import os
 import traceback
 
-from . import cothread
-from . import coselect
+import cothread
+import coselect
 
 
 __all__ = [
@@ -62,7 +62,7 @@ def _install_readline_hook(enable_hook = True):
     enable_hook parameter to False -- for example, this can be helpful if a
     background activity is causing a nuisance.'''
 
-    from ._coroutine import install_readline_hook
+    from _coroutine import install_readline_hook
     if enable_hook:
         install_readline_hook(_readline_hook)
     else:

@@ -38,14 +38,13 @@ modules:
         Channel access support tools for client access to EPICS records.
 '''
 
-from . import cothread
-from . import input_hook
-
-from .cothread import *
-from .input_hook import *
-from .coselect import *
-from .cosocket import *
+from cothread import *
+from input_hook import *
+from coselect import *
+from cosocket import *
 
 # Publish all public symbols from cothread and input_hook as default exports.
 # The coselect functions aren't exported by default but are available.
+import cothread
+import input_hook
 __all__ = cothread.__all__ + input_hook.__all__

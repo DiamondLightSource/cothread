@@ -69,7 +69,7 @@ def _libca_path(load_libca_path):
     if load_libca_path:
         try:
             # If libca_path has been defined go with that
-            from .libca_path import libca_path
+            from libca_path import libca_path
             return libca_path
         except ImportError:
             pass
@@ -106,8 +106,8 @@ if __name__ == '__main__':
     # If run standalone we are a helper script.  Write out the relevant
     # definitions for the use of our caller.
     libca_path = _libca_path(False)
-    print('CATOOLS_LIBCA_PATH=\'%s\'' % libca_path)
-    print('LIB_FILES=\'%s\'' % ' '.join(lib_files))
+    print 'CATOOLS_LIBCA_PATH=\'%s\'' % libca_path
+    print 'LIB_FILES=\'%s\'' % ' '.join(lib_files)
 
 else:
     # Load the library (or libraries).

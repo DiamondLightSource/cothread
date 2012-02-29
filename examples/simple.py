@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/bin/env dls-python2.6
 
 '''Channel Access Example'''
 
@@ -6,4 +6,4 @@
 import require
 from cothread.catools import *
 
-print(caget('SR21C-DI-DCCT-01:SIGNAL'))
+print caget('SR21C-DI-DCCT-01:SIGNAL')

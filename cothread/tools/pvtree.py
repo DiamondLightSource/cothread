@@ -1,6 +1,7 @@
-#!/bin/env python3
+#!/bin/env dls-python
 
 # Simple tool for viewing the chain of PV dependencies.
+
 
 import sys
 import re
@@ -97,8 +98,8 @@ def print_indent(priority, indent, col, record, *args):
     if options.quiet:
         indent = 0
     if priority > 0 or not options.quiet:
-        print('%s%s %s' % (
-            '  ' * indent, colour(col, record), ' '.join(map(str, args))))
+        print '%s%s %s' % (
+            '  ' * indent, colour(col, record), ' '.join(map(str, args)))
 
 
 # Set of PVs that we've visited so we can avoid repeating ourself.

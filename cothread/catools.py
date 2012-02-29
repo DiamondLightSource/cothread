@@ -53,12 +53,12 @@ import traceback
 import ctypes
 import threading
 
-from . import cothread
-from . import cadef
-from . import dbr
+import cothread
+import cadef
+import dbr
 
-from .dbr import *
-from .cadef import *
+from dbr import *
+from cadef import *
 
 __all__ = [
     # The core functions.
@@ -100,9 +100,9 @@ class ca_nothing(Exception):
         self.errorcode = errorcode
 
     def __str__(self):
-        return '%s: %s' % (self.name, cadef.ca_message(self.errorcode).decode())
+        return '%s: %s' % (self.name, cadef.ca_message(self.errorcode))
 
-    def __bool__(self):
+    def __nonzero__(self):
         return self.ok
 
     def __iter__(self):
@@ -145,8 +145,8 @@ def ca_timeout(event, timeout, name):
     ca_nothing timeout exception containing the PV name.'''
     try:
         return event.Wait(timeout)
-    except cothread.Timedout as timeout:
-        raise ca_nothing(name, cadef.ECA_TIMEOUT) from timeout
+    except cothread.Timedout:
+        raise ca_nothing(name, cadef.ECA_TIMEOUT)
 
 
 # ----------------------------------------------------------------------------
@@ -193,7 +193,7 @@ class Channel(object):
 
         chid = ctypes.c_void_p()
         cadef.ca_create_channel(
-            name.encode(), self.on_ca_connect, ctypes.py_object(self),
+            name, self.on_ca_connect, ctypes.py_object(self),
             0, ctypes.byref(chid))
         # Setting this allows a channel object to autoconvert into the chid
         # when passed to ca_ functions.
@@ -339,10 +339,10 @@ class _Subscription(object):
                 # We try and be robust about exceptions in handlers, but to
                 # prevent a perpetual storm of exceptions, we close the
                 # subscription after reporting the problem.
-                print('Subscription %s callback raised exception' % self.name,
-                    file = sys.stderr)
+                print >>sys.stderr, \
+                    'Subscription %s callback raised exception' % self.name
                 traceback.print_exc()
-                print('Subscription %s closed' % self.name, file = sys.stderr)
+                print >>sys.stderr, 'Subscription %s closed' % self.name
                 self.close()
 
 
@@ -968,6 +968,6 @@ if False:
     @exception_handler
     def catools_exception(args):
         '''print ca exception message'''
-        print('catools_exception:', args.ctx,
-            cadef.ca_message(args.stat).decode(), file = sys.stderr)
+        print >>sys.stderr, 'catools_exception:', \
+            args.ctx, cadef.ca_message(args.stat)
     cadef.ca_add_exception_event(catools_exception, 0)

@@ -67,7 +67,7 @@ def select_hook():
 # A helpful routine to ensure that our select() behaves as much as possible
 # like the real thing!
 def _AsFileDescriptor(file):
-    if isinstance(file, int):
+    if isinstance(file, int) or isinstance(file, long):
         return file
     else:
         return file.fileno()
@@ -229,7 +229,7 @@ class _Poller(object):
         if events:
             # We're interested!  Record the event flag and wake our task.
             self.__ready_list[file] = self.__ready_list.get(file, 0) | events
-            self.wakeup.wakeup(cothread.cothread._WAKEUP_NORMAL)
+            self.wakeup.wakeup(cothread._WAKEUP_NORMAL)
         # Return the events we've actually consumed here.  The extra events
         # don't count, as everybody gets those.
         return events & ~POLLEXTRA
@@ -248,8 +248,7 @@ def poll_list(event_list, timeout = None):
     signals a selected event (or any event from HUP, ERR, NVAL) or until
     the timeout (in seconds) occurs.'''
     poller = _Poller(event_list)
-    cothread.cothread._scheduler.poll_until(
-        poller, cothread.cothread.GetDeadline(timeout))
+    cothread._scheduler.poll_until(poller, cothread.GetDeadline(timeout))
     return poller.ready_list()
 
 

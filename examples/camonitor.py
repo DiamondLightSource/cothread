@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env dls-python2.6
 # Simple example of camonitor tool catools library
-
-from __future__ import print_function
 
 import sys
 import optparse
@@ -9,7 +7,6 @@ import optparse
 import require
 from cothread import *
 from cothread.catools import *
-import numpy
 
 parser = optparse.OptionParser(
     usage = 'Usage: %prog pv-list\nMonitor PVs using channel access')
@@ -44,17 +41,12 @@ if not arglist:
 
 def value_callback(value, index):
     if value.ok:
-        print(value.name, end = ' ')
-        if isinstance(value, numpy.ndarray):
-            print('[', ', '.join(map(repr, value)), ']')
-        else:
-            print(repr(value))
-
+        print value.name, value
         for field in ca_extra_fields[2:]:   # Skip over name, ok.
             if hasattr(value, field):
-                print(field, getattr(value, field))
+                print field, getattr(value, field)
     else:
-        print(value.name, 'disconnected:', value)
+        print value.name, 'disconnected:', value
 
 subscriptions = camonitor(arglist, value_callback,
     format = options.format, events = options.events,

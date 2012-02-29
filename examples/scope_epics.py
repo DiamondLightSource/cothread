@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env dls-python2.6
 
 '''Form Example with Monitor'''
 
@@ -33,7 +33,7 @@ class MyScope(widget, Ui_Scope):
 
     def bConnect_clicked(self):
         name = str(self.channel.text())
-        print('Connect Clicked', name)
+        print 'Connect Clicked', name
         # disconnect old channel if any
         if self.monitor:
             self.monitor.close()
