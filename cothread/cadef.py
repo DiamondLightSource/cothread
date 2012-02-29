@@ -138,7 +138,7 @@ class CAException(Exception):
         self.function = function
     def __str__(self):
         return '%s calling %s' % (
-            ca_message(self.status), self.function.__name__)
+            ca_message(self.status).decode(), self.function.__name__)
 
 
 
