@@ -100,7 +100,7 @@ class ca_nothing(Exception):
         self.errorcode = errorcode
 
     def __str__(self):
-        return '%s: %s' % (self.name, cadef.ca_message(self.errorcode))
+        return '%s: %s' % (self.name, cadef.ca_message(self.errorcode).decode())
 
     def __bool__(self):
         return self.ok
@@ -145,8 +145,8 @@ def ca_timeout(event, timeout, name):
     ca_nothing timeout exception containing the PV name.'''
     try:
         return event.Wait(timeout)
-    except cothread.Timedout:
-        raise ca_nothing(name, cadef.ECA_TIMEOUT)
+    except cothread.Timedout as timeout:
+        raise ca_nothing(name, cadef.ECA_TIMEOUT) from timeout
 
 
 # ----------------------------------------------------------------------------
@@ -981,6 +981,6 @@ if False:
     @exception_handler
     def catools_exception(args):
         '''print ca exception message'''
-        print('catools_exception:', args.ctx, cadef.ca_message(args.stat),
-            file = sys.stderr)
+        print('catools_exception:', args.ctx,
+            cadef.ca_message(args.stat).decode(), file = sys.stderr)
     cadef.ca_add_exception_event(catools_exception, 0)
