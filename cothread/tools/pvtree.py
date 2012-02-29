@@ -1,4 +1,4 @@
-#!/bin/env dls-python
+#!/bin/env python3
 
 # Simple tool for viewing the chain of PV dependencies.
 
