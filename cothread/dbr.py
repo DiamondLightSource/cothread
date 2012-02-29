@@ -51,7 +51,7 @@ __all__ = [
     'DBR_DOUBLE',       # 64 bit float
 
     'DBR_CHAR_STR',     # Long strings as char arrays
-    'DBR_CHAR_UNICODE', # Long unicode strings as char arrays
+    'DBR_CHAR_BYTES',   # Long byte strings as char arrays
 
     'DBR_PUT_ACKT',     # Configure global alarm acknowledgement
     'DBR_PUT_ACKS',     # Acknowledge global alarm
@@ -154,11 +154,11 @@ class ca_str(str):
     def __pos__(self):
         return str(self)
 
-class ca_unicode(unicode):
+class ca_bytes(bytes):
     __doc__ = ca_doc_string
     datetime = timestamp_to_datetime
     def __pos__(self):
-        return unicode(self)
+        return bytes(self)
 
 class ca_int(int):
     __doc__ = ca_doc_string
@@ -213,7 +213,7 @@ def copy_attributes_ctrl(self, other):
     other.status = self.status
     other.severity = self.severity
 
-    other.units = ctypes.string_at(self.units)
+    other.units = ctypes.string_at(self.units).decode()
     other.upper_disp_limit = self.upper_disp_limit
     other.lower_disp_limit = self.lower_disp_limit
     other.upper_alarm_limit = self.upper_alarm_limit
@@ -402,7 +402,8 @@ class dbr_ctrl_enum(ctypes.Structure):
     def copy_attributes(self, other):
         other.status = self.status
         other.severity = self.severity
-        other.enums = map(ctypes.string_at, self.raw_strs[:self.no_str])
+        other.enums = [
+            ctypes.string_at(s).decode() for s in self.raw_strs[:self.no_str]]
 
 class dbr_ctrl_char(ctypes.Structure):
     dtype = numpy.uint8
@@ -508,7 +509,7 @@ DBR_STSACK_STRING = 37
 DBR_CLASS_NAME = 38
 
 # Special value for DBR_CHAR as str special processing.
-DBR_CHAR_UNICODE = 998
+DBR_CHAR_BYTES = 997
 DBR_CHAR_STR = 999
 
 
@@ -558,7 +559,7 @@ NumpyCharCodeToDbr = {
     'i':    DBR_LONG,       # intc   = int32
     'f':    DBR_FLOAT,      # single = float32
     'd':    DBR_DOUBLE,     # float_ = float64
-    'S':    DBR_STRING,     # str_
+    'S':    DBR_STRING,     # bytes_
 
     # The following type codes are weakly supported by pretending that
     # they're related types.
@@ -601,9 +602,10 @@ def _datatype_to_dbr(datatype):
         # with filtering through our array of acceptable types.
         dtype = numpy.dtype(datatype)
         dbrcode = NumpyCharCodeToDbr[dtype.char]
-    except:
+    except Exception as error:
         raise InvalidDatatype(
-            'Datatype "%s" not supported for channel access' % datatype)
+            'Datatype "%s" not supported for channel access' % datatype) \
+            from error
     else:
         return dbrcode, dtype
 
@@ -620,7 +622,7 @@ def _type_to_dbrcode(datatype, format):
       - FORMAT_CTRL: retrieve limit and control data
     '''
     if datatype not in BasicDbrTypes:
-        if datatype in [DBR_CHAR_STR, DBR_CHAR_UNICODE]:
+        if datatype in [DBR_CHAR_STR, DBR_CHAR_BYTES]:
             datatype = DBR_CHAR     # Retrieve this type using char array
         elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
             return datatype         # format is meaningless in this case
@@ -646,7 +648,7 @@ def _type_to_dbrcode(datatype, format):
         raise InvalidDatatype('Format not recognised')
 
 
-# Helper functions for string arrays used in _convert_str_{str,unicode} below.
+# Helper functions for string arrays used in _convert_str_{str,bytes} below.
 def _make_strings(raw_dbr, count):
     p_raw_value = ctypes.pointer(raw_dbr.raw_value[0])
     return [ctypes.string_at(p_raw_value[n]) for n in range(count)]
@@ -670,21 +672,22 @@ def _string_result(strings, count, scalar, dtypechar):
 def _convert_char_str(raw_dbr, count):
     # Need string_at() twice to ensure string is size limited *and* null
     # terminated.
-    return ca_str(ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count)))
-
-# Conversion from char array to unicode strings
-def _convert_char_unicode(raw_dbr, count):
     result = ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
-    return ca_unicode(result.decode('UTF-8'))
+    return ca_str(result.decode())
+
+# Conversion from char array to bytes strings
+def _convert_char_bytes(raw_dbr, count):
+    result = ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
+    return ca_bytes(result)
 
 # Arrays of standard strings.
 def _convert_str_str(raw_dbr, count):
-    return _string_result(_make_strings(raw_dbr, count), count, ca_str, 'S')
+    strings = [s.decode() for s in _make_strings(raw_dbr, count)]
+    return _string_result(strings, count, ca_str, 'U')
 
-# Arrays of unicode strings.
-def _convert_str_unicode(raw_dbr, count):
-    strings = [s.decode('UTF-8') for s in _make_strings(raw_dbr, count)]
-    return _string_result(strings, count, ca_unicode, 'U')
+# Arrays of bytes strings.
+def _convert_str_bytes(raw_dbr, count):
+    return _string_result(_make_strings(raw_dbr, count), count, ca_bytes, 'S')
 
 # For everything that isn't a string we either return a scalar or a ca_array
 def _convert_other(raw_dbr, count):
@@ -728,13 +731,13 @@ def type_to_dbr(channel, datatype, format):
     if dtype is numpy.uint8 and datatype == DBR_CHAR_STR:
         # Conversion from char array to strings
         convert = _convert_char_str
-    elif dtype is numpy.uint8 and datatype == DBR_CHAR_UNICODE:
-        # Conversion from char array to unicode strings
-        convert = _convert_char_unicode
+    elif dtype is numpy.uint8 and datatype == DBR_CHAR_BYTES:
+        # Conversion from char array to bytes strings
+        convert = _convert_char_bytes
     elif dtype is str_dtype:
-        # String arrays, either unicode or normal.
-        if isinstance(datatype, type) and issubclass(datatype, unicode):
-            convert = _convert_str_unicode
+        # String arrays, either bytes or normal.
+        if isinstance(datatype, type) and issubclass(datatype, bytes):
+            convert = _convert_str_bytes
         else:
             convert = _convert_str_str
     else:
@@ -794,7 +797,7 @@ def value_to_dbr(channel, datatype, value):
 
     # If no datatype specified then use the target datatype.
     if datatype is None:
-        if isinstance(value, str) or isinstance(value, unicode):
+        if isinstance(value, str) or isinstance(value, bytes):
             # Give strings with no datatype special treatment, let the IOC do
             # the decoding.  It's safer this way.
             datatype = DBR_STRING
@@ -811,7 +814,7 @@ def value_to_dbr(channel, datatype, value):
             result = _require_value(value, 'S%d' % count)
         except UnicodeEncodeError:
             # Unicode needs to be encoded
-            result = _require_value(value.encode('UTF-8'), 'S%d' % count)
+            result = _require_value(value.encode(), 'S%d' % count)
         assert result.shape[0] == 1, \
             'Can\'t put array of strings as char array'
         return DBR_CHAR, count, result.ctypes.data, result
@@ -831,7 +834,7 @@ def value_to_dbr(channel, datatype, value):
                 value = _require_value(value, None)
                 result = numpy.empty(value.shape, str_dtype)
                 for n, s in enumerate(value):
-                    result[n] = s.encode('UTF-8')
+                    result[n] = s.encode()
         else:
             # Numpy can do all the conversion for all the remaining data types.
             result = _require_value(value, dtype)
