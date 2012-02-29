@@ -66,15 +66,13 @@ Similarly the EventQueue can be used for communication.
 # It might be worth taking a close look at:
 #   http://wiki.secondlife.com/wiki/Eventlet
 
-from __future__ import print_function
-
 import sys
 import os
 import time
 import bisect
 import traceback
 import collections
-import thread
+import _thread
 
 from . import _coroutine
 
@@ -651,7 +649,7 @@ class Spawn(EventBase):
         # See wait_until() for an explanation of this return value.
         return []
 
-    def __nonzero__(self):
+    def __bool__(self):
         '''Tests whether the event is signalled.'''
         return bool(self.__result)
 
@@ -668,7 +666,7 @@ class Spawn(EventBase):
             try:
                 # Re-raise the exception that actually killed the task here
                 # where it can be received by whoever waits on the task.
-                raise result[0], result[1], result[2]
+                raise result[1].with_traceback(result[2])
             finally:
                 # In this case result and self.__result contain a traceback.  To
                 # avoid circular references which will delay garbage collection,
@@ -704,7 +702,7 @@ class Event(EventBase):
         self.__value = ()
         self.__auto_reset = auto_reset
 
-    def __nonzero__(self):
+    def __bool__(self):
         '''Tests whether the event is signalled.'''
         return bool(self.__value)
 
@@ -814,6 +812,7 @@ class EventQueue(EventBase):
 
     def next(self):
         return self.Wait()
+    __next__ = next
 
 
 class ThreadedEventQueue(object):
@@ -833,7 +832,7 @@ class ThreadedEventQueue(object):
         '''Waits for a value to be written to the queue.  This can safely be
         called from either a cothread or another thread: the appropriate form
         of cooperative or normal blocking will be selected automatically.'''
-        if thread.get_ident() == _scheduler_thread_id:
+        if _thread.get_ident() == _scheduler_thread_id:
             # Normal cothread case, use cooperative wait
             poll = coselect.poll_list
         else:
@@ -849,7 +848,7 @@ class ThreadedEventQueue(object):
         '''Posts a value to the event queue.  This can safely be called from
         a thread or a cothread.'''
         self.__values.append(value)
-        os.write(self.__signal, '-')
+        os.write(self.__signal, b'-')
 
 
 
@@ -895,7 +894,7 @@ class _Callback:
         self.values.append((action, args))
         if self.waiting:
             self.waiting = False
-            os.write(self.signal, '-')
+            os.write(self.signal, b'-')
 
 
 class Timer(object):
@@ -1018,12 +1017,12 @@ def WaitForQuit(catch_interrupt = True):
 _scheduler = _Scheduler.create()
 # We hang onto the thread ID for the cothread thread (at present there can
 # only be one) so that we can recognise when we're in another thread.
-_scheduler_thread_id = thread.get_ident()
+_scheduler_thread_id = _thread.get_ident()
 
 
 # Thread validation: ensure cothreads aren't used across threads!
 def _validate_thread():
-    assert _scheduler_thread_id == thread.get_ident(), \
+    assert _scheduler_thread_id == _thread.get_ident(), \
         'Cannot use cothread with multiple threads.  Consider using ' \
         'ThreadedEventQueue if necessary.'
 
