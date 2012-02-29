@@ -269,7 +269,7 @@ class _Subscription(object):
     __slots__ = [
         'name',             # Name of the PV subscribed to
         'callback',         # The user callback function
-        '__convert',        # Controls char array conversion
+        'dbr_to_value',     # Conversion from dbr
         'channel',          # The associated channel object
         '__state',          # Whether the subscription is active
         '_as_parameter_',   # Associated channel access subscription handle
@@ -299,9 +299,7 @@ class _Subscription(object):
 
         if args.status == cadef.ECA_NORMAL:
             # Good data: extract value from the dbr.
-            value = dbr.dbr_to_value(
-                args.raw_dbr, args.type, args.count, self.channel.name,
-                self.__convert)
+            value = self.dbr_to_value(args.raw_dbr, args.type, args.count)
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, but only if
             # they've requested disconnect nofication.
@@ -406,7 +404,7 @@ class _Subscription(object):
             # so that type_to_dbr() can discover the underlying channel type.
             self.channel.Wait()
         # Can now convert the datatype request into the subscription datatype.
-        dbrcode, self.__convert = \
+        dbrcode, self.dbr_to_value = \
             dbr.type_to_dbr(self.channel, datatype, format)
 
         # Finally create the subscription with all the requested properties
@@ -507,12 +505,12 @@ def _caget_event_handler(args):
     # We are called exactly once, so can consume the context right now.  Note
     # that we have to do some manual reference counting on the user context,
     # as this is a python object that is invisible to the C api.
-    pv, convert, done = args.usr
+    pv, dbr_to_value, done = args.usr
     ctypes.pythonapi.Py_DecRef(args.usr)
 
     if args.status == cadef.ECA_NORMAL:
-        cothread.Callback(done.Signal, dbr.dbr_to_value(
-            args.raw_dbr, args.type, args.count, pv, convert))
+        cothread.Callback(done.Signal, dbr_to_value(
+            args.raw_dbr, args.type, args.count))
     else:
         cothread.Callback(done.SignalException, ca_nothing(pv, args.status))
 
@@ -539,9 +537,9 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     # Assemble the callback context.  Note that we need to explicitly
     # increment the reference count so that the context survives until the
     # callback routine gets to see it.
-    dbrcode, convert = dbr.type_to_dbr(channel, datatype, format)
+    dbrcode, dbr_to_value = dbr.type_to_dbr(channel, datatype, format)
     done = cothread.Event()
-    context = (pv, convert, done)
+    context = (pv, dbr_to_value, done)
     ctypes.pythonapi.Py_IncRef(context)
 
     # Perform the actual put as a non-blocking operation: we wait to be

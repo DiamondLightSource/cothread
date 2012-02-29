@@ -652,78 +652,123 @@ def _type_to_dbr(datatype, format):
         raise InvalidDatatype('Format not recognised')
 
 
+# Conversion functions from raw_dbr to specified format.  These all take a
+# raw_dbr and compute the appropriate selected Python type.  One of these
+# conversion functions is selected internally with type_to_dbr below.
+
+# Conversion from char array to strings
+def convert_char_str(raw_dbr, count):
+    # Need string_at() twice to ensure string is size limited *and* null
+    # terminated.
+    return ca_str(ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count)))
+
+# Conversion from char array to unicode strings
+def convert_char_unicode(raw_dbr, count):
+    result = ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
+    return ca_unicode(result.decode('UTF-8'))
+
+# Arrays of standard strings.
+def convert_str_str(raw_dbr, count):
+    return string_result(make_strings(raw_dbr, count), count, ca_str, 'S')
+
+# Arrays of unicode strings.
+def convert_str_unicode(raw_dbr, count):
+    strings = [s.decode('UTF-8') for s in make_strings(raw_dbr, count)]
+    return string_result(strings, count, ca_unicode, 'U')
+
+# For everything that isn't a string we either return a scalar or a ca_array
+def convert_other(raw_dbr, count):
+    if count == 1:
+        # Single elements are always returned as scalars.
+        return raw_dbr.scalar(raw_dbr.raw_value[0])
+    else:
+        # Build a fresh ca_array to receive a copy of the raw data in the dbr.
+        # We have to take a copy, because the dbr is transient, and it is
+        # helpful to use a numpy array as a container, because of the support it
+        # provides.  It is essential that the dtype correctly matches the memory
+        # layout of the raw dbr, and of course that the count is accurate.
+        result = ca_array(shape = (count,), dtype = raw_dbr.dtype)
+        ctypes.memmove(
+            result.ctypes.data, raw_dbr.raw_value, result.nbytes)
+        return result
+
+
+# Helper functions for string arrays used in convert_str_{str,unicode} above.
+def make_strings(raw_dbr, count):
+    p_raw_value = ctypes.pointer(raw_dbr.raw_value[0])
+    return [ctypes.string_at(p_raw_value[n]) for n in range(count)]
+
+def string_result(strings, count, scalar, dtypechar):
+    if count == 1:
+        return scalar(strings[0])
+    else:
+        n = max(len(s) for s in strings)
+        result = ca_array((count,), dtype = '%s%d' % (dtypechar, n))
+        for i, s in enumerate(strings):
+            result[i] = s
+        return result
+
+
 def type_to_dbr(channel, datatype, format):
     '''Converts data request into the appropriate dbr code and conversion.  If
-    the datatype is none then the channel must be ready.'''
+    the datatype is none then the channel must be ready so that its field type
+    can be interrogated.'''
 
+    name = channel.name
     if datatype is None:
+        # Use natural channel data type if no type specified.
         datatype = cadef.ca_field_type(channel)
-        if datatype == DBR_CHAR and channel.name[-1] == '$':
+        # A special hack for char arrays with PV name ending in $ -- these are
+        # handled specially by EPICS as long strings.
+        if datatype == DBR_CHAR and name[-1] == '$':
             datatype = DBR_CHAR_STR
-    return _type_to_dbr(datatype, format), datatype
 
-
-def dbr_to_value(raw_dbr, dbrcode, count, name, convert):
-    '''Convert a raw DBR structure into a packaged Python value.  All values
-    are returned as augmented types.'''
-
-    # Reinterpret the raw_dbr as a pointer to the appropriate structure as
-    # identified by the given dbrcode.  We can then cast the raw_dbr structure
-    # into an instance of this dbr: the data we want is then available in the
-    # .raw_dbr field of this structure.
+    # Prepare as much beforehand for conversion.
+    dbrcode = _type_to_dbr(datatype, format)
     dbr_type = DbrCodeToType[dbrcode]
-    raw_dbr = ctypes.cast(raw_dbr, ctypes.POINTER(dbr_type))[0]
+    dtype = dbr_type.dtype
 
-    dtype = raw_dbr.dtype
-    if dtype is numpy.uint8 and (
-            convert == DBR_CHAR_STR or convert == DBR_CHAR_UNICODE):
-        # Special case hack for long strings returned as DBR_CHAR arrays.
-        # Need string_at() twice to ensure string is size limited *and* null
-        # terminated.
-        result = ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
-        if convert == DBR_CHAR_STR:
-            result = ca_str(result)
-        else:
-            result = ca_unicode(result.decode('UTF-8'))
+    # Determine precisely which conversion from dbr to Python is required: all
+    # the options for strings add a lot of complexity, ordinary numeric values
+    # are all handled uniformly.
+    if dtype is numpy.uint8 and datatype == DBR_CHAR_STR:
+        # Conversion from char array to strings
+        convert = convert_char_str
+    elif dtype is numpy.uint8 and datatype == DBR_CHAR_UNICODE:
+        # Conversion from char array to unicode strings
+        convert = convert_char_unicode
     elif dtype is str_dtype:
-        # Strings need special handling.  First extract the array of strings,
-        # convert to unicode if necessary, then convert to the appropriate
-        # wrapped result type (ca_str or ca_unicode).
-        p_raw_value = ctypes.pointer(raw_dbr.raw_value[0])
-        strings = [ctypes.string_at(p_raw_value[n]) for n in range(count)]
-        if convert is unicode:
-            strings = [s.decode('UTF-8') for s in strings]
-            scalar = ca_unicode
-            dtype = 'U'
+        # String arrays, either unicode or normal.
+        if isinstance(datatype, type) and issubclass(datatype, unicode):
+            convert = convert_str_unicode
         else:
-            scalar = ca_str
-            dtype = 'S'
-        if count == 1:
-            result = scalar(strings[0])
-        else:
-            n = max(len(s) for s in strings)
-            result = ca_array((count,), dtype = '%s%d' % (dtype, n))
-            for i, s in enumerate(strings):
-                result[i] = s
-    elif count == 1:
-        # Single scalar values can be created directly from the raw value
-        result = raw_dbr.scalar(raw_dbr.raw_value[0])
+            convert = convert_str_str
     else:
-        # Build a fresh ca_array to receive a copy of the raw data in the
-        # dbr.  We have to take a copy, because the dbr is transient, and it
-        # is helpful to use a numpy array as a container, because of the
-        # support it provides.
-        #     It is essential that the dtype correctly matches the memory
-        # layout of the raw dbr, and of course that the count is accurate.
-        result = ca_array(shape = (count,), dtype = dbr_type.dtype)
-        ctypes.memmove(result.ctypes.data, raw_dbr.raw_value, result.nbytes)
+        convert = convert_other
 
-    # Finally copy across any attributes together with the pv name and a
-    # success indicator.
-    raw_dbr.copy_attributes(result)
-    result.name = name
-    result.ok = True
-    return result
+
+    # We return this function to perform conversion from dbr to Python value.
+    def dbr_to_value(raw_dbr, dbrcode_in, count):
+        # If the dbrcode has changed (this really shouldn't happen) then we've
+        # got a problem!  If this does happen I'll need to handle this better,
+        # as this is a pretty poor place to raise an exception.
+        assert dbrcode_in == dbrcode, 'Oops, I didn\'t expect CA to do that'
+
+        # Reinterpret the raw_dbr as a pointer to the appropriate structure as
+        # identified by the given dbrcode.  We can then cast the raw_dbr
+        # structure into an instance of this dbr: the data we want is then
+        # available in the .raw_dbr field of this structure.
+        raw_dbr = ctypes.cast(raw_dbr, ctypes.POINTER(dbr_type))[0]
+        result = convert(raw_dbr, count)
+
+        # Finally copy across any attributes together with the pv name and a
+        # success indicator.
+        raw_dbr.copy_attributes(result)
+        result.name = name
+        result.ok = True
+        return result
+
+    return dbrcode, dbr_to_value
 
 
 def value_to_dbr(value, datatype):
