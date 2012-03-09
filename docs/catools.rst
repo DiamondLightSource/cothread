@@ -256,7 +256,7 @@ Functions
     as a scalar, otherwise as a numpy array.
 
 
-..  function:: camonitor(pvs, callback, events=DBE_VALUE, datatype=None, \
+..  function:: camonitor(pvs, callback, events=None, datatype=None, \
         format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)
 
     Creates a subscription to one or more PVs, returning a subscription
@@ -296,6 +296,17 @@ Functions
         DBE_PROPERTY   Notify property changes
                        (on 3.14.11 and later servers)
         ============== ==============================================
+
+        If `events` is not specified then the default value depends on the value
+        selected for `format` as follows:
+
+        ==============  =============================================
+        `format`        Default value for `events`
+        ==============  =============================================
+        FORMAT_RAW      DBE_VALUE
+        FORMAT_TIME     DBE_VALUE | DBE_ALARM
+        FORMAT_CTRL     DBE_VALUE | DBE_ALARM | DBE_PROPERTY
+        ==============  =============================================
 
     `datatype`, `format`, `count`
         See documentation for :ref:`Augmented` below.

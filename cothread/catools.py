@@ -284,6 +284,12 @@ class _Subscription(object):
     __OPEN    = 1       # Normally active
     __CLOSED  = 2       # Closed but not yet deleted
 
+    # Mapping from format to event mask for default events
+    __default_events = {
+        FORMAT_RAW:  DBE_VALUE,
+        FORMAT_TIME: DBE_VALUE | DBE_ALARM,
+        FORMAT_CTRL: DBE_VALUE | DBE_ALARM | DBE_PROPERTY }
+
     __lock = threading.Lock()   # Used for update merging.
 
     # Create our own callback queue so that camonitor() callbacks can be handled
@@ -371,7 +377,7 @@ class _Subscription(object):
         self.__state = self.__CLOSED
 
     def __init__(self, name, callback,
-            events = DBE_VALUE,
+            events = None,
             datatype = None, format = FORMAT_RAW, count = 0,
             all_updates = False, notify_disconnect = False):
         '''Subscription initialisation.'''
@@ -381,6 +387,11 @@ class _Subscription(object):
         self.all_updates = all_updates
         self.notify_disconnect = notify_disconnect
         self.__update_count = 0
+
+        # If events not specified then compute appropriate default corresponding
+        # to the requested format.
+        if events is None:
+            events = self.__default_events[format]
 
         # We connect to the channel so that we can be kept informed of
         # connection updates.
@@ -423,7 +434,7 @@ class _Subscription(object):
 
 def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
-        events = DBE_VALUE,
+        events = None,
         datatype = None, format = FORMAT_RAW, count = 0,
         all_updates = False, notify_disconnect = False)
 
@@ -463,6 +474,8 @@ def camonitor(pvs, callback, **kargs):
         DBE_LOG         Notify archive value changes
         DBE_ALARM       Notify alarm state changes
         DBE_PROPERTY    Notify property changes
+
+        The default mask selected for events depends on the requested format.
 
     datatype
     format
