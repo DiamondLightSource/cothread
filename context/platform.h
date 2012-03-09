@@ -1,6 +1,6 @@
 /* This file is part of the Diamond cothread library.
  *
- * Copyright (C) 2011 Michael Abbott, Diamond Light Source Ltd.
+ * Copyright (C) 2011-2012 Michael Abbott, Diamond Light Source Ltd.
  *
  * The Diamond cothread library is free software; you can redistribute it
  * and/or modify it under the terms of the GNU General Public License as
