@@ -69,7 +69,7 @@ def _libca_path(load_libca_path):
     if load_libca_path:
         try:
             # If libca_path has been defined go with that
-            from libca_path import libca_path
+            from .libca_path import libca_path
             return libca_path
         except ImportError:
             pass

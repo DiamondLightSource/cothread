@@ -74,12 +74,12 @@ import traceback
 import collections
 import thread
 
-import _coroutine
+from . import _coroutine
 
 if os.environ.get('COTHREAD_CHECK_STACK'):
     _coroutine.enable_check_stack(True)
 
-import coselect
+from . import coselect
 
 
 __all__ = [

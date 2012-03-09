@@ -32,7 +32,7 @@ standard socket module.'''
 import os
 import errno
 
-import coselect
+from . import coselect
 import socket as _socket
 
 

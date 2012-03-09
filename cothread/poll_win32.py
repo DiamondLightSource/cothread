@@ -33,11 +33,11 @@
 #   http://sourceforge.net/projects/pywin32/
 # import win32file
 # import win32pipe
-import _winlib
+from . import _winlib
 import msvcrt
 import time
 
-import coselect
+from . import coselect
 
 
 def poll_block_win32(poll_list, timeout = None):

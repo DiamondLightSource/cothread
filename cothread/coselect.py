@@ -29,6 +29,8 @@
 '''Support for cooperative select functions.  Replaces the functionality of
 the standard select module.'''
 
+from __future__ import absolute_import
+
 import time
 import select as _select
 import cothread
@@ -229,7 +231,7 @@ class _Poller(object):
         if events:
             # We're interested!  Record the event flag and wake our task.
             self.__ready_list[file] = self.__ready_list.get(file, 0) | events
-            self.wakeup.wakeup(cothread._WAKEUP_NORMAL)
+            self.wakeup.wakeup(cothread.cothread._WAKEUP_NORMAL)
         # Return the events we've actually consumed here.  The extra events
         # don't count, as everybody gets those.
         return events & ~POLLEXTRA
@@ -248,7 +250,8 @@ def poll_list(event_list, timeout = None):
     signals a selected event (or any event from HUP, ERR, NVAL) or until
     the timeout (in seconds) occurs.'''
     poller = _Poller(event_list)
-    cothread._scheduler.poll_until(poller, cothread.GetDeadline(timeout))
+    cothread.cothread._scheduler.poll_until(
+        poller, cothread.cothread.GetDeadline(timeout))
     return poller.ready_list()
 
 

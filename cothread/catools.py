@@ -53,12 +53,12 @@ import traceback
 import ctypes
 import threading
 
-import cothread
-import cadef
-import dbr
+from . import cothread
+from . import cadef
+from . import dbr
 
-from dbr import *
-from cadef import *
+from .dbr import *
+from .cadef import *
 
 __all__ = [
     # The core functions.
