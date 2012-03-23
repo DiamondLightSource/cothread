@@ -46,8 +46,6 @@ Supports the following methods:
 See the documentation for the individual functions for more details on using
 them.'''
 
-from __future__ import print_function
-
 import os
 import sys
 import atexit

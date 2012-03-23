@@ -2,8 +2,6 @@
 
 '''Channel Access Get Structure'''
 
-from __future__ import print_function
-
 import require
 from cothread.catools import *
 

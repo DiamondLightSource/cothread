@@ -66,8 +66,6 @@ Similarly the EventQueue can be used for communication.
 # It might be worth taking a close look at:
 #   http://wiki.secondlife.com/wiki/Eventlet
 
-from __future__ import print_function
-
 import sys
 import os
 import time

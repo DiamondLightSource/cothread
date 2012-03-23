@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # Simple example of camonitor tool using greenlets etcetera.
 
-from __future__ import print_function
-
 import sys
 
 import require

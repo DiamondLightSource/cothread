@@ -2,8 +2,6 @@
 
 # Testing coselect
 
-from __future__ import print_function
-
 import require
 from cothread import *
 import threading

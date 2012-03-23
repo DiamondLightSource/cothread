@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import print_function
-
 import require
 from cothread.cothread import *
 from time import time as time_time

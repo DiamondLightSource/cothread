@@ -2,8 +2,6 @@
 
 '''Tests for memory leaks.'''
 
-from __future__ import print_function
-
 import sys
 sys.path.append('/scratch/local/python-debug')
 
