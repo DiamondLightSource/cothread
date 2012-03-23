@@ -2,8 +2,6 @@
 
 # Test Callback mechanism
 
-from __future__ import print_function
-
 import require
 import cothread
 import time

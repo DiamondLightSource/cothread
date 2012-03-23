@@ -3,8 +3,6 @@
 # Simple recursion overflow test, checks that guard pages do indeed guard
 # against stack overflow (by generating a segmentation fault).
 
-from __future__ import print_function
-
 import os
 os.environ['COTHREAD_CHECK_STACK'] = 'yes'
 

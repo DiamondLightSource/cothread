@@ -7,8 +7,6 @@
 # This means that the current iqt() implementation is incompatible with Qt modal
 # windows.
 
-from __future__ import print_function
-
 import sys
 from PyQt4.QtCore import QTimer
 from PyQt4.QtGui import QApplication, QMessageBox

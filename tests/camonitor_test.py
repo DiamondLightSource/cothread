@@ -2,8 +2,6 @@
 
 '''camonitor minimal example'''
 
-from __future__ import print_function
-
 import require
 from cothread.catools import *
 from cothread import WaitForQuit
