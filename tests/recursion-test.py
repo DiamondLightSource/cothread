@@ -3,6 +3,8 @@
 # Simple recursion overflow test, checks that guard pages do indeed guard
 # against stack overflow (by generating a segmentation fault).
 
+from __future__ import print_function
+
 import os
 os.environ['COTHREAD_CHECK_STACK'] = 'yes'
 
@@ -11,9 +13,9 @@ import cothread
 from cothread import _coroutine
 
 def recurse(n):
-    print 'recursing', n
+    print('recursing', n)
     stack = _coroutine.stack_use(_coroutine.get_current())
-    print 'stack', stack
+    print('stack', stack)
     recurse(n + 1)
 
 cothread.Spawn(recurse, 0, stack_size = 8192)

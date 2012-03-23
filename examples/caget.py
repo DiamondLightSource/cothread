@@ -1,6 +1,8 @@
 #!/usr/bin/env dls-python2.6
 # Simple example of caget tool using cothread.
 
+from __future__ import print_function
+
 import sys
 import optparse
 
@@ -52,14 +54,14 @@ get = caget(arglist,
     format = options.format, count = options.count, throw = options.throw)
 for result in get:
     if result.ok:
-        print result.name, 
+        print(result.name, end = ' ')
         if isinstance(result, numpy.ndarray):
-            print '[', ' '.join(map(str, result)), ']'
+            print('[', ' '.join(map(str, result)), ']')
         else:
-            print repr(result)
+            print(repr(result))
 
         for field in extra_fields:
             if hasattr(result, field):
-                print field, getattr(result, field)
+                print(field, getattr(result, field))
     else:
-        print result.name, 'failed:', result
+        print(result.name, 'failed:', result)

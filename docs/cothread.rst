@@ -384,7 +384,7 @@ signal), while an :class:`EventQueue` can hold a list of unbounded length.
 
         def consumer(e):
             for x in e:
-                print 'consumed', x
+                print('consumed', x)
 
         eq = EventQueue()
         Spawn(consumer, eq)

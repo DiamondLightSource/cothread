@@ -2,6 +2,8 @@
 
 '''Form Example with Monitor'''
 
+from __future__ import print_function
+
 import os, sys
 
 import require
@@ -33,7 +35,7 @@ class MyScope(widget, Ui_Scope):
 
     def bConnect_clicked(self):
         name = str(self.channel.text())
-        print 'Connect Clicked', name
+        print('Connect Clicked', name)
         # disconnect old channel if any
         if self.monitor:
             self.monitor.close()

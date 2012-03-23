@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import require
 import cothread
 import socket
@@ -10,10 +12,10 @@ SERVER = 'localhost'
 PORT = 8888
 
 s = socket.create_connection((SERVER, PORT))
-print 'sending', s.send('bogus\n')
-print 'recving', repr(s.recv(1024))
+print('sending', s.send('bogus\n'))
+print('recving', repr(s.recv(1024)))
 
 while True:
     input = raw_input('> ')
     s.sendall(input)
-    print s.recv(1024)
+    print(s.recv(1024))

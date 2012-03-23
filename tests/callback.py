@@ -2,6 +2,8 @@
 
 # Test Callback mechanism
 
+from __future__ import print_function
+
 import require
 import cothread
 import time
@@ -28,4 +30,4 @@ for n in range(THREADS):
 
 while True:
     name, n = signal.Wait(1)
-    print 'got', name, n
+    print('got', name, n)

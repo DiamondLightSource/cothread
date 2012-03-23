@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import socket
 
 import require
@@ -12,7 +14,7 @@ cothread.socket_hook()
 
 
 def run_service(sock, addr):
-    print 'run_service', addr
+    print('run_service', addr)
 
     sock.send('Echo server running\n')
     while True:
@@ -22,7 +24,7 @@ def run_service(sock, addr):
         else:
             break
     sock.close()
-    print 'service', addr, 'closed'
+    print('service', addr, 'closed')
 
 
 @cothread.Spawn
@@ -31,7 +33,7 @@ def server():
     server.bind(('localhost', PORT))
     server.listen(5)
 
-    print 'Running echo server'
+    print('Running echo server')
     while True:
         sock, addr = server.accept()
         cothread.Spawn(run_service, sock, addr)

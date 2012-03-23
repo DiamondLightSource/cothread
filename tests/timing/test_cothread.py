@@ -1,5 +1,7 @@
 #!/bin/env dls-python2.6
 
+from __future__ import print_function
+
 import time
 import sys
 import os
@@ -11,17 +13,17 @@ import cothread
 from cothread.catools import *
 
 if sys.argv[1:]:
-        count = int(sys.argv[1])
+    count = int(sys.argv[1])
 else:
-        count = 0
+    count = 0
 
 callbacks = 0
 
 def callback(value):
-        global callbacks
-        callbacks += 1
-        if value.update_count != 1:
-                print 'update_count', value.update_count
+    global callbacks
+    callbacks += 1
+    if value.update_count != 1:
+        print('update_count', value.update_count)
 
 camonitor("ARAVISCAM1:ARR:ArrayData", callback, count=count, all_updates=True)
 
@@ -32,7 +34,7 @@ def timer():
     while True:
         cothread.Sleep(1)
         now = time.time()
-        print "%d callbacks" % callbacks, callbacks - last_callbacks
+        print("%d callbacks" % callbacks, callbacks - last_callbacks)
         last = now
         last_callbacks = callbacks
 

@@ -2,6 +2,8 @@
 
 # Testing coselect
 
+from __future__ import print_function
+
 import require
 from cothread import *
 import threading
@@ -10,7 +12,7 @@ import time
 
 def ThreadTicker(queue):
     while True:
-        print 'tick',
+        print('tick',)
         queue.Signal('tick')
         time.sleep(1)
 
@@ -19,11 +21,11 @@ def ThreadTicker(queue):
 def Listener(queue, n):
     while True:
         x = queue.Wait()
-        print 'listener', n, x
+        print('listener', n, x)
 
 def Ticker(n):
     while True:
-        print 'ticker', n
+        print('ticker', n)
         Sleep(n)
 
 

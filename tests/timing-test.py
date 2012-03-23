@@ -1,5 +1,7 @@
 #!/usr/bin/env python2.6
 
+from __future__ import print_function
+
 import greenlet
 import time
 
@@ -31,7 +33,7 @@ def timing_test(name, action, count):
     now = time.time()
     result = map(action, count)
     duration = time.time() - now
-    print '%s took %g ns' % (name, 1e9 * duration / len(count))
+    print('%s took %g ns' % (name, 1e9 * duration / len(count)))
     return result
 
 N = 1000000

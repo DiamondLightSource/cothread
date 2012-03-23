@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import input_hook
 
 from cothread import *
@@ -5,7 +7,7 @@ from cothread import *
 def Reader(queue):
     while True:
         x = queue.Wait()
-        print 'got', x
+        print('got', x)
 
 e1 = Event()
 e2 = Event()
@@ -19,13 +21,13 @@ e1.Signal()
 e2.Signal()
 map(q.Signal, 'testing')
 
-print 'Signalling e1'
+print('Signalling e1')
 e1.SignalException(Exception)
 
-print 'Signalling e2'
+print('Signalling e2')
 e2.SignalException(Exception)
 
-# print 'Waiting for stuff'
+# print('Waiting for stuff')
 # s.Wait()
 
 import time

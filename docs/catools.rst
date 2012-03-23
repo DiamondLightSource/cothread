@@ -43,11 +43,11 @@ control-C::
     caput('PV1', 1234)
 
     # Print out the value reported by PV2.
-    print caget('PV2')
+    print(caget('PV2'))
 
     # Monitor PV3, printing out each update as it is received.
     def callback(value):
-        print 'callback', value
+        print('callback', value)
     camonitor('PV3', callback)
 
     # Now run the camonitor process until interrupted by Ctrl-C.
@@ -61,7 +61,7 @@ The following details are general to all cothread applications.
   required at the start of any catools application::
 
     from pkg_resources import require
-    require('cothread==2.1')
+    require('cothread==2.6')
 
   or if the most recent version is ok then the version number can be omitted as
   in the example.

@@ -1,5 +1,7 @@
 #!/usr/bin/env dls-python2.6
 
+from __future__ import print_function
+
 import sys
 
 import require
@@ -36,14 +38,14 @@ def update_plot(l, x):
     draw()
 
     from cothread import catools
-    print (len(Callback.im_self.values), x.update_count),
+    print((len(Callback.im_self.values), x.update_count), end='')
     sys.stdout.flush()
     Yield()     # Needed here or in Callback queue
 
 ll = do_plot(caget(pvs, timeout = 10))
 show()
 
-print pvs
+print(pvs)
 m = camonitor(pvs, lambda x, n: update_plot(ll[n], x))
 
 WaitForQuit()

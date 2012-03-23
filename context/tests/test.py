@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys, os
 sys.path.append(
     os.path.join(os.path.dirname(__file__), '../..'))
@@ -13,5 +15,5 @@ bpms = [
 def getall(pv, **kargs): 
     return caget(['%s:%s' % (bpm, pv) for bpm in bpms], **kargs)
 
-# print getall('bogus', timeout=1)
-print getall('SA:X', count=1)
+# print(getall('bogus', timeout=1)))
+print(getall('SA:X', count=1))

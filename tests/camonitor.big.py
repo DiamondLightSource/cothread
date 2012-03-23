@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.6
 # Simple example of camonitor tool using greenlets etcetera.
 
+from __future__ import print_function
+
 import sys
 
 import require
@@ -42,8 +44,8 @@ class MonitorWaveform:
     def Update(self):
         '''This is called on a timer and is used to generate a collected update
         for the entire waveform.'''
-        print 'tick', self.name, self.changed, self.updates, \
-            len(Callback.im_self.values)
+        print('tick', self.name, self.changed, self.updates,
+            len(Callback.im_self.values))
         self.changed = 0
 
 

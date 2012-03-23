@@ -7,6 +7,8 @@
 # This means that the current iqt() implementation is incompatible with Qt modal
 # windows.
 
+from __future__ import print_function
+
 import sys
 from PyQt4.QtCore import QTimer
 from PyQt4.QtGui import QApplication, QMessageBox
@@ -18,7 +20,7 @@ counts = 0
 def timeout():
     global counts
     counts += 1
-    print 'tick', counts
+    print('tick', counts)
 
     if counts == 10:
         QMessageBox.information(None, 'My caption', 'This is a test')

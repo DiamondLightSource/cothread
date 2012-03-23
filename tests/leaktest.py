@@ -2,6 +2,8 @@
 
 '''Tests for memory leaks.'''
 
+from __future__ import print_function
+
 import sys
 sys.path.append('/scratch/local/python-debug')
 
@@ -22,7 +24,7 @@ def Log(who=''):
     global last_ref_count
     this_ref_count = sys.gettotalrefcount()
     delta = this_ref_count - last_ref_count
-    print who, 'refs:', this_ref_count, 'delta:', delta
+    print(who, 'refs:', this_ref_count, 'delta:', delta)
     last_ref_count = this_ref_count
 
 def Reset():
@@ -35,7 +37,7 @@ def TopTest(function):
     Reset()
     function()
     end_ref_count = sys.gettotalrefcount()
-    print function.__name__, end_ref_count - start_ref_count
+    print(function.__name__, end_ref_count - start_ref_count)
 
 
 
@@ -45,7 +47,7 @@ def Waiter(event, timeout, who = 'Waiter', count = 100):
             event.Wait(timeout)
         except Timedout:
             pass
-#             print 'timeout', timeout,
+#             print('timeout', timeout,)
 #     Log(who)
 
 
@@ -78,7 +80,7 @@ def testWaitForAll():
             WaitForAll([Spawn(Fail, raise_on_wait = True) for j in range(5)])
         except MyFail:
             pass
-#             print 'Failed',
+#             print('Failed',)
 #         Log('WaitForAll')
 
 
@@ -90,7 +92,7 @@ def testSpawnFail():
             task.Wait()
         except MyFail:
             pass
-#             print 'Failed',
+#             print('Failed',)
 #         Log('Spawn')
 
 def testSpawnOk():

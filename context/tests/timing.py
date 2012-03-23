@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import time
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
@@ -19,7 +21,7 @@ def test():
     WaitForAll(tasks)
     end = time.time()
 
-    print 'Spawning', N, 'tasks in', end-now, 'seconds'
+    print('Spawning', N, 'tasks in', end-now, 'seconds')
 
 test()
 test()

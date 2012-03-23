@@ -1,6 +1,8 @@
 #!/usr/bin/env dls-python2.6
 # Simple example of caget tool using cothread.
 
+from __future__ import print_function
+
 import require
 from cothread.catools import *
 
@@ -30,5 +32,5 @@ if len(arglist) < 2:
 
 args = arglist[1:]
 if len(args) == 1: args = args[0]
-print caput(arglist[0], args,
-    timeout = options.timeout, wait = options.wait, throw = options.throw)
+print(caput(arglist[0], args,
+    timeout = options.timeout, wait = options.wait, throw = options.throw))

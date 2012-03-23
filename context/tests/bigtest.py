@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import time
 import sys, os
 sys.path.append(
@@ -57,17 +59,17 @@ def getall(pvs, **kargs):
     return caget(['%s:%s' % (bpm, pv) for bpm in bpms for pv in pvs], **kargs)
 
 def fetch():
-    print 'fetching', len(bpms) * len(pvs), 'pvs'
+    print('fetching', len(bpms) * len(pvs), 'pvs')
     start = time.time()
     val = getall(pvs, count=1, throw=False, timeout=20)
     end = time.time()
-    print 'fetched', len(val), 'pvs in', end - start, 'seconds'
+    print('fetched', len(val), 'pvs in', end - start, 'seconds')
 
     failed = [v for v in val if not v.ok]
     if failed:
-        print 'failed to fetch'
+        print('failed to fetch')
         for v in failed:
-            print v.name, v
+            print(v.name, v)
 
 fetch()
 fetch()

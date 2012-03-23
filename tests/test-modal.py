@@ -1,5 +1,7 @@
 #!/usr/bin/env python2.6
 
+from __future__ import print_function
+
 import require
 import cothread
 from cothread import *
@@ -21,7 +23,7 @@ if False:
         while True:
             cothread.select([r], [], [])
             rx = os.read(r, 1)
-            print 'read', rx
+            print('read', rx)
     @Spawn
     def Writer():
         for n in xrange(1000):
@@ -36,24 +38,24 @@ iqt(poll_interval = poll_interval)
 
 try:
     from qt import QMessageBox
-    print 'Using Qt3'
+    print('Using Qt3')
 except ImportError:
     from PyQt4.QtGui import QMessageBox
-    print 'Using Qt4'
+    print('Using Qt4')
 
 @Spawn
 def MessageBox():
     Sleep(1)
-    print 'Creating message box'
+    print('Creating message box')
     QMessageBox.information(None, 'My caption', 'This is a test')
-    print 'Message box done'
+    print('Message box done')
 
 @Spawn
 def Ticker():
     while True:
-        print 'tick'
+        print('tick')
         Sleep(1)
 
 
 x = raw_input('# ')
-print 'read', repr(x)
+print('read', repr(x))
