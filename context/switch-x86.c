@@ -84,9 +84,23 @@ FNAME(switch_frame)
 "       pushl   %edi\n"
 "       pushl   %esi\n"
 
+        // Save SIMD and floating point state just in case this coroutine has
+        // made a change: we'll make such changes local to each coroutine.
+"       sub     $4, %esp\n"
+"       stmxcsr (%esp)\n"
+"       sub     $4, %esp\n"
+"       fstcw   (%esp)\n"
+
         // Switch stack frames.
 "       movl    %esp, (%ecx)\n"
 "       movl    %edx, %esp\n"
+
+        // Restore saved floating point and SIMD state.
+"       fnclex\n"
+"       fldcw   (%esp)\n"
+"       add     $4, %esp\n"
+"       ldmxcsr (%esp)\n"
+"       add     $4, %esp\n"
 
         // Restore previously saved registers and we're done, the result is
         // already in the right place.
@@ -125,10 +139,12 @@ FNAME(create_frame)
 "       movl    %ebx, -28(%eax)\n"
 "       movl    %edi, -32(%eax)\n"
 "       movl    %esi, -36(%eax)\n"
+"       stmxcsr -40(%eax)\n"
+"       fstcw   -44(%eax)\n"
 
         // Save new stack frame and we're all done.
 "       movl    4(%esp), %edx\n"    // Frame address
-"       subl    $36, %eax\n"
+"       subl    $44, %eax\n"
 "       ret\n"
 
 "action_entry:\n"
