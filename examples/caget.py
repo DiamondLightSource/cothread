@@ -56,7 +56,7 @@ for result in get:
     if result.ok:
         print(result.name, end = ' ')
         if isinstance(result, numpy.ndarray):
-            print('[', ' '.join(map(str, result)), ']')
+            print('[', ', '.join(map(repr, result)), ']')
         else:
             print(repr(result))
 
