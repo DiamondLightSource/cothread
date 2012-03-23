@@ -68,7 +68,6 @@ static int get_cocore(PyObject *object, void **result)
     /* Check that we've chosen a valid target. */
     if (*result != NULL  &&  !check_cocore(*result))
     {
-        printf("Validity check failed on %p\n", *result);
         PyErr_Format(PyExc_ValueError, "Invalid target coroutine");
         *result = NULL;
     }
@@ -76,7 +75,7 @@ static int get_cocore(PyObject *object, void **result)
 }
 
 
-static void * coroutine_wrapper(void *action_, void *arg_)
+static void *coroutine_wrapper(void *action_, void *arg_)
 {
     PyThreadState *thread_state = PyThreadState_GET();
     /* New coroutine gets a brand new Python interpreter stack frame. */
@@ -93,7 +92,7 @@ static void * coroutine_wrapper(void *action_, void *arg_)
 }
 
 
-static PyObject * coroutine_create(PyObject *self, PyObject *args)
+static PyObject *coroutine_create(PyObject *self, PyObject *args)
 {
     struct cocore *parent;
     PyObject *action;
@@ -113,7 +112,7 @@ static PyObject * coroutine_create(PyObject *self, PyObject *args)
 }
 
 
-static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
+static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
 {
     struct cocore *target;
     PyObject *arg;
@@ -149,7 +148,7 @@ static PyObject * coroutine_switch(PyObject *Self, PyObject *args)
  * the thread specific part of the coroutine library.  Fortunately the API
  * published by this module really requires that get_current() be called before
  * doing anything substantial. */
-static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
+static PyObject *coroutine_getcurrent(PyObject *self, PyObject *args)
 {
     if (unlikely(GET_TLS(base_coroutine) == NULL))
         /* First time through initialise the cocore library. */
@@ -158,7 +157,7 @@ static PyObject* coroutine_getcurrent(PyObject *self, PyObject *args)
 }
 
 
-static PyObject* enable_check_stack(PyObject *self, PyObject *arg)
+static PyObject *enable_check_stack(PyObject *self, PyObject *arg)
 {
     int is_true = PyObject_IsTrue(arg);
     if (is_true == -1)
@@ -171,7 +170,7 @@ static PyObject* enable_check_stack(PyObject *self, PyObject *arg)
 }
 
 
-static PyObject* py_stack_use(PyObject *self, PyObject *args)
+static PyObject *py_stack_use(PyObject *self, PyObject *args)
 {
     struct cocore *target = NULL;
     if (PyArg_ParseTuple(args, "|O&", get_cocore, &target))
@@ -213,7 +212,7 @@ static int readline_hook(void)
 }
 
 
-static PyObject* install_readline_hook(PyObject *self, PyObject *arg)
+static PyObject *install_readline_hook(PyObject *self, PyObject *arg)
 {
     Py_XDECREF(readline_hook_callback);
     Py_INCREF(arg);
