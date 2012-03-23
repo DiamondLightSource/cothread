@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python3
 
 # Simple demonstration that timers and modal windows interact badly: if a modal
 # window is created from within a timer then the timer is killed and the exec()

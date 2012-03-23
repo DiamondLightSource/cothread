@@ -1,4 +1,4 @@
-#!/usr/bin/env dls-python2.6
+#!/usr/bin/env python3
 # Simple example of caget tool using cothread.
 
 from __future__ import print_function
