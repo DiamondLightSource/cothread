@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python3
 
 # Simple recursion overflow test, checks that guard pages do indeed guard
 # against stack overflow (by generating a segmentation fault).
