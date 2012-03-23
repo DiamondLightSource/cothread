@@ -360,11 +360,6 @@ class _Subscription(object):
             self.__maybe_signal(
                 ca_nothing(self.channel.name, cadef.ECA_DISCONN))
 
-    def __del__(self):
-        '''On object deletion ensure that the associated subscription is
-        closed.'''
-        self.close()
-
     def close(self):
         '''Closes the subscription and releases any associated resources.
         Note that no further callbacks will occur on a closed subscription,
@@ -372,6 +367,7 @@ class _Subscription(object):
         if self.__state == self.__OPEN:
             self.channel._remove_subscription(self)
             cadef.ca_clear_subscription(self)
+            cadef.ca_flush_io()
             # Delete the callback to avoid possible circular references.
             del self.callback
         self.__state = self.__CLOSED
@@ -942,6 +938,7 @@ def _catools_atexit():
     # can't safely do *any* ca_ calls once ca_context_destroy() is called!
     _channel_cache.purge()
     cadef.ca_context_destroy()
+    cadef.ca_flush_io()
 
 
 # EPICS Channel Access event dispatching needs to done with a little care.  In
