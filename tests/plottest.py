@@ -38,7 +38,7 @@ def update_plot(l, x):
     draw()
 
     from cothread import catools
-    print((len(Callback.im_self.values), x.update_count), end='')
+    print((len(Callback.values), x.update_count), end='')
     sys.stdout.flush()
     Yield()     # Needed here or in Callback queue
 

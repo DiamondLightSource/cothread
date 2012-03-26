@@ -44,8 +44,7 @@ class MonitorWaveform:
     def Update(self):
         '''This is called on a timer and is used to generate a collected update
         for the entire waveform.'''
-        print('tick', self.name, self.changed, self.updates,
-            len(Callback.im_self.values))
+        print('tick', self.name, self.changed, self.updates)
         self.changed = 0
 
 

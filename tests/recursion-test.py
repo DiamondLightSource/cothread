@@ -16,6 +16,7 @@ def recurse(n):
     print('recursing', n)
     stack = _coroutine.stack_use(_coroutine.get_current())
     print('stack', stack)
+    assert stack[0] <= stack[2]
     recurse(n + 1)
 
 cothread.Spawn(recurse, 0, stack_size = 8192)
