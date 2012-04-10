@@ -794,10 +794,15 @@ def value_to_dbr(channel, datatype, value):
 
     # If no datatype specified then use the target datatype.
     if datatype is None:
-        datatype = cadef.ca_field_type(channel)
-        if datatype == DBR_CHAR and channel.name[-1] == '$':
-            # Treat char arrays with name ending in $ as long strings instead.
-            datatype = DBR_CHAR_STR
+        if isinstance(value, str) or isinstance(value, unicode):
+            # Give strings with no datatype special treatment, let the IOC do
+            # the decoding.  It's safer this way.
+            datatype = DBR_STRING
+        else:
+            datatype = cadef.ca_field_type(channel)
+            if datatype == DBR_CHAR and channel.name[-1] == '$':
+                # Treat char arrays with name ending in $ as long strings.
+                datatype = DBR_CHAR_STR
 
     if datatype == DBR_CHAR_STR:
         # Char arrays as strings need special treatment.
