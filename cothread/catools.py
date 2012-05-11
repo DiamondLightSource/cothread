@@ -237,7 +237,6 @@ class ChannelCache(object):
     '''A cache of all open channels.  If a channel is not present in the
     cache it is automatically opened.  The cache needs to be purged to
     ensure a clean shutdown.'''
-    __slots__ = ['__channels']
 
     def __init__(self):
         self.__channels = {}

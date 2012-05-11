@@ -169,6 +169,11 @@ class _TimerQueue(object):
 
 
 class _WakeupQueue(object):
+    __slots__ = [
+        '__waiters',        # List of wakeup objects pending wakeup
+        '__garbage',        # Count of expired wakeup objects
+    ]
+
     def __init__(self):
         self.__waiters = []
         # Every time a timeout occurs a waiter is left behind on the timer
@@ -217,6 +222,14 @@ class _Wakeup(object):
     '''A _Wakeup object is used when a task is to be suspended on one or more
     queues.  On wakeup the original task is woken, but only once: this is
     used to ensure that entries on other queues are effectively cancelled.'''
+
+    __slots__ = [
+        '__task',           # Coroutine associated with task to wake
+        '__wakeup_task',    # Action to take on wakeup
+        '__queue',          # Queue where this wakeup object resides
+        '__timers',         # Timeout queue for this wakeup
+    ]
+
     def __init__(self, wakeup_task, queue, timers):
         self.__task = _coroutine.get_current()
         self.__wakeup_task = wakeup_task
@@ -564,6 +577,11 @@ def Deadline(deadline):
 class EventBase(object):
     '''The base class for implementing events and signals.'''
 
+    __slots__ = [
+        '__wait_queue',     # Queue of cothreads waiting to be woken
+        '__wait_abort',     # Count of abortable waits.
+    ]
+
     def __init__(self):
         # List of tasks currently waiting to be woken up.
         self.__wait_queue = _WakeupQueue()
@@ -606,6 +624,16 @@ class Spawn(EventBase):
     for main) managed by the scheduler should be an instance of this class.'''
 
     finished = property(fget = lambda self: bool(self.__result))
+    __slots__ = [
+        '__function',       # Function implementing cothread action
+        '__args',           # Positional arguments for action
+        '__kargs',          # Keyword arguments for action
+        '__result',         # Result when action has completed
+        '__raise_on_wait',  # Action to take on exception
+    ]
+
+    # Set of all active processes for debugging
+    Cothreads = set()
 
     def __init__(self, function, *args, **kargs):
         '''The given function and arguments will be called as a new task.
@@ -692,6 +720,11 @@ class Event(EventBase):
     '''Any number of tasks can wait for an event to occur.  A single value
     can also be associated with the event.'''
 
+    __slots__ = [
+        '__value',          # Value on this event
+        '__auto_reset',     # Whether value is consumed when taken
+    ]
+
     def __init__(self, auto_reset = True):
         '''An event object is either signalled or reset.  Any task can wait
         for the object to become signalled, and it will be suspended until
@@ -764,6 +797,11 @@ class Event(EventBase):
 class EventQueue(EventBase):
     '''A queue of objects.  A queue can also be treated as an iterator.'''
 
+    __slots__ = [
+        '__queue',          # Queue of values
+        '__closed',         # Used to halt iteration over this queue
+    ]
+
     def __init__(self):
         EventBase.__init__(self)
         self.__queue = []
@@ -818,6 +856,12 @@ class EventQueue(EventBase):
 
 class ThreadedEventQueue(object):
     '''An event queue designed to work with threads.'''
+
+    __slots__ = [
+        '__values',         # List of queued values
+        '__signal',         # File handle used to notify new value
+        'wait_descriptor',  # File handle waited on for new values
+    ]
 
     def __init__(self):
         # According to the documentation this is thread safe, so we don't
@@ -900,6 +944,15 @@ class _Callback:
 
 class Timer(object):
     '''A cancellable one-shot or auto-retriggering timer.'''
+
+    __slots__ = [
+        '__timeout',        # Time to wait until triggering timer
+        '__callback',       # Function to call when timer fires
+        '__retrigger',      # Enables retriggering timers
+        '__reuse',          # Set if timer can be reused
+        '__control',        # Event object for controlling timer
+        '__fire',           # Controls action when event timeout occurs
+    ]
 
     def __init__(self, timeout, callback,
             retrigger = False, reuse = False, stack_size = 0):
