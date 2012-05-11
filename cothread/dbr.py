@@ -705,10 +705,10 @@ def _convert_other(raw_dbr, count):
 
 
 def type_to_dbr(channel, datatype, format):
-    '''Converts data request into the appropriate dbr code and conversion.  If
-    the datatype is none then the channel must be ready so that its field type
-    can be interrogated.  Returns dbr code together with conversion function for
-    transforming dbr values of that type back into Python values.'''
+    '''Converts data request into the appropriate dbr code and conversion.  The
+    channel must be ready so that its field type can be interrogated.  Returns
+    dbr code together with conversion function for transforming dbr values of
+    that type back into Python values.'''
 
     name = channel.name
     if datatype is None:

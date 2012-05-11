@@ -405,12 +405,11 @@ class _Subscription(object):
     def __create_subscription(self, events, datatype, format, count):
         '''Creates the channel subscription with the specified parameters:
         event mask, datatype and format, array count.  Waits for the channel
-        to become connected if datatype is not specified (None).'''
+        to become connected.'''
 
-        if datatype is None:
-            # If no datatype has been specified ensure the channel is connected
-            # so that type_to_dbr() can discover the underlying channel type.
-            self.channel.Wait()
+        # Ensure the channel is connected so that type_to_dbr() can discover the
+        # underlying channel type if necessary.
+        self.channel.Wait()
         # Can now convert the datatype request into the subscription datatype.
         dbrcode, self.dbr_to_value = \
             dbr.type_to_dbr(self.channel, datatype, format)
