@@ -623,7 +623,6 @@ class Spawn(EventBase):
     '''This class is used to wrap cooperative threads: every task (except
     for main) managed by the scheduler should be an instance of this class.'''
 
-    finished = property(fget = lambda self: bool(self.__result))
     __slots__ = [
         '__function',       # Function implementing cothread action
         '__args',           # Positional arguments for action
@@ -674,7 +673,8 @@ class Spawn(EventBase):
                 traceback.print_exc()
                 self.__result = (True, None)
         if not self._Wakeup(False):
-            # Aborted wakeup: consume the result now
+            # Aborted wakeup: consume the result now, will cause a subsequent
+            # Wait() to fail, which it should.
             del self.__result
         # See wait_until() for an explanation of this return value.
         return []
@@ -956,7 +956,7 @@ class Timer(object):
 
     def __init__(self, timeout, callback,
             retrigger = False, reuse = False, stack_size = 0):
-        '''The callback will be called (with no argumentes) after the specified
+        '''The callback will be called (with no arguments) after the specified
         timeout.  If retrigger is set then the timer will automatically
         retrigger until it is cancelled.  Unless reuse or retrigger is set the
         timer will be cancelled once it fires and cannot be reused.'''

@@ -33,7 +33,6 @@ header file db_access.h
 
 import ctypes
 import numpy
-import time
 import datetime
 
 from . import cadef
@@ -802,7 +801,7 @@ def value_to_dbr(channel, datatype, value):
 
     # If no datatype specified then use the target datatype.
     if datatype is None:
-        if isinstance(value, str) or isinstance(value, unicode):
+        if isinstance(value, (str, unicode)):
             # Give strings with no datatype special treatment, let the IOC do
             # the decoding.  It's safer this way.
             datatype = DBR_STRING
