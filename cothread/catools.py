@@ -227,6 +227,9 @@ class Channel(object):
         '''Removes the given subscription from the list of receivers.'''
         self.__subscriptions.remove(subscription)
 
+    def __nonzero__(self):
+        return bool(self.__connected)
+
     def Wait(self, timeout = None):
         '''Waits for the channel to become connected.  Raises a Timeout
         exception if the timeout expires first.'''
@@ -704,7 +707,8 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
     # Connect to the channel and wait for connection to complete.
     timeout = cothread.AbsTimeout(timeout)
     channel = _channel_cache[pv]
-    channel.Wait(timeout)
+    if not channel:                 # Avoid suspension if already connected
+        channel.Wait(timeout)
 
     # Note: the unused value returned below needs to be retained so that
     # dbr_array, a pointer to C memory, has the right lifetime: it has to
