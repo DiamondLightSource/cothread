@@ -522,7 +522,12 @@ used to control the type of the data returned:
         Note that if the PV name ends in ``$`` and `datatype` is not specified
         then :const:`DBR_CHAR_STR` will be used.
 
-    6.  For :func:`caget` and :func:`camonitor` two further special values are
+    6.  The special value :const:`DBR_ENUM_STR`, only for :func:`caget` and
+        :func:`camonitor`.  In this case the "native" channel datatype is used
+        unless the channel is an enumeration, in which case the corresponding
+        string is returned.
+
+    7.  For :func:`caget` and :func:`camonitor` two further special values are
         supported.  In both of these cases `format` is ignored:
 
         ..  data:: DBR_STSACK_STRING

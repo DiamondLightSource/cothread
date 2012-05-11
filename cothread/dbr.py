@@ -52,6 +52,7 @@ __all__ = [
 
     'DBR_CHAR_STR',     # Long strings as char arrays
     'DBR_CHAR_UNICODE', # Long unicode strings as char arrays
+    'DBR_ENUM_STR',     # Enums as strings, default otherwise
 
     'DBR_PUT_ACKT',     # Configure global alarm acknowledgement
     'DBR_PUT_ACKS',     # Acknowledge global alarm
@@ -508,6 +509,7 @@ DBR_STSACK_STRING = 37
 DBR_CLASS_NAME = 38
 
 # Special value for DBR_CHAR as str special processing.
+DBR_ENUM_STR = 996
 DBR_CHAR_UNICODE = 998
 DBR_CHAR_STR = 999
 
@@ -716,6 +718,12 @@ def type_to_dbr(channel, datatype, format):
         # handled specially by EPICS as long strings.
         if datatype == DBR_CHAR and name[-1] == '$':
             datatype = DBR_CHAR_STR
+    elif datatype == DBR_ENUM_STR:
+        # A similar hack: for DBR_ENUM_STR use natural channel data type except
+        # for enums which are fetched as strings.
+        datatype = cadef.ca_field_type(channel)
+        if datatype == DBR_ENUM:
+            datatype = DBR_STRING
 
     # Prepare as much beforehand for conversion.
     dbrcode = _type_to_dbrcode(datatype, format)
