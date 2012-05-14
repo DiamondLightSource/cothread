@@ -146,6 +146,7 @@ class ca_array(numpy.ndarray):
     datetime = timestamp_to_datetime
     def __pos__(self):
         return numpy.array(self)
+    __hash__ = None
 
 # Augmented basic Python types used for scalar values.
 class ca_str(str):
