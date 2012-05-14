@@ -77,11 +77,6 @@ def _check_env(name, default):
 # Stack size definitions
 K = 1024
 
-# For CA notify callbacks by default we use the shared stack as arbitrary
-# processing tends to be done in this context.
-CALLBACK_DISPATCH_STACK = _check_env('CATOOLS_CALLBACK_STACK', 0)
-# This stack is used for running the channel access library.
-CA_EVENT_STACK          = _check_env('CATOOLS_EVENT_STACK', 512 * K)
 # Miscellaneous channel access operations are created using this stack size.  By
 # default we use the shared stack to avoid accidents.
 CA_ACTION_STACK         = _check_env('CATOOLS_ACTION_STACK', 0)
@@ -104,11 +99,6 @@ class ca_nothing(Exception):
 
     def __bool__(self):
         return self.ok
-
-    def __iter__(self):
-        '''This is *not* supposed to be an iterable object, but the base class
-        appears to have a different opinion.  So enforce this.'''
-        raise TypeError('iteration over non-sequence')
 
 
 def maybe_throw(function):
@@ -226,16 +216,16 @@ class Channel(object):
         self.__subscriptions.remove(subscription)
 
     def Wait(self, timeout = None):
-        '''Waits for the channel to become connected.  Raises a Timeout
-        exception if the timeout expires first.'''
-        ca_timeout(self.__connected, timeout, self.name)
+        '''Waits for the channel to become connected if not already connected.
+        Raises a Timeout exception if the timeout expires first.'''
+        if not self.__connected:
+            ca_timeout(self.__connected, timeout, self.name)
 
 
 class ChannelCache(object):
     '''A cache of all open channels.  If a channel is not present in the
     cache it is automatically opened.  The cache needs to be purged to
     ensure a clean shutdown.'''
-    __slots__ = ['__channels']
 
     def __init__(self):
         self.__channels = {}
@@ -404,12 +394,11 @@ class _Subscription(object):
     def __create_subscription(self, events, datatype, format, count):
         '''Creates the channel subscription with the specified parameters:
         event mask, datatype and format, array count.  Waits for the channel
-        to become connected if datatype is not specified (None).'''
+        to become connected.'''
 
-        if datatype is None:
-            # If no datatype has been specified ensure the channel is connected
-            # so that type_to_dbr() can discover the underlying channel type.
-            self.channel.Wait()
+        # Ensure the channel is connected so that type_to_dbr() can discover the
+        # underlying channel type if necessary.
+        self.channel.Wait()
         # Can now convert the datatype request into the subscription datatype.
         dbrcode, self.dbr_to_value = \
             dbr.type_to_dbr(self.channel, datatype, format)

@@ -33,7 +33,6 @@ header file db_access.h
 
 import ctypes
 import numpy
-import time
 import datetime
 
 from . import cadef
@@ -51,6 +50,7 @@ __all__ = [
     'DBR_DOUBLE',       # 64 bit float
 
     'DBR_CHAR_STR',     # Long strings as char arrays
+    'DBR_ENUM_STR',     # Enums as strings, default otherwise
     'DBR_CHAR_BYTES',   # Long byte strings as char arrays
 
     'DBR_PUT_ACKT',     # Configure global alarm acknowledgement
@@ -509,6 +509,7 @@ DBR_STSACK_STRING = 37
 DBR_CLASS_NAME = 38
 
 # Special value for DBR_CHAR as str special processing.
+DBR_ENUM_STR = 996
 DBR_CHAR_BYTES = 997
 DBR_CHAR_STR = 999
 
@@ -706,10 +707,10 @@ def _convert_other(raw_dbr, count):
 
 
 def type_to_dbr(channel, datatype, format):
-    '''Converts data request into the appropriate dbr code and conversion.  If
-    the datatype is none then the channel must be ready so that its field type
-    can be interrogated.  Returns dbr code together with conversion function for
-    transforming dbr values of that type back into Python values.'''
+    '''Converts data request into the appropriate dbr code and conversion.  The
+    channel must be ready so that its field type can be interrogated.  Returns
+    dbr code together with conversion function for transforming dbr values of
+    that type back into Python values.'''
 
     name = channel.name
     if datatype is None:
@@ -719,6 +720,12 @@ def type_to_dbr(channel, datatype, format):
         # handled specially by EPICS as long strings.
         if datatype == DBR_CHAR and name[-1] == '$':
             datatype = DBR_CHAR_STR
+    elif datatype == DBR_ENUM_STR:
+        # A similar hack: for DBR_ENUM_STR use natural channel data type except
+        # for enums which are fetched as strings.
+        datatype = cadef.ca_field_type(channel)
+        if datatype == DBR_ENUM:
+            datatype = DBR_STRING
 
     # Prepare as much beforehand for conversion.
     dbrcode = _type_to_dbrcode(datatype, format)
@@ -797,7 +804,7 @@ def value_to_dbr(channel, datatype, value):
 
     # If no datatype specified then use the target datatype.
     if datatype is None:
-        if isinstance(value, str) or isinstance(value, bytes):
+        if isinstance(value, (str, bytes)):
             # Give strings with no datatype special treatment, let the IOC do
             # the decoding.  It's safer this way.
             datatype = DBR_STRING

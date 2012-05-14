@@ -126,9 +126,9 @@ connection_handler = ctypes.CFUNCTYPE(None, ca_connection_handler_args)
 class Disconnected(Exception):
     '''The channel is disconnected.'''
     def __init__(self, chid):
-        self.chid = chid
+        self.name = ca_name(chid)
     def __str__(self):
-        return 'Channel %s disconnected' % ca_name(self.chid)
+        return 'Channel %s disconnected' % self.name
 
 
 class CAException(Exception):
@@ -145,11 +145,7 @@ class CAException(Exception):
 # For routines which are simply expected to succeed this routine should be
 # assigned to the routine's errcheck attribute.
 def expect_ECA_NORMAL(status, function, args):
-    if status == ECA_DISCONN:
-        # Raise a separate exception for disconnection, as we often want to
-        # handle this case specially.
-        raise Disconnected
-    elif status != ECA_NORMAL:
+    if status != ECA_NORMAL:
         raise CAException(status, function)
 
 
@@ -177,6 +173,7 @@ def convert_py_object(object, function, args):
     ctypes.pythonapi.Py_IncRef(object)
     return object
 
+
 # Let the library know that Py_IncRef and Py_DecRef take a raw PyObject*
 # (otherwise it converts the argument to a fresh int() object which receives
 # the reference count: not so useful!)
@@ -195,6 +192,14 @@ ctypes.pythonapi.Py_DecRef.argtypes = [ctypes.py_object]
 ca_message = libca.ca_message
 ca_message.argtypes = [ctypes.c_long]
 ca_message.restype = ctypes.c_char_p
+
+
+#   channel_name = ca_name(channel)
+#
+# Returns name associated with channel id
+ca_name = libca.ca_name
+ca_name.argtypes = [ctypes.c_void_p]
+ca_name.restype = ctypes.c_char_p
 
 
 #   @exception_handler

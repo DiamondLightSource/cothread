@@ -31,10 +31,8 @@
 for input from the interpreter command line.  Also includes optional support
 for the Qt event loop.'''
 
-import select
 import sys
 import os
-import traceback
 
 from . import cothread
 from . import coselect

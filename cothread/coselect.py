@@ -29,7 +29,6 @@
 '''Support for cooperative select functions.  Replaces the functionality of
 the standard select module.'''
 
-import time
 import select as _select
 import cothread
 
