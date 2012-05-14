@@ -63,3 +63,65 @@ The new :func:`Callback` mechanism raises some issues.
     yield on every callback is surprisingly costly.
 
 3.  We lack any mechanism for observing what's going on inside the library.
+
+
+
+Some notes for emulating select on Windows
+------------------------------------------
+
+Want to look at `libevent`.  I suspect this, being a network API, is largely
+socket based, but there may be clues.  Source file win32select.c, function
+win32_dispatch(), looks vaguely interesting.  Also poll.c.
+
+Also should look at twistedmatrix.com, and there's a further page of notes in
+poll_win32.py
+
+Anyhow, building on Windows is a pain and I dislike the platform anyway...
+
+
+Questions on Stack Overflow.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+http://stackoverflow.com/questions/3021424/select-on-a-named-pipe
+
+The answer here is use the named pipe APIs using the overlapped I/O model and
+WaitForMultipleObjects(), example
+
+    http://msdn.microsoft.com/en-us/library/aa365603(VS.85).aspx
+
+http://stackoverflow.com/questions/3911799/windows-poll-or-select-on-named-pipe
+
+Answer is need to use overlapped I/O or I/O completion ports, references
+
+    http://en.wikipedia.org/wiki/Iocp
+
+Another interesting suggestion is to use socketpair(2) instead of pipe(2) to
+create the asynchronous event notifier in _Callback and ThreadedEventQueue.
+This still leaves stdin handling for the input hook, but at least would restore
+some level of function.  The socketpair function is in the Python socket module.
+
+Ho ho ho.  Turns out that Windows doesn't have socketpair anyway!  There's a
+reasonable looking example here:
+
+http://code.activestate.com/recipes/525487-extending-socketsocketpair-to-work-on-windows/
+
+which does this::
+
+    def SocketPair(family = AF_INET; type_ = SOCK_STREAM; proto = IPPROTO_IP):
+        listensock = socket(family, type_, proto)
+        listensock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        listensock.bind( ('localhost', 0) )
+        iface, ephport = listensock.getsockname()
+        listensock.listen(1)
+
+        sock1 = socket(family, type_, proto)
+        connthread = threading.Thread(target=pairConnect, args=[sock1, ephport])
+        connthread.setDaemon(1)
+        connthread.start()
+        sock2, sock2addr = listensock.accept()
+        listensock.close()
+        return (sock1, sock2)
+
+    def pairConnect(sock, port):
+        sock.connect( ('localhost', port) )
