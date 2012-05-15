@@ -78,7 +78,7 @@ def _libca_path(load_libca_path):
 
     # If no libca_path, how about local copies of the files?
     libca_path = os.path.abspath(os.path.dirname(__file__))
-    if os.access(os.path.join(libca_path, lib_files[-1]), os.R_OK):
+    if os.path.isfile(os.path.join(libca_path, lib_files[-1])):
         # Yes, there seems to be something locally installed.
         return libca_path
 
@@ -120,7 +120,10 @@ else:
         for lib in lib_files:
             libca = load_library(lib)
     except OSError:
-        # Ok, now go searching.  _libca_path() has all the tricks.
+        # Ask _libca_path() where to find things.
         libca_path = _libca_path(True)
-        for lib in lib_files:
-            libca = load_library(os.path.join(libca_path, lib))
+        if os.path.isfile(libca_path):
+            libca = load_library(libca_path)
+        else:
+            for lib in lib_files:
+                libca = load_library(os.path.join(libca_path, lib))
