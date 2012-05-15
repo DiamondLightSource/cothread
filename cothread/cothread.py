@@ -651,6 +651,7 @@ class Spawn(EventBase):
         # Hand control over to the run method in the scheduler.
         _validate_thread()
         _scheduler.spawn(self.__run, kargs.pop('stack_size', 0))
+        self.Cothreads.add(self)
 
     def __run(self, _):
         try:
@@ -676,6 +677,8 @@ class Spawn(EventBase):
             # Aborted wakeup: consume the result now, will cause a subsequent
             # Wait() to fail, which it should.
             del self.__result
+
+        self.Cothreads.remove(self)
         # See wait_until() for an explanation of this return value.
         return []
 
