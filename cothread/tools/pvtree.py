@@ -39,6 +39,7 @@ record_types = {
     'acalcout':     calc_rec(),
     'ai':           input_rec,
     'ao':           output_rec,
+    'aSub':         inp_range('U'),
     'asyn':         [],
     'bi':           input_rec,
     'bo':           output_rec,
@@ -167,7 +168,7 @@ def follow_link(indent, link):
                     ('VAL', 'SEVR', 'STAT', 'DTYP') + fields),
                 datatype = str, timeout = 2, throw = False, count = 1)
             (val, sevr, stat, dtyp), values = values[:4], values[4:]
-                
+
             print_indent(0, indent, BOLD, record,
                 '(%s, %s)' % (rtyp, dtyp_to_str(dtyp)),
                 val, colour(YELLOW, sevr), colour(YELLOW, stat))
@@ -179,7 +180,7 @@ def follow_link(indent, link):
                         if options.check_ms and 'NMS' in value.split(' '):
                             ms_check = ':', colour(BRIGHT+RED, 'MS missing')
                             priority = 1
-                        print_indent(priority, 
+                        print_indent(priority,
                             indent, BRIGHT+CYAN, value.name, value, *ms_check)
                         follow_link(indent+1, value)
                 else:
