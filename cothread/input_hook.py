@@ -98,6 +98,18 @@ def _timer_iqt(poll_interval):
     return timer
 
 
+# There are a number of issues with this function... needs to be properly
+# idempotent, need to ensure that run_exec doesn't create an app instance?  Or
+# some other mechanism for same.
+#
+# Currently Ian's widget import includes the following code:
+#
+#   if not hasattr(cothread.input_hook, '_timer'):
+#       cothread.iqt(run_exec = False)
+#
+# This is used to ensure that if widgets are imported directly into designer
+# then cothread works.  Note that things are not too complicated in this
+# particular case as the Qt application is required to exist already.
 def iqt(poll_interval = 0.05, run_exec = True, argv = None):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''

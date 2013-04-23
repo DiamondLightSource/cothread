@@ -1062,7 +1062,7 @@ def WaitForQuit(catch_interrupt = True):
     if catch_interrupt:
         import signal
         def quit(signum, frame):
-            _QuitEvent.Signal()
+            Callback(_QuitEvent.Signal)
         signal.signal(signal.SIGINT, quit)
 
     _QuitEvent.Wait()
@@ -1081,7 +1081,7 @@ _scheduler_thread_id = thread.get_ident()
 def _validate_thread():
     assert _scheduler_thread_id == thread.get_ident(), \
         'Cannot use cothread with multiple threads.  Consider using ' \
-        'ThreadedEventQueue if necessary.'
+        'Callback or ThreadedEventQueue if necessary.'
 
 # This is the asynchronous callback method.
 Callback = _Callback()

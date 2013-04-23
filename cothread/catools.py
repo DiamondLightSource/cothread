@@ -96,6 +96,9 @@ class ca_nothing(Exception):
         self.name = name
         self.errorcode = errorcode
 
+    def __repr__(self):
+        return 'ca_nothing(%r, %d)' % (self.name, self.errorcode)
+
     def __str__(self):
         return '%s: %s' % (self.name, cadef.ca_message(self.errorcode))
 
@@ -771,7 +774,8 @@ def caput(pvs, values, **kargs):
 
     repeat_value
         When writing an array value to an array of PVs ensures that the
-        same array of values is written to each PV.
+        same array of values is written to each PV.  Otherwise this flag
+        can be ignored.
 
     timeout
         Timeout for the caput operation.  This can be a timeout interval
@@ -933,8 +937,8 @@ def _catools_atexit():
     #    One reason that it's rather important to do this properly is that we
     # can't safely do *any* ca_ calls once ca_context_destroy() is called!
     _channel_cache.purge()
-    cadef.ca_context_destroy()
     cadef.ca_flush_io()
+    cadef.ca_context_destroy()
 
 
 # EPICS Channel Access event dispatching needs to done with a little care.  In
