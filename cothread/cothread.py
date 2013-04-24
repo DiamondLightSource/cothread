@@ -92,6 +92,7 @@ __all__ = [
     'Yield',            # Suspend task for immediate resumption
 
     'Event',            # Event for waiting and signalling
+    'Pulse',            # Event for dynamic condition variables
     'EventQueue',       # Queue of objects with event handling
     'ThreadedEventQueue',   # Event queue designed to work with threads
     'WaitForAll',       # Wait for all events to become ready
@@ -795,6 +796,20 @@ class Event(EventBase):
     def Reset(self):
         '''Resets the event (and erases the value).'''
         self.__value = ()
+
+
+class Pulse(EventBase):
+    '''Somewhat equivalent to pthread condition variable: any number of waiters
+    will be woken by calling the Signal() method, but there is no state and
+    nothing is returned from Wait().'''
+
+    def Wait(self, timeout = None):
+        self._WaitUntil(timeout)
+
+    def Signal(self, wake_all = True):
+        self._Wakeup(wake_all)
+
+    AbortWait = EventBase._AbortWait
 
 
 class EventQueue(EventBase):
