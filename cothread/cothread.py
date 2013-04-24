@@ -935,6 +935,7 @@ class _Callback:
                     print('Asynchronous callback raised uncaught exception',
                         file = sys.stderr)
                     traceback.print_exc()
+            action = args = None
 
     def __call__(self, action, *args):
         '''This can be called from within any Python thread to arrange for
