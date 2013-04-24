@@ -158,7 +158,8 @@ class Channel(object):
     __slots__ = [
         'name',
         '__subscriptions',  # Set of listening subscriptions
-        '__connected',      # Event for waiting for channel connection
+        '__connected',      # Status of channel connection
+        '__connect_event',  # Connection event used to notify changes
         '_as_parameter_'    # Associated channel access channel handle
     ]
 
@@ -176,10 +177,10 @@ class Channel(object):
         assert op in [cadef.CA_OP_CONN_UP, cadef.CA_OP_CONN_DOWN]
         connected = op == cadef.CA_OP_CONN_UP
 
+        self.__connected = connected
         if connected:
-            self.__connected.Signal()
-        else:
-            self.__connected.Reset()
+            # Trigger wakeup of all listeners
+            self.__connect_event.Signal()
 
         # Inform all the connected subscriptions
         for subscription in self.__subscriptions:
@@ -189,7 +190,8 @@ class Channel(object):
         '''Creates a channel access channel with the given name.'''
         self.name = name
         self.__subscriptions = set()
-        self.__connected = cothread.Event(auto_reset = False)
+        self.__connected = False
+        self.__connect_event = cothread.Pulse()
 
         chid = ctypes.c_void_p()
         cadef.ca_create_channel(
@@ -228,8 +230,19 @@ class Channel(object):
     def Wait(self, timeout = None):
         '''Waits for the channel to become connected if not already connected.
         Raises a Timeout exception if the timeout expires first.'''
+        timeout = cothread.AbsTimeout(timeout)
+        while not self.__connected:
+            ca_timeout(self.__connect_event, timeout, self.name)
+
+    def WakeableWait(self):
+        '''Waits for channel to connect or any event.  Returns True if channel
+        is connected.'''
         if not self.__connected:
-            ca_timeout(self.__connected, timeout, self.name)
+            self.__connect_event.Wait()
+        return self.__connected
+
+    def Wakeup(self):
+        self.__connect_event.Signal()
 
 
 class ChannelCache(object):
@@ -330,7 +343,7 @@ class _Subscription(object):
         '''Wrapper for performing callbacks safely: only performs the callback
         if the subscription is open and reports and handles any exceptions that
         might arise.'''
-        if self.__state == self.__OPEN:
+        if self.__state != self.__CLOSED:
             if value is None:
                 # This arises from a merged update.
                 with self.__lock:
@@ -351,7 +364,6 @@ class _Subscription(object):
                 print('Subscription %s closed' % self.name, file = sys.stderr)
                 self.close()
 
-
     def _on_connect(self, connected):
         '''This is called each time the connection state of the underlying
         channel changes.  Note that this is also called asynchronously.'''
@@ -364,12 +376,14 @@ class _Subscription(object):
         '''Closes the subscription and releases any associated resources.
         Note that no further callbacks will occur on a closed subscription,
         not even callbacks currently queued for execution.'''
-        if self.__state == self.__OPEN:
+        if self.__state == self.__OPENING:
+            self.channel.Wakeup()   # Wakes up __wait_for_channel() below
+        elif self.__state == self.__OPEN:
             self.channel._remove_subscription(self)
             cadef.ca_clear_subscription(self)
-            cadef.ca_flush_io()
-            # Delete the callback to avoid possible circular references.
-            del self.callback
+            _flush_io()
+        # Delete the callback to avoid possible circular references.
+        self.callback = None
         self.__state = self.__CLOSED
 
     def __init__(self, name, callback,
@@ -389,10 +403,8 @@ class _Subscription(object):
         if events is None:
             events = self.__default_events[format]
 
-        # We connect to the channel so that we can be kept informed of
-        # connection updates.
+        # Trigger channel connection if channel not already known.
         self.channel = _channel_cache[name]
-        self.channel._add_subscription(self)
 
         # Spawn the actual task of creating the subscription into the
         # background, as we may have to wait for the channel to become
@@ -401,30 +413,43 @@ class _Subscription(object):
         cothread.Spawn(self.__create_subscription,
             events, datatype, format, count, stack_size = CA_ACTION_STACK)
 
+    # Waiting for the channel is a bit more tangled than it might otherwise be
+    # so that we can handle the subscription being closed before the connection
+    # completes.
+    def __wait_for_channel(self):
+        while self.__state == self.__OPENING:
+            if self.channel.WakeableWait():
+                return True
+        return False
+
     def __create_subscription(self, events, datatype, format, count):
         '''Creates the channel subscription with the specified parameters:
         event mask, datatype and format, array count.  Waits for the channel
         to become connected.'''
 
-        # Ensure the channel is connected so that type_to_dbr() can discover the
-        # underlying channel type if necessary.
-        self.channel.Wait()
-        # Can now convert the datatype request into the subscription datatype.
+        # Need to first wait for the channel to connect before we can do
+        # anything else.  If this fails then there's nothing more to do.
+        if not self.__wait_for_channel():
+            return
+
+        self.__state = self.__OPEN
+
+        # Connect to the channel to be kept informed of connection updates.
+        self.channel._add_subscription(self)
+        # Convert the datatype request into the subscription datatype.
         dbrcode, self.dbr_to_value = \
             dbr.type_to_dbr(self.channel, datatype, format)
 
         # Finally create the subscription with all the requested properties
         # and hang onto the returned event id as our implicit ctypes
         # parameter.
-        if self.__state == self.__OPENING:
-            event_id = ctypes.c_void_p()
-            cadef.ca_create_subscription(
-                dbrcode, count, self.channel, events,
-                self.__on_event, ctypes.py_object(self),
-                ctypes.byref(event_id))
-            self._as_parameter_ = event_id.value
-            self.__state = self.__OPEN
-            _flush_io()
+        event_id = ctypes.c_void_p()
+        cadef.ca_create_subscription(
+            dbrcode, count, self.channel, events,
+            self.__on_event, ctypes.py_object(self),
+            ctypes.byref(event_id))
+        _flush_io()
+        self._as_parameter_ = event_id.value
 
 
 def camonitor(pvs, callback, **kargs):
