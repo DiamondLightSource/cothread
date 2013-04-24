@@ -234,11 +234,11 @@ class Channel(object):
         while not self.__connected:
             ca_timeout(self.__connect_event, timeout, self.name)
 
-    def WakeableWait(self):
+    def WakeableWait(self, timeout):
         '''Waits for channel to connect or any event.  Returns True if channel
-        is connected.'''
+        is connected, raises Timedout exception on timeout.'''
         if not self.__connected:
-            self.__connect_event.Wait()
+            self.__connect_event.Wait(timeout)
         return self.__connected
 
     def Wakeup(self):
@@ -389,7 +389,8 @@ class _Subscription(object):
     def __init__(self, name, callback,
             events = None,
             datatype = None, format = FORMAT_RAW, count = 0,
-            all_updates = False, notify_disconnect = False):
+            all_updates = False, notify_disconnect = False,
+            connect_timeout = None):
         '''Subscription initialisation.'''
 
         self.name = name
@@ -411,25 +412,34 @@ class _Subscription(object):
         # connected.
         self.__state = self.__OPENING
         cothread.Spawn(self.__create_subscription,
-            events, datatype, format, count, stack_size = CA_ACTION_STACK)
+            events, datatype, format, count, connect_timeout,
+            stack_size = CA_ACTION_STACK)
 
     # Waiting for the channel is a bit more tangled than it might otherwise be
     # so that we can handle the subscription being closed before the connection
-    # completes.
-    def __wait_for_channel(self):
+    # completes.  Alas, the implementation here is horribly entangled with the
+    # Channel implementation
+    def __wait_for_channel(self, timeout):
+        timeout = cothread.AbsTimeout(timeout)
         while self.__state == self.__OPENING:
-            if self.channel.WakeableWait():
-                return True
+            try:
+                if self.channel.WakeableWait(timeout):
+                    return True
+            except cothread.Timedout:
+                # Connection timeout.  Let the caller know and bail out
+                self._on_connect(False)
+                return False
         return False
 
-    def __create_subscription(self, events, datatype, format, count):
+    def __create_subscription(self,
+            events, datatype, format, count, connect_timeout):
         '''Creates the channel subscription with the specified parameters:
         event mask, datatype and format, array count.  Waits for the channel
         to become connected.'''
 
         # Need to first wait for the channel to connect before we can do
         # anything else.  If this fails then there's nothing more to do.
-        if not self.__wait_for_channel():
+        if not self.__wait_for_channel(connect_timeout):
             return
 
         self.__state = self.__OPEN
@@ -456,7 +466,8 @@ def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
         events = None,
         datatype = None, format = FORMAT_RAW, count = 0,
-        all_updates = False, notify_disconnect = False)
+        all_updates = False, notify_disconnect = False,
+        connect_timeout = None)
 
     Creates a subscription to one or more PVs, returning a subscription
     object for each PV.  If a single PV is given then a single subscription
@@ -516,6 +527,12 @@ def camonitor(pvs, callback, **kargs):
         If this is True then IOC disconnect events will be reported by
         calling the callback with a ca_nothing error with .ok False,
         otherwise only valid values will be passed to the callback routine.
+
+    connect_timeout
+        If a connection timeout is specified then the camonitor will only
+        wait for the specified interval before detecting disconnection.  Note
+        that if connection timeout is detected no further events will occur on
+        the monitor and it might as well be closed.
     '''
     if isinstance(pvs, str):
         return _Subscription(pvs, callback, **kargs)
