@@ -331,9 +331,10 @@ Functions
 
     `connect_timeout`
         If a connection timeout is specified then the :func:`camonitor` will
-        only wait for the specified interval before detecting disconnection.
-        Note that if connection timeout is detected no further events will occur
-        on the monitor and it might as well be closed.
+        report a disconnection event after the specified interval if connection
+        has not completed by this time.  Note that this notification will be
+        made even if notify_disconnect is False, and that if the PV subsequently
+        connects it will update as normal.
 
 
 ..  function:: connect(pvs, cainfo=False, wait=True, timeout=5, throw=True)

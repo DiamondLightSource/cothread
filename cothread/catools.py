@@ -320,9 +320,9 @@ class _Subscription(object):
             # Good data: extract value from the dbr.
             value = self.dbr_to_value(args.raw_dbr, args.type, args.count)
         elif self.notify_disconnect:
-            # Something is wrong: let the subscriber know, but only if
-            # they've requested disconnect nofication.
-            value = ca_nothing(self.channel.name, args.status)
+            # Something is wrong: let the subscriber know, if they've requested
+            # disconnect nofication.
+            value = ca_nothing(self.name, args.status)
         else:
             return
         self.__maybe_signal(value)
@@ -369,8 +369,7 @@ class _Subscription(object):
         channel changes.  Note that this is also called asynchronously.'''
         if not connected and self.notify_disconnect:
             # Channel has become disconnected: tell the subscriber.
-            self.__maybe_signal(
-                ca_nothing(self.channel.name, cadef.ECA_DISCONN))
+            self.__maybe_signal(ca_nothing(self.name, cadef.ECA_DISCONN))
 
     def close(self):
         '''Closes the subscription and releases any associated resources.
@@ -426,9 +425,11 @@ class _Subscription(object):
                 if self.channel.WakeableWait(timeout):
                     return True
             except cothread.Timedout:
-                # Connection timeout.  Let the caller know and bail out
-                self._on_connect(False)
-                return False
+                # Connection timeout.  Let the caller know and now just block
+                # until we connect (if ever).  Note that in this case the caller
+                # is notified even if notify_disconnect=False is set.
+                self.__maybe_signal(ca_nothing(self.name, cadef.ECA_DISCONN))
+                timeout = None
         return False
 
     def __create_subscription(self,
@@ -456,8 +457,7 @@ class _Subscription(object):
         event_id = ctypes.c_void_p()
         cadef.ca_create_subscription(
             dbrcode, count, self.channel, events,
-            self.__on_event, ctypes.py_object(self),
-            ctypes.byref(event_id))
+            self.__on_event, ctypes.py_object(self), ctypes.byref(event_id))
         _flush_io()
         self._as_parameter_ = event_id.value
 
@@ -529,10 +529,11 @@ def camonitor(pvs, callback, **kargs):
         otherwise only valid values will be passed to the callback routine.
 
     connect_timeout
-        If a connection timeout is specified then the camonitor will only
-        wait for the specified interval before detecting disconnection.  Note
-        that if connection timeout is detected no further events will occur on
-        the monitor and it might as well be closed.
+        If a connection timeout is specified then the camonitor will report a
+        disconnection event after the specified interval if connection has not
+        completed by this time.  Note that this notification will be made even
+        if notify_disconnect is False, and that if the PV subsequently connects
+        it will update as normal.
     '''
     if isinstance(pvs, str):
         return _Subscription(pvs, callback, **kargs)
