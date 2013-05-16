@@ -385,6 +385,17 @@ class _Subscription(object):
         self.callback = None
         self.__state = self.__CLOSED
 
+        # Horrid hack to ensure self continues to exist for a short time: this
+        # will prevent callbacks raised before it was closed being mis-processed
+        # when they arrive by a recycled area of memory.  This will be fixed
+        # after EPICS 3.14.12.3.
+        cothread.Spawn(self.__delete)
+
+    def __delete(self):
+        cothread.Sleep(0.1)
+        self.callback = None
+
+
     def __init__(self, name, callback,
             events = None,
             datatype = None, format = FORMAT_RAW, count = 0,
