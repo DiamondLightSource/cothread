@@ -90,6 +90,7 @@ __all__ = [
     'Yield',            # Suspend task for immediate resumption
 
     'Event',            # Event for waiting and signalling
+    'Pulse',            # Event for dynamic condition variables
     'EventQueue',       # Queue of objects with event handling
     'ThreadedEventQueue',   # Event queue designed to work with threads
     'WaitForAll',       # Wait for all events to become ready
@@ -649,6 +650,7 @@ class Spawn(EventBase):
         # Hand control over to the run method in the scheduler.
         _validate_thread()
         _scheduler.spawn(self.__run, kargs.pop('stack_size', 0))
+        self.Cothreads.add(self)
 
     def __run(self, _):
         try:
@@ -674,6 +676,8 @@ class Spawn(EventBase):
             # Aborted wakeup: consume the result now, will cause a subsequent
             # Wait() to fail, which it should.
             del self.__result
+
+        self.Cothreads.remove(self)
         # See wait_until() for an explanation of this return value.
         return []
 
@@ -790,6 +794,20 @@ class Event(EventBase):
     def Reset(self):
         '''Resets the event (and erases the value).'''
         self.__value = ()
+
+
+class Pulse(EventBase):
+    '''Somewhat equivalent to pthread condition variable: any number of waiters
+    will be woken by calling the Signal() method, but there is no state and
+    nothing is returned from Wait().'''
+
+    def Wait(self, timeout = None):
+        self._WaitUntil(timeout)
+
+    def Signal(self, wake_all = True):
+        self._Wakeup(wake_all)
+
+    AbortWait = EventBase._AbortWait
 
 
 class EventQueue(EventBase):
@@ -931,6 +949,7 @@ class _Callback:
                     print('Asynchronous callback raised uncaught exception',
                         file = sys.stderr)
                     traceback.print_exc()
+            action = args = None
 
     def __call__(self, action, *args):
         '''This can be called from within any Python thread to arrange for
@@ -1058,7 +1077,7 @@ def WaitForQuit(catch_interrupt = True):
     if catch_interrupt:
         import signal
         def quit(signum, frame):
-            _QuitEvent.Signal()
+            Callback(_QuitEvent.Signal)
         signal.signal(signal.SIGINT, quit)
 
     _QuitEvent.Wait()
@@ -1077,7 +1096,7 @@ _scheduler_thread_id = _thread.get_ident()
 def _validate_thread():
     assert _scheduler_thread_id == _thread.get_ident(), \
         'Cannot use cothread with multiple threads.  Consider using ' \
-        'ThreadedEventQueue if necessary.'
+        'Callback or ThreadedEventQueue if necessary.'
 
 # This is the asynchronous callback method.
 Callback = _Callback()

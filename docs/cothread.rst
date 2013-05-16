@@ -115,11 +115,11 @@ The following are suspension points in the core :mod:`cothread` library:
     their own suspension points.
 
 `event`.\ :meth:`Wait`
-    On a :class:`Spawn`, :class:`Event` or :class:`EventQueue` object the
-    :meth:`Wait` method will suspend the caller when the event object is not yet
-    ready, independently of whether the timeout has already expired.  To
-    determine whether an event object is ready without risking suspension call
-    ``bool()`` on the object.
+    On a :class:`Spawn`, :class:`Pulse`, :class:`Event` or :class:`EventQueue`
+    object the :meth:`Wait` method will suspend the caller when the event object
+    is not yet ready, independently of whether the timeout has already expired.
+    To determine whether an event object is ready without risking suspension
+    call ``bool()`` on the object.
 
     ..  note::
 
@@ -301,9 +301,10 @@ module.
     active tasks have been processed, or the timeout has expired.
 
 
-Communication between cothreads is provided by :class:`Event` and
-:class:`EventQueue` objects.  An :class:`Event` can hold at most one value (or
-signal), while an :class:`EventQueue` can hold a list of unbounded length.
+Communication between cothreads is provided by :class:`Pulse`, :class:`Event`,
+and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
+:class:`Event` can hold at most one value (or signal), while an
+:class:`EventQueue` can hold a list of unbounded length.
 
 
 ..  class:: Event(auto_reset=True)
@@ -324,9 +325,9 @@ signal), while an :class:`EventQueue` can hold a list of unbounded length.
         of :const:`None` specifies no timeout) this is signalled by raising the
         exception :exc:`Timedout`.
 
-    If `auto_reset` was specified as :const:`True` then the signal is consumed,
-    and subsequent calls to :meth:`Wait` will block until further :meth:`Signal`
-    calls occur.
+        If `auto_reset` was specified as :const:`True` then the signal is
+        consumed, and subsequent calls to :meth:`Wait` will block until further
+        :meth:`Signal` calls occur.
 
     ..  method:: Signal(value=None)
 
@@ -349,6 +350,31 @@ signal), while an :class:`EventQueue` can hold a list of unbounded length.
 
         Resets the signal and erases its value.  Also erases any exception
         written to the event.
+
+
+..  class:: Pulse()
+
+    Pulse objects have no state and all cothreads waiting on a Pulse object will
+    block until :meth:`Signal()` is called, at which point waiting cothreads
+    will be woken.
+
+    The following methods are available.
+
+    ..  method:: Wait(timeout=None)
+
+        The calling cothread will suspend until :meth:`Signal()` is called or
+        until a timeout occurs, in which case a :exc:`Timedout` exception is
+        returned.
+
+    ..  method:: Signal(wake_all=True)
+
+        Wakes one or all cothreads waiting on the object.  By default all
+        waiting cothreads are woken, but ``Signal(False)`` can be used to
+        wake just one waiting cothread.
+
+    A Pulse object behaves similarly to an :class:`Event` object, but the wakeup
+    is unconditional and a Pulse object has no state.  This object can used as a
+    notifier for updating complex conditions.
 
 
 ..  class:: EventQueue()

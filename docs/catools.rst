@@ -257,7 +257,8 @@ Functions
 
 
 ..  function:: camonitor(pvs, callback, events=None, datatype=None, \
-        format=FORMAT_RAW, count=0, all_updates=False, notify_disconnect=False)
+        format=FORMAT_RAW, count=0, all_updates=False, \
+        notify_disconnect=False, connect_timeout=None)
 
     Creates a subscription to one or more PVs, returning a subscription
     object for each PV.  If a single PV is given then a single subscription
@@ -327,6 +328,13 @@ Functions
         :class:`ca_nothing` error with :attr:`!.ok` :const:`False`.  By default
         these notifications are suppressed so that only valid values will be
         passed to the callback routine.
+
+    `connect_timeout`
+        If a connection timeout is specified then the :func:`camonitor` will
+        report a disconnection event after the specified interval if connection
+        has not completed by this time.  Note that this notification will be
+        made even if notify_disconnect is False, and that if the PV subsequently
+        connects it will update as normal.
 
 
 ..  function:: connect(pvs, cainfo=False, wait=True, timeout=5, throw=True)

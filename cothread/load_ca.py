@@ -56,8 +56,7 @@ def _libca_path(load_libca_path):
     #    gospel.  This allows the remaining search to be overridden.
     # 2  If the libca_path module is present we accept the value it defines.
     # 3. Check for local copies of the libca file(s).
-    # 4. Finally check for EPICS_BASE and optionally EPICS_HOST_ARCH, which we
-    #    normally guess if not specified.
+    # 4. Finally check for EPICS_BASE and compute appropriate architecture
 
     # First allow a forced override
     libca_path = os.environ.get('CATOOLS_LIBCA_PATH')
@@ -76,29 +75,26 @@ def _libca_path(load_libca_path):
 
     # If no libca_path, how about local copies of the files?
     libca_path = os.path.abspath(os.path.dirname(__file__))
-    if os.access(os.path.join(libca_path, lib_files[-1]), os.R_OK):
+    if os.path.isfile(os.path.join(libca_path, lib_files[-1])):
         # Yes, there seems to be something locally installed.
         return libca_path
 
     # No local install, no local configuration, no override.  Try for standard
     # environment variable configuration instead.
     epics_base = os.environ['EPICS_BASE']
-    epics_host_arch = os.environ.get('EPICS_HOST_ARCH')
-    if not epics_host_arch:
-        # Mapping from host architecture to EPICS host architecture name can be
-        # done with a little careful guesswork.  As EPICS architecture names are
-        # a little arbitrary this isn't guaranteed to work.
-        system_map = {
-            ('Linux',   '32bit', 'i386'):   'linux-x86',
-            ('Linux',   '32bit', 'i686'):   'linux-x86',
-            ('Linux',   '64bit', 'x86_64'): 'linux-x86_64',
-            ('Darwin',  '64bit', 'i386'):   'darwin-x86',
-            ('Windows', '32bit', 'x86'):    'win32-x86',
-            ('Windows', '64bit', '????'):   'windows-x64',  # Not quite yet!
-        }
-        bits = platform.architecture()[0]
-        machine = platform.machine()
-        epics_host_arch = system_map[(system, bits, machine)]
+    # Mapping from host architecture to EPICS host architecture name can be done
+    # with a little careful guesswork.  As EPICS architecture names are a little
+    # arbitrary this isn't guaranteed to work.
+    system_map = {
+        ('Linux',   '32bit'):   'linux-x86',
+        ('Linux',   '64bit'):   'linux-x86_64',
+        ('Darwin',  '32bit'):   'darwin-x86',
+        ('Darwin',  '64bit'):   'darwin-x86',
+        ('Windows', '32bit'):   'win32-x86',
+        ('Windows', '64bit'):   'windows-x64',  # Not quite yet!
+    }
+    bits = platform.architecture()[0]
+    epics_host_arch = system_map[(system, bits)]
     return os.path.join(epics_base, 'lib', epics_host_arch)
 
 
@@ -118,7 +114,10 @@ else:
         for lib in lib_files:
             libca = load_library(lib)
     except OSError:
-        # Ok, now go searching.  _libca_path() has all the tricks.
+        # Ask _libca_path() where to find things.
         libca_path = _libca_path(True)
-        for lib in lib_files:
-            libca = load_library(os.path.join(libca_path, lib))
+        if os.path.isfile(libca_path):
+            libca = load_library(libca_path)
+        else:
+            for lib in lib_files:
+                libca = load_library(os.path.join(libca_path, lib))

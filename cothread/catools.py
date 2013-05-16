@@ -94,6 +94,9 @@ class ca_nothing(Exception):
         self.name = name
         self.errorcode = errorcode
 
+    def __repr__(self):
+        return 'ca_nothing(%r, %d)' % (self.name, self.errorcode)
+
     def __str__(self):
         return '%s: %s' % (self.name, cadef.ca_message(self.errorcode).decode())
 
@@ -148,7 +151,8 @@ class Channel(object):
     __slots__ = [
         'name',
         '__subscriptions',  # Set of listening subscriptions
-        '__connected',      # Event for waiting for channel connection
+        '__connected',      # Status of channel connection
+        '__connect_event',  # Connection event used to notify changes
         '_as_parameter_'    # Associated channel access channel handle
     ]
 
@@ -166,10 +170,10 @@ class Channel(object):
         assert op in [cadef.CA_OP_CONN_UP, cadef.CA_OP_CONN_DOWN]
         connected = op == cadef.CA_OP_CONN_UP
 
+        self.__connected = connected
         if connected:
-            self.__connected.Signal()
-        else:
-            self.__connected.Reset()
+            # Trigger wakeup of all listeners
+            self.__connect_event.Signal()
 
         # Inform all the connected subscriptions
         for subscription in self.__subscriptions:
@@ -179,7 +183,8 @@ class Channel(object):
         '''Creates a channel access channel with the given name.'''
         self.name = name
         self.__subscriptions = set()
-        self.__connected = cothread.Event(auto_reset = False)
+        self.__connected = False
+        self.__connect_event = cothread.Pulse()
 
         chid = ctypes.c_void_p()
         cadef.ca_create_channel(
@@ -218,8 +223,19 @@ class Channel(object):
     def Wait(self, timeout = None):
         '''Waits for the channel to become connected if not already connected.
         Raises a Timeout exception if the timeout expires first.'''
+        timeout = cothread.AbsTimeout(timeout)
+        while not self.__connected:
+            ca_timeout(self.__connect_event, timeout, self.name)
+
+    def WakeableWait(self, timeout):
+        '''Waits for channel to connect or any event.  Returns True if channel
+        is connected, raises Timedout exception on timeout.'''
         if not self.__connected:
-            ca_timeout(self.__connected, timeout, self.name)
+            self.__connect_event.Wait(timeout)
+        return self.__connected
+
+    def Wakeup(self):
+        self.__connect_event.Signal()
 
 
 class ChannelCache(object):
@@ -297,9 +313,9 @@ class _Subscription(object):
             # Good data: extract value from the dbr.
             value = self.dbr_to_value(args.raw_dbr, args.type, args.count)
         elif self.notify_disconnect:
-            # Something is wrong: let the subscriber know, but only if
-            # they've requested disconnect nofication.
-            value = ca_nothing(self.channel.name, args.status)
+            # Something is wrong: let the subscriber know, if they've requested
+            # disconnect nofication.
+            value = ca_nothing(self.name, args.status)
         else:
             return
         self.__maybe_signal(value)
@@ -320,7 +336,7 @@ class _Subscription(object):
         '''Wrapper for performing callbacks safely: only performs the callback
         if the subscription is open and reports and handles any exceptions that
         might arise.'''
-        if self.__state == self.__OPEN:
+        if self.__state != self.__CLOSED:
             if value is None:
                 # This arises from a merged update.
                 with self.__lock:
@@ -341,31 +357,43 @@ class _Subscription(object):
                 print('Subscription %s closed' % self.name, file = sys.stderr)
                 self.close()
 
-
     def _on_connect(self, connected):
         '''This is called each time the connection state of the underlying
         channel changes.  Note that this is also called asynchronously.'''
         if not connected and self.notify_disconnect:
             # Channel has become disconnected: tell the subscriber.
-            self.__maybe_signal(
-                ca_nothing(self.channel.name, cadef.ECA_DISCONN))
+            self.__maybe_signal(ca_nothing(self.name, cadef.ECA_DISCONN))
 
     def close(self):
         '''Closes the subscription and releases any associated resources.
         Note that no further callbacks will occur on a closed subscription,
         not even callbacks currently queued for execution.'''
-        if self.__state == self.__OPEN:
+        if self.__state == self.__OPENING:
+            self.channel.Wakeup()   # Wakes up __wait_for_channel() below
+        elif self.__state == self.__OPEN:
             self.channel._remove_subscription(self)
             cadef.ca_clear_subscription(self)
-            cadef.ca_flush_io()
-            # Delete the callback to avoid possible circular references.
-            del self.callback
+            _flush_io()
+
+        # Delete the callback to avoid possible circular references.
+        self.callback = None
         self.__state = self.__CLOSED
+
+        # Horrid hack to ensure self continues to exist for a short time: this
+        # will prevent callbacks raised before it was closed being mis-processed
+        # when they arrive by a recycled area of memory.  This will be fixed
+        # after EPICS 3.14.12.3.
+        cothread.Spawn(self.__delete)
+
+    def __delete(self):
+        cothread.Sleep(0.1)
+
 
     def __init__(self, name, callback,
             events = None,
             datatype = None, format = FORMAT_RAW, count = 0,
-            all_updates = False, notify_disconnect = False):
+            all_updates = False, notify_disconnect = False,
+            connect_timeout = None):
         '''Subscription initialisation.'''
 
         self.name = name
@@ -379,49 +407,71 @@ class _Subscription(object):
         if events is None:
             events = self.__default_events[format]
 
-        # We connect to the channel so that we can be kept informed of
-        # connection updates.
+        # Trigger channel connection if channel not already known.
         self.channel = _channel_cache[name]
-        self.channel._add_subscription(self)
 
         # Spawn the actual task of creating the subscription into the
         # background, as we may have to wait for the channel to become
         # connected.
         self.__state = self.__OPENING
         cothread.Spawn(self.__create_subscription,
-            events, datatype, format, count, stack_size = CA_ACTION_STACK)
+            events, datatype, format, count, connect_timeout,
+            stack_size = CA_ACTION_STACK)
 
-    def __create_subscription(self, events, datatype, format, count):
+    # Waiting for the channel is a bit more tangled than it might otherwise be
+    # so that we can handle the subscription being closed before the connection
+    # completes.  Alas, the implementation here is horribly entangled with the
+    # Channel implementation
+    def __wait_for_channel(self, timeout):
+        timeout = cothread.AbsTimeout(timeout)
+        while self.__state == self.__OPENING:
+            try:
+                if self.channel.WakeableWait(timeout):
+                    return self.__state == self.__OPENING
+            except cothread.Timedout:
+                # Connection timeout.  Let the caller know and now just block
+                # until we connect (if ever).  Note that in this case the caller
+                # is notified even if notify_disconnect=False is set.
+                self.__maybe_signal(ca_nothing(self.name, cadef.ECA_DISCONN))
+                timeout = None
+        return False
+
+    def __create_subscription(self,
+            events, datatype, format, count, connect_timeout):
         '''Creates the channel subscription with the specified parameters:
         event mask, datatype and format, array count.  Waits for the channel
         to become connected.'''
 
-        # Ensure the channel is connected so that type_to_dbr() can discover the
-        # underlying channel type if necessary.
-        self.channel.Wait()
-        # Can now convert the datatype request into the subscription datatype.
+        # Need to first wait for the channel to connect before we can do
+        # anything else.  If this fails then there's nothing more to do.
+        if not self.__wait_for_channel(connect_timeout):
+            return
+
+        self.__state = self.__OPEN
+
+        # Connect to the channel to be kept informed of connection updates.
+        self.channel._add_subscription(self)
+        # Convert the datatype request into the subscription datatype.
         dbrcode, self.dbr_to_value = \
             dbr.type_to_dbr(self.channel, datatype, format)
 
         # Finally create the subscription with all the requested properties
         # and hang onto the returned event id as our implicit ctypes
         # parameter.
-        if self.__state == self.__OPENING:
-            event_id = ctypes.c_void_p()
-            cadef.ca_create_subscription(
-                dbrcode, count, self.channel, events,
-                self.__on_event, ctypes.py_object(self),
-                ctypes.byref(event_id))
-            self._as_parameter_ = event_id.value
-            self.__state = self.__OPEN
-            _flush_io()
+        event_id = ctypes.c_void_p()
+        cadef.ca_create_subscription(
+            dbrcode, count, self.channel, events,
+            self.__on_event, ctypes.py_object(self), ctypes.byref(event_id))
+        _flush_io()
+        self._as_parameter_ = event_id.value
 
 
 def camonitor(pvs, callback, **kargs):
     '''camonitor(pvs, callback,
         events = None,
         datatype = None, format = FORMAT_RAW, count = 0,
-        all_updates = False, notify_disconnect = False)
+        all_updates = False, notify_disconnect = False,
+        connect_timeout = None)
 
     Creates a subscription to one or more PVs, returning a subscription
     object for each PV.  If a single PV is given then a single subscription
@@ -481,6 +531,13 @@ def camonitor(pvs, callback, **kargs):
         If this is True then IOC disconnect events will be reported by
         calling the callback with a ca_nothing error with .ok False,
         otherwise only valid values will be passed to the callback routine.
+
+    connect_timeout
+        If a connection timeout is specified then the camonitor will report a
+        disconnection event after the specified interval if connection has not
+        completed by this time.  Note that this notification will be made even
+        if notify_disconnect is False, and that if the PV subsequently connects
+        it will update as normal.
     '''
     if isinstance(pvs, str):
         return _Subscription(pvs, callback, **kargs)
@@ -764,7 +821,8 @@ def caput(pvs, values, **kargs):
 
     repeat_value
         When writing an array value to an array of PVs ensures that the
-        same array of values is written to each PV.
+        same array of values is written to each PV.  Otherwise this flag
+        can be ignored.
 
     timeout
         Timeout for the caput operation.  This can be a timeout interval
@@ -926,8 +984,8 @@ def _catools_atexit():
     #    One reason that it's rather important to do this properly is that we
     # can't safely do *any* ca_ calls once ca_context_destroy() is called!
     _channel_cache.purge()
-    cadef.ca_context_destroy()
     cadef.ca_flush_io()
+    cadef.ca_context_destroy()
 
 
 # EPICS Channel Access event dispatching needs to done with a little care.  In

@@ -45,6 +45,11 @@
 #include <sys/mman.h>
 #endif
 
+/* We include valgrind annotations so that valgrind can follow along without
+ * complaints as we switch stack frames. */
+#include "valgrind.h"
+#include "memcheck.h"
+
 #include "switch.h"
 #include "platform.h"
 #include "cocore.h"
@@ -76,6 +81,7 @@ struct stack {
     bool check_stack;           // Whether to check consumption on exit
     struct cocore *current;     // Coroutine currently on the stack
     unsigned int ref_count;     // Number of sharing coroutines
+    unsigned int valgrind_stack_id;
 };
 
 /* This represents the state of a single coroutine. */
@@ -150,9 +156,9 @@ static void save_frame(struct cocore *target)
 static void restore_frame(struct cocore *target)
 {
     struct stack *stack = target->stack;
-    memcpy(
-        FRAME_START(stack->stack_base, target->frame),
-        target->saved_frame, target->saved_length);
+    void *frame_start = FRAME_START(stack->stack_base, target->frame);
+    VALGRIND_MAKE_MEM_UNDEFINED(frame_start, target->saved_length);
+    memcpy(frame_start, target->saved_frame, target->saved_length);
     stack->current = target;
 }
 
@@ -238,7 +244,8 @@ static struct stack *create_stack(
     size_t alignment = guard_size == 0 ? STACK_ALIGNMENT : page_size;
     stack_size = (stack_size + alignment - 1) & -alignment;
 
-    void *alloc_base = MALLOC_ALIGNED(alignment, stack_size + guard_size);
+    size_t alloc_size = stack_size + guard_size;
+    void *alloc_base = MALLOC_ALIGNED(alignment, alloc_size);
     if (guard_size > 0)
         /* Disable access to the guard area. */
         mprotect(
@@ -249,6 +256,8 @@ static struct stack *create_stack(
     stack->stack_base = STACK_BASE(alloc_base, stack_size + guard_size);
     stack->stack_size = stack_size;
     stack->guard_size = guard_size;
+    stack->valgrind_stack_id =
+        VALGRIND_STACK_REGISTER(alloc_base, alloc_base + alloc_size);
 
     stack->check_stack = check_stack;
     stack->current = coroutine;
@@ -314,6 +323,7 @@ static void delete_stack(struct cocore_state *state, struct stack *stack)
             FRAME_START(alloc_base + stack->stack_size, alloc_base),
             stack->guard_size, PROT_READWRITE);
     FREE_ALIGNED(alloc_base);
+    VALGRIND_STACK_DEREGISTER(stack->valgrind_stack_id);
     free(stack);
 }
 
@@ -396,9 +406,10 @@ struct cocore *initialise_cocore_thread(void)
 
     /* Now is also a good time to prepare the switcher coroutine in case we need
      * it. */
-    void *stack = STACK_BASE(
-        malloc(FRAME_SWITCHER_STACK), FRAME_SWITCHER_STACK);
-    state->switcher_coroutine = create_frame(stack, frame_switcher, state);
+    void *stack = malloc(FRAME_SWITCHER_STACK);
+    state->switcher_coroutine = create_frame(
+        STACK_BASE(stack, FRAME_SWITCHER_STACK), frame_switcher, state);
+    VALGRIND_STACK_REGISTER(stack, stack + FRAME_SWITCHER_STACK);
 
     return coroutine;
 }
