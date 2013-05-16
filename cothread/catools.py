@@ -381,6 +381,7 @@ class _Subscription(object):
             self.channel._remove_subscription(self)
             cadef.ca_clear_subscription(self)
             _flush_io()
+
         # Delete the callback to avoid possible circular references.
         self.callback = None
         self.__state = self.__CLOSED
@@ -393,7 +394,6 @@ class _Subscription(object):
 
     def __delete(self):
         cothread.Sleep(0.1)
-        self.callback = None
 
 
     def __init__(self, name, callback,
@@ -434,7 +434,7 @@ class _Subscription(object):
         while self.__state == self.__OPENING:
             try:
                 if self.channel.WakeableWait(timeout):
-                    return True
+                    return self.__state == self.__OPENING
             except cothread.Timedout:
                 # Connection timeout.  Let the caller know and now just block
                 # until we connect (if ever).  Note that in this case the caller
