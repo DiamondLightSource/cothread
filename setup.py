@@ -59,6 +59,7 @@ setup(
     url = 'http://controls.diamond.ac.uk/downloads/python/cothread/',
     license = 'GPL2',
 
+    install_requires = ['numpy'],
     packages = ['cothread', 'cothread.tools'],
     ext_modules = ext_modules,
     **setup_args)
