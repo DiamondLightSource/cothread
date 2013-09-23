@@ -11,6 +11,11 @@ if __name__ == '__main__':
     import os
     sys.path.append(
         os.path.join(os.path.dirname(__file__), '../..'))
+    try:
+        import numpy
+    except ImportError:
+        from pkg_resources import require
+        require('numpy')
 
 from cothread import Timedout
 from cothread.catools import *
@@ -80,10 +85,12 @@ record_types = {
 }
 
 
-
 def colour(col, word):
-    esc = 27
-    return '%(esc)c[%(col)dm%(word)s%(esc)c[0m' % locals()
+    if options.raw:
+        return word
+    else:
+        esc = 27
+        return '%(esc)c[%(col)dm%(word)s%(esc)c[0m' % locals()
 
 BLACK   = 30
 RED     = 31
@@ -187,6 +194,10 @@ def follow_link(indent, link):
                     print_indent(0, indent, CYAN, value.name, value)
 
 
+# Determines whether output supports colour
+def dumb_terminal():
+    term = os.getenv('TERM')
+    return not sys.stdout.isatty() or term is None or term == 'dumb'
 
 def main():
     # Argument parsing
@@ -204,6 +215,14 @@ def main():
         '-q', '--quiet',
         dest = 'quiet', default = False, action = 'store_true',
         help = 'Only show errors, suppress normal output')
+    parser.add_option(
+        '-r', '--raw',
+        dest = 'raw', default = dumb_terminal(), action = 'store_true',
+        help = 'Print raw text without colour codes')
+    parser.add_option(
+        '-c', '--colour',
+        dest = 'raw', action = 'store_false',
+        help = 'Force colour coded output on unsupported destination')
 
     global options
     options, args = parser.parse_args()
