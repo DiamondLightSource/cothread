@@ -2,6 +2,7 @@
 
 import numpy
 import weakref
+import time
 
 from . import cothread
 from . import catools
@@ -30,16 +31,18 @@ class PV(object):
     WARNING!  This API is a work in progress and will change in future releases
     in incompatible ways.'''
 
-    def __init__(self, pv, on_update=None, **kargs):
+    def __init__(self, pv, on_update = None, timeout = 5, **kargs):
         assert isinstance(pv, str), 'PV class only works for one PV at a time'
 
         self.name = pv
         self.__event = cothread.Event()
-        self.__value = catools.ca_nothing(pv, cadef.ECA_DISCONN)
+        self.__value = None
 
         self.monitor = catools.camonitor(
             pv, _WeakMethod(self, '_on_update'), **kargs)
         self.on_update = on_update
+
+        self.__deadline = cothread.AbsTimeout(timeout)
 
     def __del__(self):
         self.close()
@@ -55,12 +58,15 @@ class PV(object):
 
     def get(self):
         '''Returns current value.'''
-        return self.__value
+        if self.__value is None:
+            return self.get_next(self.__deadline)
+        else:
+            return self.__value
 
-    def get_next(self):
+    def get_next(self, timeout=None):
         '''Returns current value or blocks until next update.  Call .reset()
         first if more recent value required.'''
-        return self.__event.Wait()
+        return self.__event.Wait(timeout)
 
     def reset(self):
         '''Ensures .get_next() will block until an update occurs.'''
