@@ -12,6 +12,7 @@ try:
         entry_points = {
             'console_scripts': [
                 'pvtree.py = cothread.tools.pvtree:main' ] },
+        install_requires = ['numpy'],
         zip_safe = False)
 
 except ImportError:
@@ -59,7 +60,6 @@ setup(
     url = 'http://controls.diamond.ac.uk/downloads/python/cothread/',
     license = 'GPL2',
 
-    install_requires = ['numpy'],
     packages = ['cothread', 'cothread.tools'],
     ext_modules = ext_modules,
     **setup_args)

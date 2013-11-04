@@ -11,6 +11,8 @@ DEPENDENCIES = \
 
 default: dist docs
 
+local: cothread/_coroutine.so
+
 dist: setup.py $(DEPENDENCIES) cothread/libca_path.py
 	MODULEVER=$(MODULEVER) $(PYTHON) setup.py bdist_egg
 	touch dist
@@ -20,7 +22,7 @@ clean: clean_docs
 	$(PYTHON) setup.py clean
 	-rm -rf build dist *egg-info installed.files cothread/libca_path.py
 	-find -name '*.pyc' -exec rm {} \;
-	rm -f cothread/_coroutine.so
+	rm -f cothread/*.so
 
 # Install the built egg
 install: dist
@@ -35,7 +37,7 @@ docs: cothread/_coroutine.so
 clean_docs:
 	rm -rf docs/html
 
-.PHONY: default clean install docs clean_docs
+.PHONY: default clean install docs clean_docs local
 
 cothread/libca_path.py:
 	EVAL="$$($(PYTHON) cothread/load_ca.py)"  && \
