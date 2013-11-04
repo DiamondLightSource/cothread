@@ -514,7 +514,7 @@ DBR_CHAR_UNICODE = 998
 DBR_CHAR_STR = 999
 
 
-# Lookup table to convert support DBR type codes into the corresponding DBR
+# Lookup table to convert supported DBR type codes into the corresponding DBR
 # datatype.
 DbrCodeToType = {
     DBR_STRING : dbr_string,
@@ -572,19 +572,17 @@ NumpyCharCodeToDbr = {
     # Unicode is supported by decoding from DBR_STRING
     'U':    DBR_STRING,     # str => unicode
 
+    # We translate machine native integers to DBR_LONG as EPICS has no support
+    # for 64-bit integers, but not allowing int as an argument is too confusing.
+    'l':    DBR_LONG,       # int_ => int32, truncate as necessary
+    'L':    DBR_LONG,       # uint => int32
+
     # The following type codes are not supported at all:
     #   q   longlong        Q   ulonglong       g   longfloat
     #   F   csingle         D   complex_        G   clongfloat
-    #   O   object_         V   void
+    #   O   object_         V   void            p, P    pointer types
 }
 
-
-
-# A couple of data types can only be supported on 32-bit platforms
-if numpy.int_().itemsize == 4:
-    NumpyCharCodeToDbr.update({'l': DBR_LONG, 'L': DBR_LONG})   # int_, uint
-if numpy.intp().itemsize == 4:
-    NumpyCharCodeToDbr.update({'p': DBR_LONG, 'P': DBR_LONG})   # intp, uintp
 
 
 # Format codes for type_to_dbr function.
@@ -601,13 +599,10 @@ def _datatype_to_dbr(datatype):
     try:
         # Rely on numpy for generic datatype recognition and conversion together
         # with filtering through our array of acceptable types.
-        dtype = numpy.dtype(datatype)
-        dbrcode = NumpyCharCodeToDbr[dtype.char]
+        return NumpyCharCodeToDbr[numpy.dtype(datatype).char]
     except:
         raise InvalidDatatype(
             'Datatype "%s" not supported for channel access' % datatype)
-    else:
-        return dbrcode, dtype
 
 def _type_to_dbrcode(datatype, format):
     '''Converts a datatype and format request to a dbr value, or raises an
@@ -627,7 +622,7 @@ def _type_to_dbrcode(datatype, format):
         elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
             return datatype         # format is meaningless in this case
         else:
-            datatype, _ = _datatype_to_dbr(datatype)
+            datatype = _datatype_to_dbr(datatype)
 
     # Now take account of the format
     if format == FORMAT_RAW:
@@ -778,10 +773,9 @@ def type_to_dbr(channel, datatype, format):
 
 def _datatype_to_dtype(datatype):
     '''Converts any user specified datatype into dbrcode and dtype.'''
-    if datatype in BasicDbrTypes:
-        return datatype, DbrCodeToType[datatype].dtype
-    else:
-        return _datatype_to_dbr(datatype)
+    if datatype not in BasicDbrTypes:
+        datatype = _datatype_to_dbr(datatype)
+    return datatype, DbrCodeToType[datatype].dtype
 
 
 def _require_value(value, dtype):
