@@ -650,15 +650,22 @@ def _make_strings(raw_dbr, count):
     p_raw_value = ctypes.pointer(raw_dbr.raw_value[0])
     return [ctypes.string_at(p_raw_value[n]) for n in range(count)]
 
-def _string_result(strings, count, scalar, dtypechar):
-    if count == 1:
-        return scalar(strings[0])
-    else:
+def _string_array(strings, count, dtypechar):
+    if strings:
         n = max(len(s) for s in strings)
-        result = ca_array((count,), dtype = '%s%d' % (dtypechar, n))
-        for i, s in enumerate(strings):
-            result[i] = s
-        return result
+    else:
+        # Zero length array of strings!  Very rare, but possible, but numpy
+        # won't allow a dtype of S0, so we need to fake up something
+        n = 1
+    result = ca_array((count,), dtype = '%s%d' % (dtypechar, n))
+    for i, s in enumerate(strings):
+        result[i] = s
+    return result
+
+def _string_at(raw_value, count):
+    # Need string_at() twice to ensure string is size limited *and* null
+    # terminated.
+    return ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
 
 
 # Conversion functions from raw_dbr to specified format.  These all take a
@@ -667,39 +674,38 @@ def _string_result(strings, count, scalar, dtypechar):
 
 # Conversion from char array to strings
 def _convert_char_str(raw_dbr, count):
-    # Need string_at() twice to ensure string is size limited *and* null
-    # terminated.
-    result = ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
-    return ca_str(result.decode())
+    return ca_str(_string_at(raw_dbr.raw_value, count).decode())
 
 # Conversion from char array to bytes strings
 def _convert_char_bytes(raw_dbr, count):
-    result = ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
-    return ca_bytes(result)
+    return ca_bytes(_string_at(raw_dbr.raw_value, count))
 
 # Arrays of standard strings.
 def _convert_str_str(raw_dbr, count):
+    return ca_str(_make_strings(raw_dbr, count)[0].decode())
+def _convert_str_str_array(raw_dbr, count):
     strings = [s.decode() for s in _make_strings(raw_dbr, count)]
-    return _string_result(strings, count, ca_str, 'U')
+    return _string_array(strings, count, 'U')
 
 # Arrays of bytes strings.
 def _convert_str_bytes(raw_dbr, count):
-    return _string_result(_make_strings(raw_dbr, count), count, ca_bytes, 'S')
+    return ca_bytes(_make_strings(raw_dbr, count)[0])
+def _convert_str_bytes_array(raw_dbr, count):
+    return _string_array(_make_strings(raw_dbr, count), count, 'S')
 
 # For everything that isn't a string we either return a scalar or a ca_array
 def _convert_other(raw_dbr, count):
-    if count == 1:
-        # Single elements are always returned as scalars.
-        return raw_dbr.scalar(raw_dbr.raw_value[0])
-    else:
-        # Build a fresh ca_array to receive a copy of the raw data in the dbr.
-        # We have to take a copy, because the dbr is transient, and it is
-        # helpful to use a numpy array as a container, because of the support it
-        # provides.  It is essential that the dtype correctly matches the memory
-        # layout of the raw dbr, and of course that the count is accurate.
-        result = ca_array(shape = (count,), dtype = raw_dbr.dtype)
-        ctypes.memmove(result.ctypes.data, raw_dbr.raw_value, result.nbytes)
-        return result
+    # Single elements are always returned as scalars.
+    return raw_dbr.scalar(raw_dbr.raw_value[0])
+def _convert_other_array(raw_dbr, count):
+    # Build a fresh ca_array to receive a copy of the raw data in the dbr.
+    # We have to take a copy, because the dbr is transient, and it is
+    # helpful to use a numpy array as a container, because of the support it
+    # provides.  It is essential that the dtype correctly matches the memory
+    # layout of the raw dbr, and of course that the count is accurate.
+    result = ca_array(shape = (count,), dtype = raw_dbr.dtype)
+    ctypes.memmove(result.ctypes.data, raw_dbr.raw_value, result.nbytes)
+    return result
 
 
 def type_to_dbr(channel, datatype, format):
@@ -727,6 +733,7 @@ def type_to_dbr(channel, datatype, format):
     dbrcode = _type_to_dbrcode(datatype, format)
     dbr_type = DbrCodeToType[dbrcode]
     dtype = dbr_type.dtype
+    element_count = cadef.ca_element_count(channel)
 
     # Determine precisely which conversion from dbr to Python is required: all
     # the options for strings add a lot of complexity, ordinary numeric values
@@ -737,14 +744,22 @@ def type_to_dbr(channel, datatype, format):
     elif dtype is numpy.uint8 and datatype == DBR_CHAR_BYTES:
         # Conversion from char array to bytes strings
         convert = _convert_char_bytes
-    elif dtype is str_dtype:
-        # String arrays, either bytes or normal.
-        if isinstance(datatype, type) and issubclass(datatype, bytes):
-            convert = _convert_str_bytes
-        else:
-            convert = _convert_str_str
     else:
-        convert = _convert_other
+        if dtype is str_dtype:
+            # String arrays, either unicode or normal.
+            if isinstance(datatype, type) and issubclass(datatype, bytes):
+                convert = (_convert_str_bytes, _convert_str_bytes_array)
+            else:
+                convert = (_convert_str_str, _convert_str_str_array)
+        else:
+            convert = (_convert_other, _convert_other_array)
+
+        # The conversion to scalar or array is determined by the original
+        # element count of the underlying data source.
+        if element_count == 1:
+            convert = convert[0]
+        else:
+            convert = convert[1]
 
 
     # We return this function to perform conversion from dbr to Python value.
