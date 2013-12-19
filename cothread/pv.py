@@ -8,7 +8,7 @@ from . import cothread
 from . import catools
 from . import cadef
 
-__all__ = ['PV', 'PV_waveform']
+__all__ = ['PV', 'PV_array']
 
 
 # This class implements an indirect call to target.method and holds on to target
@@ -38,7 +38,7 @@ class PV(object):
         self.__event = cothread.Event()
         self.__value = None
 
-        self.monitor = catools.camonitor(
+        self.__monitor = catools.camonitor(
             pv, _WeakMethod(self, '_on_update'), **kargs)
         self.on_update = on_update
 
@@ -48,7 +48,7 @@ class PV(object):
         self.close()
 
     def close(self):
-        self.monitor.close()
+        self.__monitor.close()
 
     def _on_update(self, value):
         self.__value = value
@@ -63,22 +63,27 @@ class PV(object):
         else:
             return self.__value
 
-    def get_next(self, timeout=None):
+    def get_next(self, timeout = None, reset = False):
         '''Returns current value or blocks until next update.  Call .reset()
         first if more recent value required.'''
+        if reset:
+            self.reset()
         return self.__event.Wait(timeout)
 
     def reset(self):
         '''Ensures .get_next() will block until an update occurs.'''
         self.__event.Reset()
 
-    def put(self, value, **kargs):
+    def caput(self, value, **kargs):
         return catools.caput(self.name, value, **kargs)
 
-    value = property(get, put)
+    def caget(self, **kargs):
+        return catools.caget(self.name, **kargs)
+
+    value = property(get, caput)
 
 
-class PV_waveform(object):
+class PV_array(object):
     '''PV waveform wrapper class.  Wraps access to a list of PVs as a single
     waveform with simple access methods.  This class will only work if all of
     the PVs are of the same datatype and the same length.
@@ -90,7 +95,7 @@ class PV_waveform(object):
             dtype = float, count = 1, on_update = None, **kargs):
 
         assert not isinstance(pvs, str), \
-            'PV_waveform class only works for an array of PVs'
+            'PV_array class only works for an array of PVs'
 
         self.names = pvs
         self.on_update = on_update
@@ -100,34 +105,44 @@ class PV_waveform(object):
         else:
             self.shape = (len(pvs), count)
         self.__value = numpy.zeros(self.shape, dtype = dtype)
-        self.__times = numpy.zeros(len(pvs), dtype = float)
+        self.ok = numpy.zeros(len(pvs), dtype = bool)
+        self.timestamp = numpy.zeros(len(pvs), dtype = float)
+        self.severity = numpy.zeros(len(pvs), dtype = numpy.int16)
+        self.status   = numpy.zeros(len(pvs), dtype = numpy.int16)
 
-        self.monitors = catools.camonitor(
+        self.__monitors = catools.camonitor(
             pvs, _WeakMethod(self, '_on_update'),
             count = count, datatype = dtype,
-            format = catools.FORMAT_TIME, **kargs)
+            format = catools.FORMAT_TIME, notify_disconnect = True, **kargs)
 
     def __del__(self):
         self.close()
 
     def close(self):
-        for monitor in self.monitors:
+        for monitor in self.__monitors:
             monitor.close()
 
     def _on_update(self, value, index):
-        self.__value[index] = value
-        self.__times[index] = value.timestamp
+        self.ok[index] = value.ok
+        if value.ok:
+            self.__value[index] = value
+            self.timestamp[index] = value.timestamp
+            self.severity[index] = value.severity
+            self.status[index] = value.status
         if self.on_update:
             self.on_update(self, index)
 
     def get(self):
         return self.__value
 
-    def get_times(self):
-        return self.__times
+    def caget(self, **kargs):
+        return numpy.array(catools.caget(self.names, **kargs))
 
-    def put(self, value, **kargs):
+    def caput(self, value, **kargs):
         return catools.caput(self.names, value, **kargs)
 
-    value = property(get, put)
-    times = property(get_times)
+    value = property(get, caput)
+
+    @property
+    def all_ok(self):
+        return numpy.all(self.ok)
