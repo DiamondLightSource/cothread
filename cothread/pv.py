@@ -8,7 +8,7 @@ from . import cothread
 from . import catools
 from . import cadef
 
-__all__ = ['PV', 'PV_waveform']
+__all__ = ['PV', 'PV_array']
 
 
 # This class implements an indirect call to target.method and holds on to target
@@ -38,7 +38,7 @@ class PV(object):
         self.__event = cothread.Event()
         self.__value = None
 
-        self.monitor = catools.camonitor(
+        self.__monitor = catools.camonitor(
             pv, _WeakMethod(self, '_on_update'), **kargs)
         self.on_update = on_update
 
@@ -48,7 +48,7 @@ class PV(object):
         self.close()
 
     def close(self):
-        self.monitor.close()
+        self.__monitor.close()
 
     def _on_update(self, value):
         self.__value = value
@@ -95,7 +95,7 @@ class PV_array(object):
             dtype = float, count = 1, on_update = None, **kargs):
 
         assert not isinstance(pvs, str), \
-            'PV_waveform class only works for an array of PVs'
+            'PV_array class only works for an array of PVs'
 
         self.names = pvs
         self.on_update = on_update
@@ -110,7 +110,7 @@ class PV_array(object):
         self.severity = numpy.zeros(len(pvs), dtype = numpy.int16)
         self.status   = numpy.zeros(len(pvs), dtype = numpy.int16)
 
-        self.monitors = catools.camonitor(
+        self.__monitors = catools.camonitor(
             pvs, _WeakMethod(self, '_on_update'),
             count = count, datatype = dtype,
             format = catools.FORMAT_TIME, notify_disconnect = True, **kargs)
@@ -119,7 +119,7 @@ class PV_array(object):
         self.close()
 
     def close(self):
-        for monitor in self.monitors:
+        for monitor in self.__monitors:
             monitor.close()
 
     def _on_update(self, value, index):
