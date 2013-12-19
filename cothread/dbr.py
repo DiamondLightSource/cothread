@@ -71,6 +71,8 @@ ca_extra_fields = [
     # Fields common to all data types
     'name',         # Name of the PV used to create this value
     'ok',           # True for normal data, False for error code
+    'datatype',     # Underlying DBR_ code
+    'element_type', # Underlying length of original data
     # Fields common to time and ctrl types
     'severity',     # Alarm severity
     'status',       # CA status code: reason for severity
@@ -779,6 +781,8 @@ def type_to_dbr(channel, datatype, format):
         raw_dbr.copy_attributes(result)
         result.name = name
         result.ok = True
+        result.element_count = element_count
+        result.datatype = datatype
         return result
 
     return dbrcode, dbr_to_value
