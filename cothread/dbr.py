@@ -109,6 +109,10 @@ types with extra fields.  The following fields are always present:
     name
     ok
 
+The followiong fields are present if ok is True:
+    datatype
+    element_count
+
 Depending on the request type, the following extra fields may be present:
 
 If timestamps requested:

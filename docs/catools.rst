@@ -449,6 +449,73 @@ always safe to test ``value.ok`` for a value returned by :func:`caget` or
 
     Name of the pv.
 
+If :attr:`!.ok` is :const:`True` then two further attributes are set (see
+:ref:`Augmented` for further details):
+
+..  attribute:: .datatype
+
+    Underlying EPICS data type.
+
+..  attribute:: .element_count
+
+    Underlying EPICS length.  This is typically determined by record support at
+    database loading type, for instance for :const:`waveform` records this is
+    the value in the :const:`.NELM` field.
+
+    Note that this determines the maximum length of the associated data array,
+    but the returned data may be shorter, for instance the :const:`.NORD` field
+    of a :const:`waveform` record can determine a shorter length.
+
+
+Values and their Types
+~~~~~~~~~~~~~~~~~~~~~~
+
+The type of values returned by :func:`caget` or delivered by :func:`camonitor`
+callbacks is determined by the requested datatype in the original :func:`caget`
+or :func:`camonitor` call together with the underlying length of the requested
+EPICS field.
+
+If the underlying length (:attr:`!.element_count`) of the EPICS value is 1 then
+the value will be returned as a Python scalar, and will be one of the three
+basic scalar types (string, integer or floating point number), but wrapped as an
+augmented type.
+
+If on the other hand :attr:`!.element_count` is not 1 then the value is treated
+as an array and is always returned as a numpy array, again wrapped as an
+augmented type.  Note that this means that even if ``caget(pv, count=1)`` is
+used to fetch a value with one element, if the underlying PV is an array then
+the result returned will be an array.
+
+..  note::
+
+    This is an incompatible change in behaviour from previous versions of
+    cothread.  Previously whether to return a value as an array or a scalar was
+    determined purely by the length of the retrieved data, now it is determined
+    by the underlying length of the EPICS source, ie by its
+    :attr:`!.element_count` value.
+
+The table below enumerates the possibilities:
+
+    ==================  =============== ========================================
+    Cothread type       Derived from    For these values
+    ==================  =============== ========================================
+    :class:`ca_str`     :class:`str`    String value
+    :class:`ca_int`     :class:`int`    Integral value
+    :class:`ca_float`   :class:`float`  Floating point value
+    :class:`ca_array`   :class:`ndarry` Any array value
+    ==================  =============== ========================================
+
+..  class:: ca_str
+..  class:: ca_int
+..  class:: ca_float
+
+    Scalar types derived from basic Python types.
+
+..  class:: ca_array
+
+    Array type derived from :class:`numpy.ndarray`.  The associated
+    :attr:`dtype` will be as close a fit to the underlying data as possible.
+
 
 ..  _Augmented:
 
@@ -622,6 +689,30 @@ The following fields are present in all augmented values.
 ..  attribute:: .ok
 
     Set to :const:`True`, always present.
+
+The following fields are present if :attr:`!.ok` is :const:`True`:
+
+..  attribute:: .datatype
+
+    This is the underlying EPICS data type of the value, and is one of the
+    following values:
+
+    ==============  ==  ========================================================
+    DBR_STRING      0   String (up to 40 characters)
+    DBR_SHORT       1   16-bit signed integer
+    DBR_FLOAT       2   32-bit floating point number
+    DBR_ENUM        3   Enumeration, should be value between 0 and 15, but the
+                        underlying data is a 16-bit integer
+    DBR_CHAR        4   8-bit signed integer
+    DBR_LONG        5   32-bit signed integer
+    DBR_DOUBLE      6   64-bit floating point number
+    ==============  ==  ========================================================
+
+..  attribute:: .element_count
+
+    Number of elements in the underlying EPICS value.  If this is not 1 then the
+    value is treated as an array, otherwise up to this many elements may be
+    present in the value.
 
 
 The following fields are present in all values if :const:`FORMAT_TIME` is
