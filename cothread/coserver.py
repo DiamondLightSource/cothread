@@ -22,11 +22,11 @@ cothread friendly versions of the socket servers
 from the SocketServer and BaseHTTPServer modules
 """
 
-import SocketServer, BaseHTTPServer, SimpleHTTPServer
+import socketserver, http.server, http.server
 
-import cothread
-import cosocket
-import coselect
+from . import cothread
+from . import cosocket
+from . import coselect
 
 __all__ = [
     'BaseServer',
@@ -60,7 +60,9 @@ def _patch(cls):
             self.__shut = cosocket.socketpair()
 
             if hasattr(cls, 'address_family'):
-                self.socket = cosocket.socket(None, None, None, self.socket)
+                self.socket = cosocket.socket(
+                    self.socket.family, self.socket.type,
+                    self.socket.proto, self.socket.detach())
                 if baact:
                     self.server_bind()
                     self.server_activate()
@@ -95,13 +97,13 @@ def _patch(cls):
     return WrappedServer
 
 
-BaseServer = _patch(SocketServer.BaseServer)
-TCPServer  = _patch(SocketServer.TCPServer)
-UDPServer  = _patch(SocketServer.UDPServer)
-HTTPServer = _patch(BaseHTTPServer.HTTPServer)
+BaseServer = _patch(socketserver.BaseServer)
+TCPServer  = _patch(socketserver.TCPServer)
+UDPServer  = _patch(socketserver.UDPServer)
+HTTPServer = _patch(http.server.HTTPServer)
 
 
-class CoThreadingMixIn(SocketServer.ThreadingMixIn):
+class CoThreadingMixIn(socketserver.ThreadingMixIn):
     def process_request(self, request, client_address):
         cothread.Spawn(self.process_request_thread, request, client_address)
 
@@ -109,10 +111,9 @@ class CoThreadingUDPServer(CoThreadingMixIn, UDPServer): pass
 class CoThreadingTCPServer(CoThreadingMixIn, TCPServer): pass
 class CoThreadingHTTPServer(CoThreadingMixIn, HTTPServer): pass
 
-def test(HandlerClass = SimpleHTTPServer.SimpleHTTPRequestHandler,
+def test(HandlerClass = http.server.SimpleHTTPRequestHandler,
          ServerClass = CoThreadingHTTPServer):
-    BaseHTTPServer.test(HandlerClass, ServerClass)
-
+    http.server.test(HandlerClass, ServerClass)
 
 if __name__ == '__main__':
     test()
