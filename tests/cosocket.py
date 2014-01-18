@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 
 import cothread
 from cothread import cosocket, coserver
@@ -9,9 +8,9 @@ cosocket.socket_hook()
 import unittest
 
 import socket
-import BaseHTTPServer as http
-from httplib import HTTPConnection
-from urllib2 import urlopen
+import http.server as http
+from http.client import HTTPConnection
+from urllib.request import urlopen
 
 A, B = socket.socketpair()
 
@@ -26,7 +25,7 @@ print('Test basic I/O')
 def tx():
     for i in  range(10):
         print('>>>', i)
-        A.send(chr(i))
+        A.send(chr(i).encode('ascii'))
     A.close()
 
 while True:
@@ -46,7 +45,7 @@ A, B = A.makefile('wb'), B.makefile('rb')
 @cothread.Spawn
 def tx2():
     for i in range(10):
-        print(i, file=A)
+        A.writelines([str(i).encode('ascii')])
     A.close()
 
 for L in B.readlines():
@@ -63,7 +62,7 @@ class handler(http.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Length', str(len(msg)))
         self.end_headers()
-        self.wfile.write(msg)
+        self.wfile.write(msg.encode('ascii'))
         print('Served reply')
 
 #Note: can't use HTTPServer.serve_forever() as this uses a threading.Event
