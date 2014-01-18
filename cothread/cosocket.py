@@ -52,11 +52,12 @@ def socket_hook():
     _socket.socketpair = socketpair
 
 def socketpair(*args):
-    # For unfathomable reasons socketpair() returns un-wrapped '_socket.socket'
-    # So they are only wrapped once.
-    return tuple(map(lambda S:socket(None, None, None, S), _socket_pair(*args)))
+    A, B = _socket_pair(*args)
+    A = socket(A.family, A.type, A.proto, A.detach())
+    B = socket(B.family, B.type, B.proto, B.detach())
+    return A, B
 
-class socket(object):
+class socket(_socket_socket):
     __doc__ = _socket_socket.__doc__
 
     def wrap(fun):
@@ -65,17 +66,10 @@ class socket(object):
 
     def __init__(self,
             family=_socket.AF_INET, type=_socket.SOCK_STREAM, proto=0,
-            _sock=None):
-
-        if _sock is None:
-            _sock = _socket_socket(family, type, proto)
-        self.__socket = _sock
-        self.__socket.setblocking(0)
+            fileno=None):
+        _socket_socket.__init__(self, family, type, proto, fileno)
+        _socket_socket.setblocking(self, 0)
         self.__timeout = _socket.getdefaulttimeout()
-
-    def __getattr__(self, name):
-        # Delegate all attributes we've not defined to the underlying socket.
-        return getattr(self.__socket, name)
 
     @wrap
     def settimeout(self, timeout):
@@ -98,7 +92,7 @@ class socket(object):
         # with EINPROGRESS, and then need to wait for connection to complete
         # before discovering the true result.
         try:
-            self.__socket.connect(address)
+            _socket_socket.connect(self, address)
         except _socket.error as error:
             if error.errno != errno.EINPROGRESS:
                 raise
@@ -120,44 +114,44 @@ class socket(object):
         if not coselect.poll_list([(self, event)], self.__timeout):
             raise _socket.error(errno.ETIMEDOUT, 'Timeout waiting for socket')
 
-    def __retry(self, poll, action, args):
+    def __retry(self, event, action, args):
         while True:
             try:
-                return action(*args)
+                return action(self, *args)
             except _socket.error as error:
                 if error.errno != errno.EAGAIN:
                     raise
-            self.__poll(poll)
+            self.__poll(event)
 
 
     @wrap
     def accept(self):
-        sock, addr = self.__retry(coselect.POLLIN, self.__socket.accept, ())
-        return (socket(_sock = sock), addr)
+        sock, addr = self.__retry(coselect.POLLIN, _socket_socket.accept, ())
+        return (socket(sock.family, sock.type, sock.proto, sock.detach()), addr)
 
     @wrap
     def recv(self, *args):
-        return self.__retry(coselect.POLLIN, self.__socket.recv, args)
+        return self.__retry(coselect.POLLIN, _socket_socket.recv, args)
 
     @wrap
     def recvfrom(self, *args):
-        return self.__retry(coselect.POLLIN, self.__socket.recvfrom, args)
+        return self.__retry(coselect.POLLIN, _socket_socket.recvfrom, args)
 
     @wrap
     def recvfrom_into(self, *args):
-        return self.__retry(coselect.POLLIN, self.__socket.recvfrom_into, args)
+        return self.__retry(coselect.POLLIN, _socket_socket.recvfrom_into, args)
 
     @wrap
     def recv_into(self, *args):
-        return self.__retry(coselect.POLLIN, self.__socket.recv_into, args)
+        return self.__retry(coselect.POLLIN, _socket_socket.recv_into, args)
 
     @wrap
     def send(self, *args):
-        return self.__retry(coselect.POLLOUT, self.__socket.send, args)
+        return self.__retry(coselect.POLLOUT, _socket_socket.send, args)
 
     @wrap
     def sendto(self, *args):
-        return self.__retry(coselect.POLLOUT, self.__socket.sendto, args)
+        return self.__retry(coselect.POLLOUT, _socket_socket.sendto, args)
 
     @wrap
     def sendall(self, data, *flags):
