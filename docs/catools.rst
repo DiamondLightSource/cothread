@@ -957,8 +957,9 @@ deleted.
 
     ..  method:: get()
 
-        Returns current value.  This will be a :mod:`numpy` array with shape and
-        dtype determined by the arguments to the constructor.
+        Returns copy of current value.  This will be a :mod:`numpy` array with
+        shape and dtype determined by the arguments to the constructor.  This is
+        the same as the value returned by the :attr:`value` attribute.
 
     ..  method:: caget(** kargs)
 
@@ -970,9 +971,14 @@ deleted.
 
         Directly calls :func:`caput` on the stored list of PVs.
 
+    ..  method:: sync(timeout=5, throw=False)
+
+        This method attempts to ensure that all of the PVs associated with this
+        array have received at least one update by blocking.
+
     ..  attribute:: value
 
-        Returns current value, same as :meth:`get` when read, calls
+        Returns copy of current value, same as :meth:`get` when read, calls
         :meth:`caput` when written to.
 
     ..  attribute:: names
@@ -1003,3 +1009,8 @@ deleted.
 
         Returns aggregate status of :attr:`!.ok`, :const:`True` iff all PVs
         currently connected.
+
+    Note that the attributes :attr:`value`, :attr:`ok`, :attr:`timestamp`,
+    :attr:`severity`, and :attr:`status` all return fresh copies of the
+    underlying data.  This means that the values returned are not affected by
+    subsequent updates to the :class:`PV_array` object.
