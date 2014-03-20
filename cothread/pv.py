@@ -88,7 +88,7 @@ class PV_array(object):
     waveform with simple access methods.  This class will only work if all of
     the PVs are of the same datatype and the same length.
 
-    WARNING!  This API is a work in progress and will change in future releases
+    WARNING!  This API is a work in progress and may change in future releases
     in incompatible ways.'''
 
     def __init__(self, pvs,
@@ -99,6 +99,8 @@ class PV_array(object):
 
         self.names = pvs
         self.on_update = on_update
+        self.dtype = dtype
+        self.count = count
 
         if count == 1:
             self.shape = len(pvs)
@@ -141,7 +143,11 @@ class PV_array(object):
         return +self.__value
 
     def caget(self, **kargs):
-        return catools.caget(self.names, format=catools.FORMAT_TIME, **kargs)
+        dtype = kargs.pop('dtype', self.dtype)
+        count = kargs.pop('count', self.count)
+        return catools.caget(
+            self.names, count = count, datatype = dtype,
+            format=catools.FORMAT_TIME, **kargs)
 
     def sync(self, timeout = 5, throw = True):
         values = self.caget(timeout = timeout, throw = throw)
