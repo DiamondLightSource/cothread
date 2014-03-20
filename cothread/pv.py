@@ -105,10 +105,11 @@ class PV_array(object):
         else:
             self.shape = (len(pvs), count)
         self.__value = numpy.zeros(self.shape, dtype = dtype)
-        self.ok = numpy.zeros(len(pvs), dtype = bool)
-        self.timestamp = numpy.zeros(len(pvs), dtype = float)
-        self.severity = numpy.zeros(len(pvs), dtype = numpy.int16)
-        self.status   = numpy.zeros(len(pvs), dtype = numpy.int16)
+        self.seen = numpy.zeros(len(pvs), dtype = bool)
+        self.__ok = numpy.zeros(len(pvs), dtype = bool)
+        self.__timestamp = numpy.zeros(len(pvs), dtype = float)
+        self.__severity = numpy.zeros(len(pvs), dtype = numpy.int16)
+        self.__status   = numpy.zeros(len(pvs), dtype = numpy.int16)
 
         self.__monitors = catools.camonitor(
             pvs, _WeakMethod(self, '_on_update'),
@@ -122,27 +123,41 @@ class PV_array(object):
         for monitor in self.__monitors:
             monitor.close()
 
-    def _on_update(self, value, index):
-        self.ok[index] = value.ok
+    def _update_one(self, value, index):
+        self.seen[index] = True
+        self.__ok[index] = value.ok
         if value.ok:
             self.__value[index] = value
-            self.timestamp[index] = value.timestamp
-            self.severity[index] = value.severity
-            self.status[index] = value.status
+            self.__timestamp[index] = value.timestamp
+            self.__severity[index] = value.severity
+            self.__status[index] = value.status
+
+    def _on_update(self, value, index):
+        self._update_one(value, index)
         if self.on_update:
             self.on_update(self, index)
 
     def get(self):
-        return self.__value
+        return +self.__value
 
     def caget(self, **kargs):
-        return numpy.array(catools.caget(self.names, **kargs))
+        return catools.caget(self.names, format=catools.FORMAT_TIME, **kargs)
+
+    def sync(self, timeout = 5, throw = True):
+        values = self.caget(timeout = timeout, throw = throw)
+        for index, value in enumerate(values):
+            if not self.seen[index]:
+                self._update_one(value, index)
 
     def caput(self, value, **kargs):
         return catools.caput(self.names, value, **kargs)
 
     value = property(get, caput)
+    ok        = property(lambda self: +self.__ok)
+    timestamp = property(lambda self: +self.__timestamp)
+    severity  = property(lambda self: +self.__severity)
+    status    = property(lambda self: +self.__status)
 
     @property
     def all_ok(self):
-        return numpy.all(self.ok)
+        return numpy.all(self.__ok)
