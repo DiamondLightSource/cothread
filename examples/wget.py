@@ -39,7 +39,6 @@ def download(url, nurls=nurls):
         rep = urlopen(url, None, timo)
 
         with open(os.path.basename(urlparse(rep.geturl()).path), 'wb') as F:
-            print(rep.fp._sock.fp._sock._socket__socket)
             D = rep.read()
             print('Recv',len(D))
             F.write(D)
