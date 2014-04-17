@@ -44,16 +44,12 @@ def _patch(cls):
 
         def serve_forever(self, poll_interval=0.5):
             while True:
-                print 'waiting for',self,self.__shut[1]
                 A, B = self.fileno(), self.__shut[1].fileno()
                 for S,E in coselect.poll_list([(A,coselect.POLLIN),(B,coselect.POLLIN)]):
-                    print 'have',S,E
                     if S == B:
-                        print 'stopping'
                         self.__shut[1].read(100)
                         return
                     elif S == A:
-                        print 'handling'
                         self._handle_request_noblock()
         serve_forever.__doc__ = cls.serve_forever.__doc__
 
