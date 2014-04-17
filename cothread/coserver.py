@@ -91,6 +91,7 @@ def _patch(cls):
             else:
                 self._handle_request_noblock()
 
+    WrappedServer.__name__ = cls.__name__
     return WrappedServer
 
 
