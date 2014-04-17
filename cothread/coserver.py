@@ -9,6 +9,17 @@ import cothread
 import cosocket
 import coselect
 
+__all__ = [
+  'BaseServer',
+  'TCPServer',
+  'UDPServer',
+  'HTTPServer',
+  'CoThreadingMixIn',
+  'CoThreadingTCPServer',
+  'CoThreadingUDPServer',
+  'CoThreadingHTTPServer',
+]
+
 # We must patch out use of the socket, threading, and select modules
 
 def _patch(cls):
@@ -71,9 +82,10 @@ class CoThreadingMixIn(SocketServer.ThreadingMixIn):
 
 class CoThreadingUDPServer(CoThreadingMixIn, UDPServer): pass
 class CoThreadingTCPServer(CoThreadingMixIn, TCPServer): pass
+class CoThreadingHTTPServer(CoThreadingMixIn, HTTPServer): pass
 
 def test(HandlerClass = SimpleHTTPServer.SimpleHTTPRequestHandler,
-         ServerClass = HTTPServer):
+         ServerClass = CoThreadingHTTPServer):
     BaseHTTPServer.test(HandlerClass, ServerClass)
 
 if __name__ == '__main__':
