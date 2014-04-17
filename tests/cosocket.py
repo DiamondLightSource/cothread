@@ -8,10 +8,13 @@ cosocket.socket_hook()
 
 import unittest
 
+import os
 import socket
 import BaseHTTPServer as http
 from httplib import HTTPConnection
 from urllib2 import urlopen
+
+os.environ.pop('http_proxy', None)
 
 A, B = socket.socketpair()
 
