@@ -7,10 +7,13 @@ cosocket.socket_hook()
 
 import unittest
 
+import os
 import socket
 import http.server as http
 from http.client import HTTPConnection
 from urllib.request import urlopen
+
+os.environ.pop('http_proxy', None)
 
 A, B = socket.socketpair()
 
