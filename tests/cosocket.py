@@ -18,20 +18,20 @@ A, B = socket.socketpair()
 assert(isinstance(A, cosocket.socket))
 assert(isinstance(B, cosocket.socket))
 
-print(A,B)
+print(A, B)
 
 print('Test basic I/O')
 
 @cothread.Spawn
 def tx():
     for i in  range(10):
-        print('>>>',i)
+        print('>>>', i)
         A.send(chr(i))
     A.close()
 
 while True:
     c = B.recv(100)
-    print('<<<',repr(c))
+    print('<<<', repr(c))
     if not c:
         break
 
@@ -46,7 +46,7 @@ A, B = A.makefile('wb'), B.makefile('rb')
 @cothread.Spawn
 def tx2():
     for i in range(10):
-        print(i,file=A)
+        print(i, file=A)
     A.close()
 
 for L in B.readlines():
@@ -61,14 +61,14 @@ class handler(http.BaseHTTPRequestHandler):
         print('Serving reply')
         msg = 'Request handled'
         self.send_response(200)
-        self.send_header('Content-Length',str(len(msg)))
+        self.send_header('Content-Length', str(len(msg)))
         self.end_headers()
         self.wfile.write(msg)
         print('Served reply')
 
 #Note: can't use HTTPServer.serve_forever() as this uses a threading.Event
 # and the select module
-serv = coserver.HTTPServer(('127.0.0.1',0), handler)
+serv = coserver.HTTPServer(('127.0.0.1', 0), handler)
 evt = cothread.Event()
 
 def doservone():
@@ -83,15 +83,15 @@ conn = HTTPConnection('127.0.0.1', serv.server_port)
 
 conn.connect()
 assert isinstance(conn.sock, cosocket.socket)
-print('socket',conn.sock)
+print('socket', conn.sock)
 conn.request('GET', '/')
 
 #import pdb; pdb.set_trace()
 resp = conn.getresponse()
 
-print('status',resp.status, resp.reason, resp.isclosed())
+print('status', resp.status, resp.reason, resp.isclosed())
 
-print('got back',resp.read())
+print('got back', resp.read())
 
 conn.close()
 
@@ -104,7 +104,7 @@ cothread.Spawn(doservone)
 url='http://127.0.0.1:%d'%serv.server_port
 
 resp = urlopen(url)
-print('Response is',resp.read())
+print('Response is', resp.read())
 
 resp.close()
 

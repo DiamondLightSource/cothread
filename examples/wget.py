@@ -22,8 +22,7 @@ else:
     from urllib2 import urlopen, Request
 
 parser = OptionParser()
-parser.add_option('-T','--timeout',default='5',
-                  help='Abort after some time')
+parser.add_option('-T', '--timeout', default='5', help='Abort after some time')
 
 opts, args = parser.parse_args()
 
@@ -40,7 +39,7 @@ def download(url, nurls=nurls):
 
         with open(os.path.basename(urlparse(rep.geturl()).path), 'wb') as F:
             D = rep.read()
-            print('Recv',len(D))
+            print('Recv', len(D))
             F.write(D)
 
         rep.close()
@@ -51,7 +50,7 @@ def download(url, nurls=nurls):
             cothread.Quit()
             print('Done')
         else:
-            print(nurls[0],'Remaining')
+            print(nurls[0], 'Remaining')
 
 for url in args:
     cothread.Spawn(download, url)

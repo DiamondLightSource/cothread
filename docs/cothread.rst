@@ -583,22 +583,23 @@ provided:
 
 ..  function:: select_hook()
 
-    This function will replace the :func:`select.select` and :class:`select.poll` methods in
-    the :mod:`select` module with the non-blocking cothread compatible functions
-    defined here.  Do not use this if other threads need to use functions from
-    the :mod:`select` module.
+    This function will replace the :func:`select.select` and
+    :class:`select.poll` methods in the :mod:`select` module with the
+    non-blocking cothread compatible functions defined here.  Do not use this if
+    other threads need to use functions from the :mod:`select` module.
 
 
 ..  function:: socket_hook()
 
-    This function will replace :class:`socket.socket` and :func:`socket.socketpair`
-    in the :mod:`socket` module with :class:`cothread.socket` and :func:`socketpair`.
-    This will convert most Python socket library functions into cooperative socket
-    functions and allows all of the helper functions in the :class:`socket` module
-    to be used.
+    This function will replace :class:`socket.socket` and
+    :func:`socket.socketpair` in the :mod:`socket` module with
+    :class:`cothread.socket` and :func:`socketpair`.  This will convert most
+    Python socket library functions into cooperative socket functions and allows
+    all of the helper functions in the :class:`socket` module to be used.
 
     Note that this function will affect all threads, so if the application
     contains a non-cothread thread using sockets this function must not be used.
+
 
 Coserver Functions
 ~~~~~~~~~~~~~~~~~~
@@ -608,32 +609,32 @@ Coserver Functions
 :mod:`cothread.coserver` provides coorperative versions of the server classes
 from :mod:`SocketServer` and :mod:`BaseHTTPServer` modules.
 
-.. class:: TCPServer(...)
+..  class:: TCPServer(...)
 
-   Wrapped version of :class:`SocketServer.TCPServer`.
+    Wrapped version of :class:`SocketServer.TCPServer`.
 
-.. class:: UDPServer(...)
+..  class:: UDPServer(...)
 
-   Wrapped version of :class:`SocketServer.UDPServer`.
+    Wrapped version of :class:`SocketServer.UDPServer`.
 
-.. class:: HTTPPServer(...)
+..  class:: HTTPPServer(...)
 
-   Wrapped version of :class:`BaseHTTPServer.HTTPServer`.
+    Wrapped version of :class:`BaseHTTPServer.HTTPServer`.
 
-.. class:: CoThreadingMixIn()
+..  class:: CoThreadingMixIn()
 
-   A cooperative equivalent to :class:`SocketServer.ThreadingMixIn` which spawns a new
-   cothread to handle each request.
+    A cooperative equivalent to :class:`SocketServer.ThreadingMixIn` which
+    spawns a new cothread to handle each request.
 
-.. class:: CoThreadingTCPServer(...)
+..  class:: CoThreadingTCPServer(...)
 
-.. class:: CoThreadingUDPServer(...)
+..  class:: CoThreadingUDPServer(...)
 
-.. class:: CoThreadingHTTPServer(...)
+..  class:: CoThreadingHTTPServer(...)
 
-   Convenience classes which apply :class:`CoThreadingMixIn`.
+    Convenience classes which apply :class:`CoThreadingMixIn`.
 
-.. class:: BaseServer(...)
+..  class:: BaseServer(...)
 
-   Wrapped version of :class:`SocketServer.BaseServer` provided for completeness.
-   User code will typically not use this class directly.
+    Wrapped version of :class:`SocketServer.BaseServer` provided for
+    completeness.  User code will typically not use this class directly.

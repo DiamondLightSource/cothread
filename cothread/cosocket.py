@@ -54,7 +54,7 @@ def socket_hook():
 def socketpair(*args):
     # For unfathomable reasons socketpair() returns un-wrapped '_socket.socket'
     # So they are only wrapped once.
-    return tuple(map(lambda S:socket(None,None,None,S), _socket_pair(*args)))
+    return tuple(map(lambda S:socket(None, None, None, S), _socket_pair(*args)))
 
 class socket(object):
     __doc__ = _socket_socket.__doc__
@@ -151,20 +151,19 @@ class socket(object):
             sent += self.send(data[sent:], *flags)
 
     def dup(self):
-        return socket(None,None,None,self.__socket.dup())
+        return socket(None, None, None, self.__socket.dup())
     dup.__doc__ = _socket_socket.dup.__doc__
 
     def makefile(self, *args):
-        # At this point the actual socket '_socket.socket' is wrapped
-        # by either two layers: 'socket.socket' and this class.
-        # or a single layer: this class
-        # In order to handle close() properly we must copy all wrappers,
+        # At this point the actual socket '_socket.socket' is wrapped by either
+        # two layers: 'socket.socket' and this class.  or a single layer: this
+        # class.  In order to handle close() properly we must copy all wrappers,
         # but not the underlying actual socket.
         sock = getattr(self.__socket, '_sock', None)
         if sock: # double wrapped
-            copy0 = _socket_socket(None,None,None,sock)
-            copy1 = socket(None,None,None,copy0)
+            copy0 = _socket_socket(None, None, None, sock)
+            copy1 = socket(None, None, None, copy0)
         else: # single wrapped
-            copy1 = socket(None,None,None,self.__socket)
+            copy1 = socket(None, None, None, self.__socket)
         return _socket._fileobject(copy1, *args)
     makefile.__doc__ = _socket_socket.makefile.__doc__
