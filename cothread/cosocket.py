@@ -59,6 +59,10 @@ def socketpair(*args):
 class socket(object):
     __doc__ = _socket_socket.__doc__
 
+    def wrap(fun):
+        fun.__doc__ = getattr(_socket_socket, fun.__name__).__doc__
+        return fun
+
     def __init__(self,
             family=_socket.AF_INET, type=_socket.SOCK_STREAM, proto=0,
             _sock=None):
@@ -73,19 +77,22 @@ class socket(object):
         # Delegate all attributes we've not defined to the underlying socket.
         return getattr(self.__socket, name)
 
+    @wrap
     def settimeout(self, timeout):
         self.__timeout = timeout
 
+    @wrap
     def gettimeout(self):
         return self.__timeout
 
+    @wrap
     def setblocking(self, flag):
         if flag:
             self.settimeout(None)
         else:
             self.settimeout(0)
 
-
+    @wrap
     def connect(self, address):
         # Non blocking connection is a trifle delicate: we fail straightaway
         # with EINPROGRESS, and then need to wait for connection to complete
@@ -100,6 +107,7 @@ class socket(object):
         if error:
             raise _socket.error(error, os.strerror(error))
 
+    @wrap
     def connect_ex(self, address):
         try:
             self.connect(address)
@@ -122,38 +130,47 @@ class socket(object):
             self.__poll(poll)
 
 
+    @wrap
     def accept(self):
         sock, addr = self.__retry(coselect.POLLIN, self.__socket.accept, ())
         return (socket(_sock = sock), addr)
 
+    @wrap
     def recv(self, *args):
         return self.__retry(coselect.POLLIN, self.__socket.recv, args)
 
+    @wrap
     def recvfrom(self, *args):
         return self.__retry(coselect.POLLIN, self.__socket.recvfrom, args)
 
+    @wrap
     def recvfrom_into(self, *args):
         return self.__retry(coselect.POLLIN, self.__socket.recvfrom_into, args)
 
+    @wrap
     def recv_into(self, *args):
         return self.__retry(coselect.POLLIN, self.__socket.recv_into, args)
 
+    @wrap
     def send(self, *args):
         return self.__retry(coselect.POLLOUT, self.__socket.send, args)
 
+    @wrap
     def sendto(self, *args):
         return self.__retry(coselect.POLLOUT, self.__socket.sendto, args)
 
+    @wrap
     def sendall(self, data, *flags):
         sent = 0
         length = len(data)
         while sent < length:
             sent += self.send(data[sent:], *flags)
 
+    @wrap
     def dup(self):
         return socket(None, None, None, self.__socket.dup())
-    dup.__doc__ = _socket_socket.dup.__doc__
 
+    @wrap
     def makefile(self, *args):
         # At this point the actual socket '_socket.socket' is wrapped by either
         # two layers: 'socket.socket' and this class.  or a single layer: this
@@ -166,4 +183,5 @@ class socket(object):
         else: # single wrapped
             copy1 = socket(None, None, None, self.__socket)
         return _socket._fileobject(copy1, *args)
-    makefile.__doc__ = _socket_socket.makefile.__doc__
+
+    del wrap

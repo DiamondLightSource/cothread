@@ -23,9 +23,14 @@ __all__ = [
 
 # We must patch out use of the socket, threading, and select modules
 def _patch(cls):
+    def wrap(fun):
+        fun.__doc__ = getattr(cls, fun.__name__).__doc__
+        return fun
+
     class WrappedServer(cls):
         __doc__ = cls.__doc__
 
+        @wrap
         def __init__(self, *args, **kws):
             if hasattr(cls, 'address_family'): # All except BaseServer
                 baact = kws.get('bind_and_activate', True)
@@ -40,8 +45,8 @@ def _patch(cls):
                 if baact:
                     self.server_bind()
                     self.server_activate()
-        __init__.__doc__ = cls.__init__.__doc__
 
+        @wrap
         def serve_forever(self, poll_interval=0.5):
             while True:
                 A, B = self.fileno(), self.__shut[1].fileno()
@@ -52,12 +57,12 @@ def _patch(cls):
                         return
                     elif S == A:
                         self._handle_request_noblock()
-        serve_forever.__doc__ = cls.serve_forever.__doc__
 
+        @wrap
         def shutdown(self):
             self.__shut[0].send('\0')
-        shutdown.__doc__ = cls.shutdown.__doc__
 
+        @wrap
         def handle_request(self):
             L = coselect.poll_list(
                 [(self, coselect.POLLIN)],
@@ -67,7 +72,6 @@ def _patch(cls):
             else:
                 self._handle_request_noblock()
 
-        handle_request.__doc__ = cls.handle_request.__doc__
     return WrappedServer
 
 
