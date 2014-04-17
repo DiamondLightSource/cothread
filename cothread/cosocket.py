@@ -160,22 +160,4 @@ class socket(_socket_socket):
         while sent < length:
             sent += self.send(data[sent:], *flags)
 
-    @wrap
-    def dup(self):
-        return socket(None, None, None, self.__socket.dup())
-
-    @wrap
-    def makefile(self, *args):
-        # At this point the actual socket '_socket.socket' is wrapped by either
-        # two layers: 'socket.socket' and this class.  or a single layer: this
-        # class.  In order to handle close() properly we must copy all wrappers,
-        # but not the underlying actual socket.
-        sock = getattr(self.__socket, '_sock', None)
-        if sock: # double wrapped
-            copy0 = _socket_socket(None, None, None, sock)
-            copy1 = socket(None, None, None, copy0)
-        else: # single wrapped
-            copy1 = socket(None, None, None, self.__socket)
-        return _socket._fileobject(copy1, *args)
-
     del wrap
