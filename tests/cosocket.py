@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 import cothread
-from cothread import cosocket
+from cothread import cosocket, coserver
 cosocket.socket_hook()
 
 import unittest
@@ -68,7 +68,7 @@ class handler(http.BaseHTTPRequestHandler):
 
 #Note: can't use HTTPServer.serve_forever() as this uses a threading.Event
 # and the select module
-serv = http.HTTPServer(('127.0.0.1',0), handler)
+serv = coserver.HTTPServer(('127.0.0.1',0), handler)
 evt = cothread.Event()
 
 def doservone():
