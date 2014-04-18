@@ -134,24 +134,24 @@ class TestSocket(unittest.TestCase):
 
     def test_pair_makefile(self):
         """Test makefile() with socketpair()
-        which behave differently than a plain socket() in python 2.X
+        which behaves the same as plain socket() in python 3.X
 
-        These must behave like a socket._fileobject wrapping a raw
-        _socket.socket.  Closing a _socket.socket is immediate, and necessary
-        to terminate readlines()
+        Underlying socket is a reference count.  So the socket in actually
+        closed when the last reference is released.
         """
 
         sA, sB = socket.socketpair()
 
         A, B = sA.makefile('w'), sB.makefile('r')
+        sA.close()
+        sB.close()
         self.assertNotEqual(A.name, -1)
         self.assertNotEqual(B.name, -1)
 
         def tx2():
             for i in range(10):
                 print(i, file=A)
-            A.close() # flush...
-            sA.close() # Actually close the socket, completes readlines()
+            A.close() # flush and close
 
         tx2 = cothread.Spawn(tx2, raise_on_wait=True)
 
@@ -160,20 +160,12 @@ class TestSocket(unittest.TestCase):
 
         tx2.Wait(1.0)
 
-        sB.close()
-
         self.assertEqual(Ls, ['0\n','1\n','2\n','3\n','4\n','5\n','6\n','7\n',
                               '8\n','9\n'])
 
     def test_server_makefile(self):
         """Test makefile() with socket()
-        which behave differently than socketpair() in python 2.X
-
-        These must behave like a socket._fileobject wrapping a
-        socket.socket.  Closing a socket.socket decrements a ref counter
-        which does not close the socket as a ref is held by the _fileobject.
-        So here (as with many library modules) we depend on the GC to close
-        the socket when the _fileobject is collected.
+        which behaves the same as plain socketpair() in python 3.X
         """
         A = socket.socket()
         A.bind(('localhost',0))
