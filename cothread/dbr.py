@@ -72,7 +72,7 @@ ca_extra_fields = [
     'name',         # Name of the PV used to create this value
     'ok',           # True for normal data, False for error code
     'datatype',     # Underlying DBR_ code
-    'element_type', # Underlying length of original data
+    'element_count', # Underlying length of original data
     # Fields common to time and ctrl types
     'severity',     # Alarm severity
     'status',       # CA status code: reason for severity
