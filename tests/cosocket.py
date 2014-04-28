@@ -133,25 +133,85 @@ class TestSocket(unittest.TestCase):
 
         self.assertEqual(msg, b'hello')
 
-    def test_makefile(self):
+    def test_pair_makefile(self):
+        """Test makefile() with socketpair()
+        which behave differently than a plain socket() in python 2.X
+
+        These must behave like a socket._fileobject wrapping a raw
+        _socket.socket.  Closing a _socket.socket is immediate, and necessary
+        to terminate readlines()
+        """
 
         sA, sB = socket.socketpair()
 
         A, B = sA.makefile('w'), sB.makefile('r')
-        sA.close()
-        sB.close()
+        self.assertNotEqual(A._sock.fileno(), -1)
+        self.assertNotEqual(B._sock.fileno(), -1)
 
-        @cothread.Spawn
         def tx2():
             for i in range(10):
                 print(i, file=A)
-            A.close()
+            A.close() # flush...
+            sA.close() # Actually close the socket, completes readlines()
+
+        tx2 = cothread.Spawn(tx2, raise_on_wait=True)
 
         Ls = B.readlines()
         B.close()
 
+        tx2.Wait(1.0)
+
+        sB.close()
+
         self.assertEqual(Ls, ['0\n','1\n','2\n','3\n','4\n','5\n','6\n','7\n',
                               '8\n','9\n'])
+
+    def test_server_makefile(self):
+        """Test makefile() with socket()
+        which behave differently than socketpair() in python 2.X
+
+        These must behave like a socket._fileobject wrapping a
+        socket.socket.  Closing a socket.socket decrements a ref counter
+        which does not close the socket as a ref is held by the _fileobject.
+        So here (as with many library modules) we depend on the GC to close
+        the socket when the _fileobject is collected.
+        """
+        A = socket.socket()
+        A.bind(('localhost',0))
+        A.listen(1)
+
+        B = socket.socket()
+        B.bind(('localhost',0))
+
+        Sname = A.getsockname()
+        Cname = B.getsockname()
+
+        def server():
+            C, peer = A.accept()
+            self.assertEqual(peer, Cname)
+            F = C.makefile(mode='w')
+            C.close()
+            F.write('hello')
+            F.close()
+
+        server = cothread.Spawn(server, raise_on_wait=True)
+
+        try:
+            B.connect(Sname)
+            fB = B.makefile(mode='r')
+            B.close()
+            msg = fB.readline()
+            fB.close()
+        except socket.error:
+            # ensure we capture server exceptions...
+            server.Wait(1.0)
+            raise # only get here if no server exception
+        else:
+            server.Wait(1.0)
+
+        A.close()
+
+        self.assertEqual(msg, 'hello')
 
 class handler(http.BaseHTTPRequestHandler):
     def do_GET(self):
