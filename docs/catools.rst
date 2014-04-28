@@ -671,8 +671,29 @@ used to control the type of the data returned:
 
 
 `count`
-    If specified this can be used to limit the number of waveform points
-    retrieved from the server, otherwise the entire waveform is always returned.
+    The precise behaviour of this parameter is EPICS server and client version
+    specific, but for recent versions of EPICS there are three options:
+
+    0 (default)
+        For recent versions of EPICS this is interpreted as a request for the
+        true data dependent length of the data, for example, the number of
+        points in a waveform record determined by the ``.NORD`` field).  For
+        older versions of EPICS the full waveform is returned.
+
+        ..  note::
+
+            This feature means that a very visible change in behaviour is seen
+            when upgrading from EPICS 3.14.11 to 3.14.12.  Before this update
+            requests from waveform records ignore ``.NORD``, subsequently it is
+            possible for truncated data to be returned in response to a default
+            request.
+
+    -1 (or any negative value)
+        This will always request the entire waveform, up to
+        :attr:`.element_count` values.
+
+    any other value
+        Returns the specified number of elements, up to :attr:`.element_count`.
 
 
 Fields in Augmented Values
