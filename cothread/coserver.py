@@ -74,14 +74,14 @@ def _patch(cls):
                 for S, E in coselect.poll_list(
                         [(A, coselect.POLLIN), (B, coselect.POLLIN)]):
                     if S == B:
-                        self.__shut[1].read(100)
+                        self.__shut[1].recv(100)
                         return
                     elif S == A:
                         self._handle_request_noblock()
 
         @wrap
         def shutdown(self):
-            self.__shut[0].send('\0')
+            self.__shut[0].send(b'\0')
 
         @wrap
         def handle_request(self):
