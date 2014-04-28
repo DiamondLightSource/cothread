@@ -135,9 +135,11 @@ class TestSocket(unittest.TestCase):
 
     def test_makefile(self):
 
-        A, B = socket.socketpair()
+        sA, sB = socket.socketpair()
 
-        A, B = A.makefile('w'), B.makefile('r')
+        A, B = sA.makefile('w'), sB.makefile('r')
+        sA.close()
+        sB.close()
 
         @cothread.Spawn
         def tx2():
