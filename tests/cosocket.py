@@ -15,6 +15,7 @@ from httplib import HTTPConnection
 from urllib2 import urlopen
 
 os.environ.pop('http_proxy', None)
+os.environ.pop('HTTP_PROXY', None)
 
 A, B = socket.socketpair()
 
