@@ -449,6 +449,10 @@ class _Subscription(object):
 
         self.__state = self.__OPEN
 
+        # Treat a negative count as a request for the complete data
+        if count < 0:
+            count = cadef.ca_element_count(self.channel)
+
         # Connect to the channel to be kept informed of connection updates.
         self.channel._add_subscription(self)
         # Convert the datatype request into the subscription datatype.
@@ -584,9 +588,16 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     channel = _channel_cache[pv]
     channel.Wait(timeout)
 
-    # If an element count has been specified, make sure it fits within the
-    # channel, otherwise ask for everything by default.
-    if count > 0:
+    # A count of zero will be treated by EPICS in a version dependent manner,
+    # either returning the entire waveform (equivalent to count=-1) or a data
+    # dependent waveform length.
+    if count < 0:
+        # Treat negative count request as request for fixed underlying channel
+        # size.
+        count = cadef.ca_element_count(channel)
+    elif count > 0:
+        # Need to ensure we don't ask for more than the channel can provide as
+        # otherwise may get API error.
         count = min(count, cadef.ca_element_count(channel))
 
     # Assemble the callback context.  Note that we need to explicitly
@@ -702,7 +713,9 @@ def caget(pvs, **kargs):
 
     count
         If specified this can be used to limit the number of waveform values
-        retrieved from the server.
+        retrieved from the server.  The default value of 0 requests server and
+        data dependent waveform length, while a value of -1 requests the full
+        data length.
 
     throw
         Normally an exception will be raised if the channel cannot be
