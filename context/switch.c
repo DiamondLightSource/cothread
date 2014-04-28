@@ -34,7 +34,7 @@
 #else
     #define FNAME(name) \
         ".globl " #name "\n" \
-        ".type " #name " STT_FUNC\n" \
+        ".type " #name ", STT_FUNC\n" \
         #name ":\n"
     #define FSIZE(name) \
         ".size " #name ", .-" #name "\n"
