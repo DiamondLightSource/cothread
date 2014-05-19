@@ -93,6 +93,12 @@ def _patch(cls):
             else:
                 self._handle_request_noblock()
 
+        @wrap
+        def server_close(self):
+            cls.server_close(self)
+            self.__shut[0].close()
+            self.__shut[1].close()
+
     WrappedServer.__name__ = cls.__name__
     return WrappedServer
 

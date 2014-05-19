@@ -35,7 +35,7 @@ import errno
 from . import coselect
 import socket as _socket
 
-__all__ = ['socket', 'socket_hook']
+__all__ = ['socket', 'socket_hook', 'socketpair', 'create_connection']
 
 
 # We need to hang onto this so we can create the real thing when necessary, even
@@ -56,6 +56,11 @@ def socketpair(*args):
     A = socket(A.family, A.type, A.proto, A.detach())
     B = socket(B.family, B.type, B.proto, B.detach())
     return A, B
+
+def create_connection(*args, **kargs):
+    sock = _socket.create_connection(*args, **kargs)
+    return socket(_sock = sock)
+create_connection.__doc__ = _socket.create_connection.__doc__
 
 class socket(_socket_socket):
     __doc__ = _socket_socket.__doc__
