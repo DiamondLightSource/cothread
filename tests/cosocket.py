@@ -228,6 +228,9 @@ class TestHTTPServer(unittest.TestCase):
         self.serv = coserver.HTTPServer(('127.0.0.1', 0), handler)
         self.assertTrue(isinstance(self.serv.socket, cosocket.socket))
 
+    def tearDown(self):
+        self.serv.server_close()
+
     def test_immediate_shutdown(self):
         self.serv.shutdown()
 
@@ -254,6 +257,7 @@ class TestHTTPClient(unittest.TestCase):
     def tearDown(self):
         self.serv.shutdown()
         self.task.Wait(1.0)
+        self.serv.server_close()
 
     def test_httplib(self):
         conn = HTTPConnection('127.0.0.1', self.serv.server_port)
