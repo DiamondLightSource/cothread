@@ -579,7 +579,12 @@ provided:
 ..  function:: socketpair(...)
 
     This function wraps :func:`socket.socketpair` to return a pair of
-    coorperative stream :class:`socket` instances which are already connected.
+    cooperative stream :class:`socket` instances which are already connected.
+
+..  function:: create_connection(address, ...)
+
+    This function wraps :func:`socket.create_connection` to return a cothread
+    compatible socket.
 
 ..  function:: select_hook()
 

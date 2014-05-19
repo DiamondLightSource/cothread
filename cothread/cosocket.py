@@ -35,7 +35,7 @@ import errno
 from . import coselect
 import socket as _socket
 
-__all__ = ['socket', 'socket_hook']
+__all__ = ['socket', 'socket_hook', 'socketpair', 'create_connection']
 
 
 # We need to hang onto this so we can create the real thing when necessary, even
@@ -54,7 +54,13 @@ def socket_hook():
 def socketpair(*args):
     # For unfathomable reasons socketpair() returns un-wrapped '_socket.socket'
     # So they are only wrapped once.
-    return tuple(map(lambda S:socket(None, None, None, S), _socket_pair(*args)))
+    return tuple(map(lambda S: socket(_sock = S), _socket_pair(*args)))
+socketpair.__doc__ = _socket.socketpair.__doc__
+
+def create_connection(*args, **kargs):
+    sock = _socket.create_connection(*args, **kargs)
+    return socket(_sock = sock)
+create_connection.__doc__ = _socket.create_connection.__doc__
 
 class socket(object):
     __doc__ = _socket_socket.__doc__
