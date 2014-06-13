@@ -669,7 +669,7 @@ def _string_array(strings, count, dtypechar):
 def _string_at(raw_value, count):
     # Need string_at() twice to ensure string is size limited *and* null
     # terminated.
-    return ctypes.string_at(ctypes.string_at(raw_dbr.raw_value, count))
+    return ctypes.string_at(ctypes.string_at(raw_value, count))
 
 
 # Conversion functions from raw_dbr to specified format.  These all take a
