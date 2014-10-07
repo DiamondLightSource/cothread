@@ -247,7 +247,7 @@ def poll_list(event_list, timeout = None):
     signals a selected event (or any event from HUP, ERR, NVAL) or until
     the timeout (in seconds) occurs.'''
     poller = _Poller(event_list)
-    cothread.cothread._scheduler.poll_until(
+    cothread.cothread._get_thread_state(True).scheduler.poll_until(
         poller, cothread.cothread.GetDeadline(timeout))
     return poller.ready_list()
 

@@ -52,6 +52,7 @@ import atexit
 import traceback
 import ctypes
 import threading
+import weakref
 
 from . import cothread
 from . import cadef
@@ -164,7 +165,7 @@ class Channel(object):
 
         self = cadef.ca_puser(args.chid)
         op = args.op
-        cothread.Callback(self.on_ca_connect_, op)
+        self.__connect_event.Callback(self.on_ca_connect_, op)
 
     def on_ca_connect_(self, op):
         assert op in [cadef.CA_OP_CONN_UP, cadef.CA_OP_CONN_DOWN]
@@ -283,6 +284,8 @@ class _Subscription(object):
         'notify_disconnect', # Whether to report disconnect events
         '__value',          # Most recent update if merging updates
         '__update_count',   # Number of updates seen since last notification
+        '__callback',       # Dedicated cothread for camonitor callbacks
+        '__lock',           # Used for update merging
     ]
 
     # _Subscription state values:
@@ -295,12 +298,6 @@ class _Subscription(object):
         FORMAT_RAW:  DBE_VALUE,
         FORMAT_TIME: DBE_VALUE | DBE_ALARM,
         FORMAT_CTRL: DBE_VALUE | DBE_ALARM | DBE_PROPERTY }
-
-    __lock = threading.Lock()   # Used for update merging.
-
-    # Create our own callback queue so that camonitor() callbacks can be handled
-    # concurrently with other asynchronous callbacks.
-    __Callback = cothread._Callback()
 
     @cadef.event_handler
     def __on_event(args):
@@ -324,12 +321,12 @@ class _Subscription(object):
         '''Performs update merging and callback notification if appropriate.'''
         if self.all_updates:
             value.update_count = 1
-            self.__Callback(self.__signal, value)
+            self.__callback(self.__signal, value)
         else:
             with self.__lock:
                 self.__value = value
                 if self.__update_count == 0:
-                    self.__Callback(self.__signal, None)
+                    self.__callback(self.__signal, None)
                 self.__update_count += 1
 
     def __signal(self, value):
@@ -402,13 +399,17 @@ class _Subscription(object):
         self.notify_disconnect = notify_disconnect
         self.__update_count = 0
 
+        thread_state = _ThreadState.get()
+        self.__callback = thread_state.callback
+        self.__lock = thread_state.lock
+
         # If events not specified then compute appropriate default corresponding
         # to the requested format.
         if events is None:
             events = self.__default_events[format]
 
         # Trigger channel connection if channel not already known.
-        self.channel = _channel_cache[name]
+        self.channel = _channel_lookup(name)
 
         # Spawn the actual task of creating the subscription into the
         # background, as we may have to wait for the channel to become
@@ -568,10 +569,9 @@ def _caget_event_handler(args):
     ctypes.pythonapi.Py_DecRef(args.usr)
 
     if args.status == cadef.ECA_NORMAL:
-        cothread.Callback(done.Signal, dbr_to_value(
-            args.raw_dbr, args.type, args.count))
+        done.Signal(dbr_to_value(args.raw_dbr, args.type, args.count))
     else:
-        cothread.Callback(done.SignalException, ca_nothing(pv, args.status))
+        done.SignalException(ca_nothing(pv, args.status))
 
 
 @maybe_throw
@@ -585,7 +585,7 @@ def caget_one(pv, timeout=5, datatype=None, format=FORMAT_RAW, count=0):
     # deadline.
     timeout = cothread.AbsTimeout(timeout)
     # Retrieve the requested channel and ensure it's connected.
-    channel = _channel_cache[pv]
+    channel = _channel_lookup(pv)
     channel.Wait(timeout)
 
     # A count of zero will be treated by EPICS in a version dependent manner,
@@ -748,11 +748,12 @@ def _caput_event_handler(args):
 
     if done is not None:
         if args.status == cadef.ECA_NORMAL:
-            cothread.Callback(done.Signal)
+            done.Signal()
         else:
-            cothread.Callback(done.SignalException, ca_nothing(pv, args.status))
+            done.SignalException(ca_nothing(pv, args.status))
+
     if callback is not None:
-        cothread.Callback(callback, ca_nothing(pv, args.status))
+        done.Callback(callback, ca_nothing(pv, args.status))
 
 
 @maybe_throw
@@ -762,7 +763,7 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
 
     # Connect to the channel and wait for connection to complete.
     timeout = cothread.AbsTimeout(timeout)
-    channel = _channel_cache[pv]
+    channel = _channel_lookup(pv)
     channel.Wait(timeout)
 
     # Note: the unused value returned below needs to be retained so that
@@ -915,7 +916,7 @@ class ca_info(object):
 
 @maybe_throw
 def connect_one(pv, cainfo = False, wait = True, timeout = 5):
-    channel = _channel_cache[pv]
+    channel = _channel_lookup(pv)
     if wait:
         channel.Wait(timeout)
     if cainfo:
@@ -983,10 +984,62 @@ def connect(pvs, **kargs):
 
 
 # ----------------------------------------------------------------------------
-#   Final module initialisation
+# Final module initialisation and thread specific state
 
 
-_channel_cache = ChannelCache()
+class _ThreadState(object):
+    local = threading.local()
+
+    # We will perform all CA IO with a shared CA thread context.  This makes
+    # managing the context simpler.  We enable preemptive Channel Access
+    # callbacks, which means we need to cope with all of our channel access
+    # events occuring asynchronously.
+    cadef.ca_context_create(1)
+    ca_context = cadef.ca_current_context()
+
+    def __init__(self):
+        self.local.state = self
+
+        # Each thread needs its own register of connected channels.
+        self.cache = ChannelCache()
+        # Create a thread specific callback queue.  This will be used for
+        # camonitor() callback dispatching.
+        self.callback = cothread._Callback()
+        # Create thread specific lock for subscription update merging
+        self.lock = threading.Lock()
+
+        # This is a cute trick to detect termination of the thread we're
+        # initialising: so long as we hang onto the weakref, when the current
+        # thread goes away our cleanup method will be called!
+        self.close = weakref.ref(threading.current_thread(), self.cleanup)
+
+        if cadef.ca_current_context() is None:
+            cadef.ca_attach_context(self.ca_context)
+
+    def cleanup(self, close):
+        self.cache.purge()
+        cadef.ca_flush_io()
+
+    @classmethod
+    def get(cls):
+        try:
+            return cls.local.state
+        except AttributeError:
+            return _ThreadState()
+
+    @classmethod
+    def lookup(cls, name):
+        return cls.get().cache[name]
+
+    @classmethod
+    def get_callback(cls):
+        return cls.get().callback
+
+_channel_lookup = _ThreadState.lookup
+
+# Create a channel cache for the top level thread.
+_ThreadState.get()
+
 
 @atexit.register
 def _catools_atexit():
@@ -996,18 +1049,10 @@ def _catools_atexit():
     # application exit.
     #    One reason that it's rather important to do this properly is that we
     # can't safely do *any* ca_ calls once ca_context_destroy() is called!
-    _channel_cache.purge()
+    _ThreadState.get().cache.purge()
     cadef.ca_flush_io()
     cadef.ca_context_destroy()
 
-
-# EPICS Channel Access event dispatching needs to done with a little care.  In
-# previous versions the solution was to repeatedly call ca_pend_event() in
-# polling mode, but this does not appear to be efficient enough when receiving
-# large amounts of data.  Instead we enable preemptive Channel Access callbacks,
-# which means we need to cope with all of our channel access events occuring
-# asynchronously.
-cadef.ca_context_create(1)
 
 # Another delicacy arising from relying on asynchronous CA event dispatching is
 # that we need to manually flush IO events such as caget commands.  To ensure
@@ -1017,18 +1062,22 @@ cadef.ca_context_create(1)
 class _FlushIo:
     def __init__(self):
         self._flush_io_event = cothread.Event()
+        self.flush_pending = False
         cothread.Spawn(self._dispatch_flush_io, stack_size = CA_ACTION_STACK)
 
     def _dispatch_flush_io(self):
         while True:
             self._flush_io_event.Wait()
+            self.flush_pending = False
             cadef.ca_flush_io()
 
     def __call__(self):
         '''This should be called after any Channel Access method which generates
         buffered requests.  ca_flush_io() will now be called during the next
         scheduler cycle.'''
-        self._flush_io_event.Signal()
+        if not self.flush_pending:
+            self.flush_pending = True
+            self._flush_io_event.Signal()
 
 _flush_io = _FlushIo()
 

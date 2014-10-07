@@ -361,14 +361,26 @@ ca_context_create.errcheck = expect_ECA_NORMAL
 # To be called at exit.
 ca_context_destroy = libca.ca_context_destroy
 ca_context_destroy.argtypes = []
+ca_context_destroy.restype = None
 
-
-#   status = ca_pend_event(timeout)
+#   ca_current_context()
 #
-# Flushes the send buffer and processes background activities until the
-# specified timeout (in seconds) expires.
-ca_pend_event = libca.ca_pend_event
-ca_pend_event.argtypes = [ctypes.c_double]
+ca_current_context = libca.ca_current_context
+ca_current_context.argtypes = []
+ca_current_context.restype = ctypes.c_void_p
+
+#   ca_attach_context()
+#
+ca_attach_context = libca.ca_attach_context
+ca_attach_context.argtypes = [ctypes.c_void_p]
+ca_attach_context.errcheck = expect_ECA_NORMAL
+
+#   ca_detach_context()
+#
+# Orphans the context currently associated with this thread
+ca_detach_context = libca.ca_detach_context
+ca_detach_context.argtypes = []
+ca_detach_context.restype = None
 
 
 #   ca_flush_io()
