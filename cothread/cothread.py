@@ -74,7 +74,8 @@ import time
 import bisect
 import traceback
 import collections
-import thread
+import threading
+import weakref
 
 from . import _coroutine
 
@@ -108,6 +109,7 @@ __all__ = [
 
     'Timer',            # One-shot cancellable timer
     'Callback',         # Simple asynchronous synchronisation
+    'GetCallback',
 ]
 
 
@@ -581,6 +583,7 @@ class EventBase(object):
     __slots__ = [
         '__wait_queue',     # Queue of cothreads waiting to be woken
         '__wait_abort',     # Count of abortable waits.
+        '_thread_state',    # Associated scheduler thread state
     ]
 
     def __init__(self):
@@ -590,20 +593,22 @@ class EventBase(object):
         # incremented by subclasses for each _Wakeup that needs to be
         # simulated.
         self.__wait_abort = 0
+        # Thread state including scheduler used to create this waitable object.
+        # This will initialise the cothread scheduler if necessary.
+        self._thread_state = _get_thread_state(True)
 
     def _WaitUntil(self, timeout):
         '''Suspends the calling task until _Wakeup() is called.  Raises an
         exception if a timeout occurs first.'''
         # If the event object is not ready we always yield control to ensure
         # that other ready cothreads get the opportunity to run.
-        _validate_thread()
-        if _scheduler.wait_until(GetDeadline(timeout), self.__wait_queue, None):
+        if self._thread_state.scheduler.wait_until(
+                GetDeadline(timeout), self.__wait_queue, None):
             raise Timedout('Timed out waiting for event')
 
     def _Wakeup(self, wake_all):
         '''Wakes one or all waiting tasks.  Returns False if an aborted wait
         needs to be emulated.'''
-        _validate_thread()
         if self.__wait_abort and not wake_all:
             # This is a special case: an aborted wait needs to be completed.
             # This occurs when waiting needs to be simulated, in which case
@@ -619,6 +624,29 @@ class EventBase(object):
     def _AbortWait(self):
         self.__wait_abort += 1
 
+    def Callback(self, action, *args):
+        '''Triggers a cothread callback on the thread associated with this event
+        object.  Can be called from any thread.'''
+        self._thread_state.callback(action, *args)
+
+
+    # Ensures that any operation that changes the state of the event object is
+    # called in the correct thread.
+    def _validate_thread(self):
+        assert _get_thread_state(False) == self._thread_state, \
+            'Event object can only wait from same thread that created it'
+
+    # Ensures that the caller is called in the correct thread.  Returns True if
+    # processing can proceed in the calling thread.
+    def _ensure_thread(self, action, *args):
+        thread_state = self._thread_state
+        if _get_thread_state(False) == thread_state:
+            return True
+        else:
+            thread_state.callback(action, *args)
+            return False
+
+
 
 class Spawn(EventBase):
     '''This class is used to wrap cooperative threads: every task (except
@@ -631,9 +659,6 @@ class Spawn(EventBase):
         '__result',         # Result when action has completed
         '__raise_on_wait',  # Action to take on exception
     ]
-
-    # Set of all active processes for debugging
-    Cothreads = set()
 
     def __init__(self, function, *args, **kargs):
         '''The given function and arguments will be called as a new task.
@@ -650,9 +675,9 @@ class Spawn(EventBase):
         self.__result = ()
         self.__raise_on_wait = kargs.pop('raise_on_wait', False)
         # Hand control over to the run method in the scheduler.
-        _validate_thread()
-        _scheduler.spawn(self.__run, kargs.pop('stack_size', 0))
-        self.Cothreads.add(self)
+        self._thread_state.scheduler.spawn(
+            self.__run, kargs.pop('stack_size', 0))
+        self._thread_state.cothreads.add(self)
 
     def __run(self, _):
         try:
@@ -679,7 +704,7 @@ class Spawn(EventBase):
             # Wait() to fail, which it should.
             del self.__result
 
-        self.Cothreads.remove(self)
+        self._thread_state.cothreads.remove(self)
         # See wait_until() for an explanation of this return value.
         return []
 
@@ -691,6 +716,7 @@ class Spawn(EventBase):
         '''Waits until the task has completed.  May raise an exception if the
         task terminated with an exception and raise_on_wait was selected.
         Can only be called once, as the result is deleted after call.'''
+        self._validate_thread()
         if not self.__result:
             self._WaitUntil(timeout)
         ok, result = self.__result
@@ -712,6 +738,7 @@ class Spawn(EventBase):
     def AbortWait(self):
         '''Called instead of performing a proper wait to release any resources
         that might be consumed until the wait occurs.'''
+        self._validate_thread()
         if self.__result:
             # Result has already arrived.  Consume it silently now.
             del self.__result
@@ -751,6 +778,7 @@ class Event(EventBase):
         raised if a timeout occurs.'''
         # If one task resets the event while another is waiting the wait may
         # fail, so we have to loop here.
+        self._validate_thread()
         deadline = AbsTimeout(timeout)
         while not self.__value:
             self._WaitUntil(deadline)
@@ -774,6 +802,7 @@ class Event(EventBase):
         # If this isn't an auto_reset event then our aborted wait makes no
         # difference.  Otherwise we either consume the value now or on the
         # next wakeup.
+        self._validate_thread()
         if self.__auto_reset:
             if self.__value:
                 self.Reset()
@@ -782,16 +811,18 @@ class Event(EventBase):
 
     def Signal(self, value = None):
         '''Signals the event.  Any waiting tasks are scheduled to be woken.'''
-        self.__value = (True, value)
-        if not self._Wakeup(not self.__auto_reset):
-            self.Reset()
+        if self._ensure_thread(self.Signal, value):
+            self.__value = (True, value)
+            if not self._Wakeup(not self.__auto_reset):
+                self.Reset()
 
     def SignalException(self, exception):
         '''Signals the event with an exception: the next call to wait will
         receive an exception instead of a normal return value.'''
-        self.__value = (False, exception)
-        if not self._Wakeup(not self.__auto_reset):
-            self.Reset()
+        if self._ensure_thread(self.SignalException, exception):
+            self.__value = (False, exception)
+            if not self._Wakeup(not self.__auto_reset):
+                self.Reset()
 
     def Reset(self):
         '''Resets the event (and erases the value).'''
@@ -804,12 +835,16 @@ class Pulse(EventBase):
     nothing is returned from Wait().'''
 
     def Wait(self, timeout = None):
+        self._validate_thread()
         self._WaitUntil(timeout)
 
     def Signal(self, wake_all = True):
-        self._Wakeup(wake_all)
+        if self._ensure_thread(self.Signal, wake_all):
+            self._Wakeup(wake_all)
 
-    AbortWait = EventBase._AbortWait
+    def AbortWait(self):
+        self._validate_thread()
+        EventBase._AbortWait()
 
 
 class EventQueue(EventBase):
@@ -832,6 +867,7 @@ class EventQueue(EventBase):
     def Wait(self, timeout = None):
         '''Returns the next object from the queue, or raises a Timeout
         exception if the timeout expires first.'''
+        self._validate_thread()
         deadline = AbsTimeout(timeout)
         while not self.__queue and not self.__closed:
             self._WaitUntil(deadline)
@@ -843,6 +879,7 @@ class EventQueue(EventBase):
     def AbortWait(self):
         '''Called instead of performing a proper wait to release any resources
         that might be consumed until the wait occurs.'''
+        self._validate_thread()
         if self.__queue:
             self.__queue.pop(0)
         elif not self.__closed:
@@ -851,16 +888,18 @@ class EventQueue(EventBase):
     def Signal(self, value):
         '''Adds the given value to the tail of the queue.'''
         assert not self.__closed, 'Can\'t write to a closed queue'
-        self.__queue.append(value)
-        if not self._Wakeup(False):
-            self.__queue.pop(0)
+        if self._ensure_thread(self.Signal, value):
+            self.__queue.append(value)
+            if not self._Wakeup(False):
+                self.__queue.pop(0)
 
     def close(self):
         '''An event queue can be closed.  This will cause waiting to raise
         the StopIteration exception (once existing entries have been read),
         and will prevent any further signals to the queue.'''
-        self.__closed = True
-        self._Wakeup(True)
+        if self._ensure_thread(self.close):
+            self.__closed = True
+            self._Wakeup(True)
 
     def __iter__(self):
         '''An event queue can itself be treated as an iterator: this allows
@@ -895,7 +934,7 @@ class ThreadedEventQueue(object):
         '''Waits for a value to be written to the queue.  This can safely be
         called from either a cothread or another thread: the appropriate form
         of cooperative or normal blocking will be selected automatically.'''
-        if thread.get_ident() == _scheduler_thread_id:
+        if _get_thread_state(False) is None:
             # Normal cothread case, use cooperative wait
             poll = coselect.poll_list
         else:
@@ -924,8 +963,9 @@ class ThreadedEventQueue(object):
 # Note that the signalling from Callback() to the callback_events() loop is
 # rather delicate.  Care is taken here to reduce the number of os.read/write
 # actions as these involve costly system calls, but without the hazard of losing
-# events which would result in deadlock.
-class _Callback:
+# events which would result in deadlock.  Tamper with this code at your peril as
+# it's terribly easy to introduce a race condition and lose updates.
+class _Callback(object):
     COTHREAD_CALLBACK_STACK = \
         int(os.environ.get('COTHREAD_CALLBACK_STACK', 1024 * 1024))
 
@@ -1064,50 +1104,84 @@ def WaitForAll(event_list, timeout = None):
 #       method (or even with a special wakeup value), but may require some care.
 
 
-_QuitEvent = Event(auto_reset = False)
+
+# Thread specific cothread state.
+class _ThreadState(object):
+    local = threading.local()
+    # We allow callbacks to be looked up by thread id.
+    callbacks = weakref.WeakKeyDictionary()
+
+    def __init__(self):
+        # We need to be rather careful how initialisation proceeds.  Because
+        # both Event() and _Callback(), which we call, will in turn cause .get()
+        # to be called and will look for the scheduler attribute it's important
+        # to initialise .state and .scheduler first.
+        self.local.state = self
+        # The scheduler itself, the heart of cothread!
+        self.scheduler = _Scheduler.create()
+
+        # Set of currently active cothreads on this thread for debug.
+        self.cothreads = set()
+        # Callback used to perform asynchronous actions in this thread
+        self.callback = _Callback()
+        # Event object used to signal completion of a thread
+        self.quit = Event(auto_reset = False)
+
+        # We allow callbacks for specific threads to be discovered.  This is
+        # useful for dispatching actions to a specific thread.
+        self.callbacks[threading.current_thread()] = self.callback
+
+    @classmethod
+    def get(cls, create):
+        try:
+            return cls.local.state
+        except AttributeError:
+            if not create:
+                return None
+            return _ThreadState()
+
+    @classmethod
+    def get_callback(cls, thread = None):
+        if thread is None:
+            return cls.get(True).callback
+        else:
+            return cls.callbacks[thread]
+
+_get_thread_state = _ThreadState.get
+GetCallback = _ThreadState.get_callback
+
+
+# Start by initialising a cothread interpreter for the calling thread -- this
+# becomes the main recipient of callback actions.
+_master_state = _get_thread_state(True)
+Callback = _master_state.callback
+
 
 def Quit():
     '''Signals the quit event.  Once signalled it stays signalled.'''
-    _QuitEvent.Signal()
+    _get_thread_state(False).quit.Signal()
 
-def WaitForQuit(catch_interrupt = True):
+def WaitForQuit(catch_interrupt = None):
     '''Waits for the quit event to be signalled.  If catch_interrupt is True
     then control-C will only signal the quit event and will not generate an
     exception; this does mean that the only way to interrupt a misbehaving loop
     is to use another signal such as SIGQUIT (C-\)'''
+    thread_state = _get_thread_state(True)
+    # Only default to catching ctrl-C for the master thread
+    if catch_interrupt is None:
+        catch_interrupt = thread_state == _master_state
     if catch_interrupt:
         import signal
         def quit(signum, frame):
-            Callback(_QuitEvent.Signal)
+            thread_state.quit.Signal()
         signal.signal(signal.SIGINT, quit)
 
-    _QuitEvent.Wait()
-
-
-# There is only the one scheduler, which we create right away.  A dedicated
-# scheduler task is created: this allows the main task to suspend, but does
-# mean that the scheduler is not the parent of all the tasks it's managing.
-_scheduler = _Scheduler.create()
-# We hang onto the thread ID for the cothread thread (at present there can
-# only be one) so that we can recognise when we're in another thread.
-_scheduler_thread_id = thread.get_ident()
-
-
-# Thread validation: ensure cothreads aren't used across threads!
-def _validate_thread():
-    assert _scheduler_thread_id == thread.get_ident(), \
-        'Cannot use cothread with multiple threads.  Consider using ' \
-        'Callback or ThreadedEventQueue if necessary.'
-
-# This is the asynchronous callback method.
-Callback = _Callback()
-
+    thread_state.quit.Wait()
 
 def SleepUntil(deadline):
     '''Sleep until the specified deadline.  Control will always be yielded,
     even if the timeout has already passed.'''
-    _validate_thread()
-    _scheduler.wait_until(deadline, None, None)
+    _get_thread_state(True).scheduler.wait_until(deadline, None, None)
 
 def Sleep(timeout):
     '''Sleep until the specified timeout has expired.'''
@@ -1117,5 +1191,4 @@ def Yield(timeout = 0):
     '''Hands control back to the scheduler.  Control is returned either after
     the specified timeout has passed, or as soon as there are no active jobs
     waiting to be run.'''
-    _validate_thread()
-    _scheduler.do_yield(GetDeadline(timeout))
+    _get_thread_state(True).scheduler.do_yield(GetDeadline(timeout))
