@@ -68,7 +68,7 @@ class PV(object):
         first if more recent value required.'''
         if reset:
             self.reset()
-        return self.__event.Wait(timeout)
+        return catools.ca_timeout(self.__event, timeout, self.name)
 
     def reset(self):
         '''Ensures .get_next() will block until an update occurs.'''
