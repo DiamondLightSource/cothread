@@ -894,20 +894,45 @@ deleted.
     change in future releases.
 
 
-..  class:: PV(pv, on_update=None, timeout=5, caput_wait=False, **kargs)
+..  class:: PV(pv, on_update=None, initial_value=None, caput_wait=False, \
+    [initial_timeout], **kargs)
 
     Creates a wrapper to monitor *pv*.  If an *on_update* function is passed it
     will be called with the class instance as argument after each update to the
-    instance.  The *timeout* is used the first time the class is interrogated to
-    check whether a connection has been established.  The *kargs* are passed
-    through to the called :func:`camonitor`.  The flag *caput_wait* can be set
-    to change the default behaviour of :meth:`caput`.
+    instance.  The *kargs* are passed through to the called :func:`camonitor`.
+    The flag *caput_wait* can be set to change the default behaviour of
+    :meth:`caput`.
+
+    The behaviour of the first call to :meth:`get` is affected by two arguments,
+    *initial_value* and *initial_timeout*, at most one of which can be
+    specified.  If *initial_timeout* is specified then the first call to
+    :meth:`get` will block until this timeout expires or a valid PV value is
+    available.  Otherwise *initial_value* can be set to specify a value to
+    return until the PV has updated.
+
+    ..  note::
+
+        This is an incompatible change from cothread versions 2.11 and 2.12.  In
+        these versions the *initial_timeout* argument is named *timeout*,
+        defaults to 5, and cannot be unset.
+
+    Note that blocking on a PV object for the initial update cannot be safely
+    done from within a camonitor callback, as in this case the blocking
+    operation is waiting for a camonitor callback to occur, and only one
+    camonitor callback is processed at a time.
 
     ..  method:: close()
 
         Closes the associated :func:`camonitor`.  No further updates will occur.
         Note that it is sufficient to drop all references to the class, it will
         then automatically call :meth:`close`.
+
+    ..  method:: sync([timeout])
+
+        This call will block until the :class:`PV` object has seen at least one
+        update.  If *initial_timeout* was specified in the constructor then its
+        associated deadline can be used as a default timeout, otherwise a
+        *timeout* must be specified.
 
     ..  method:: get()
 
