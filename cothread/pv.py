@@ -31,12 +31,14 @@ class PV(object):
     WARNING!  This API is a work in progress and will change in future releases
     in incompatible ways.'''
 
-    def __init__(self, pv, on_update = None, timeout = 5, **kargs):
+    def __init__(self, pv,
+            on_update = None, timeout = 5, caput_wait = False, **kargs):
         assert isinstance(pv, str), 'PV class only works for one PV at a time'
 
         self.name = pv
         self.__event = cothread.Event()
         self.__value = None
+        self.caput_wait = caput_wait
 
         self.__monitor = catools.camonitor(
             pv, _WeakMethod(self, '_on_update'), **kargs)
@@ -75,6 +77,7 @@ class PV(object):
         self.__event.Reset()
 
     def caput(self, value, **kargs):
+        kargs.setdefault('wait', self.caput_wait)
         return catools.caput(self.name, value, **kargs)
 
     def caget(self, **kargs):
@@ -92,7 +95,8 @@ class PV_array(object):
     in incompatible ways.'''
 
     def __init__(self, pvs,
-            dtype = float, count = 1, on_update = None, **kargs):
+            dtype = float, count = 1, on_update = None, caput_wait = False,
+            **kargs):
 
         assert not isinstance(pvs, str), \
             'PV_array class only works for an array of PVs'
@@ -101,6 +105,7 @@ class PV_array(object):
         self.on_update = on_update
         self.dtype = dtype
         self.count = count
+        self.caput_wait = caput_wait
 
         if count == 1:
             self.shape = len(pvs)
@@ -156,6 +161,7 @@ class PV_array(object):
                 self._update_one(value, index)
 
     def caput(self, value, **kargs):
+        kargs.setdefault('wait', self.caput_wait)
         return catools.caput(self.names, value, **kargs)
 
     value = property(get, caput)

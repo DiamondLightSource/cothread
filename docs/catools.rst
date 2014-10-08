@@ -894,13 +894,14 @@ deleted.
     change in future releases.
 
 
-..  class:: PV(pv, on_update=None, timeout=5, **kargs)
+..  class:: PV(pv, on_update=None, timeout=5, caput_wait=False, **kargs)
 
     Creates a wrapper to monitor *pv*.  If an *on_update* function is passed it
     will be called with the class instance as argument after each update to the
     instance.  The *timeout* is used the first time the class is interrogated to
     check whether a connection has been established.  The *kargs* are passed
-    through to the called :func:`camonitor`.
+    through to the called :func:`camonitor`.  The flag *caput_wait* can be set
+    to change the default behaviour of :meth:`caput`.
 
     ..  method:: close()
 
@@ -941,7 +942,9 @@ deleted.
     ..  method:: caput(value, ** kargs)
 
         Directly calls :func:`caput` on the underlying PV with the given
-        arguments.
+        arguments.  If *caput_wait* was set in the original :class:`PV`
+        constructor then by default :func:`caput` is called with ``wait=True``,
+        otherwise :func:`caput` is non blocking.
 
     ..  attribute:: name
 
@@ -955,14 +958,17 @@ deleted.
         new_value)``.
 
 
-..  class:: PV_array(pvs, dtype=float, count=1, on_update=None, **kargs)
+..  class:: PV_array(pvs, dtype=float, count=1, on_update=None, \
+    caput_wait=False, **kargs)
 
     Uses *pvs* to create an aggregate array containing the value of all
     specified PVs aggregated into a single :mod:`numpy` array.  The type of all
     the elements is specified by *dtype* and the number of points contributed by
     each PV is given by *count*.  If *count* is 1 the generated array is one
     dimensional of shape ``(len(pvs),)``, otherwise the shape is
-    ``(len(pvs),count)``.
+    ``(len(pvs),count)``.  The flag *caput_wait* can be set to change the
+    default behaviour of :meth:`caput`.
+
 
     At the same time arrays of length ``len(pvs)`` are created for the
     connection status, timestamp and severity of each PV.
@@ -990,7 +996,11 @@ deleted.
 
     ..  method:: caput(value, ** args)
 
-        Directly calls :func:`caput` on the stored list of PVs.
+        Directly calls :func:`caput` on the stored list of PVs.  If *caput_wait*
+        was set in the original :class:`PV` constructor then by default
+        :func:`caput` is called with ``wait=True``, otherwise :func:`caput` is
+        non blocking.
+
 
     ..  method:: sync(timeout=5, throw=False)
 
