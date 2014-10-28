@@ -994,6 +994,32 @@ def connect(pvs, **kargs):
 # Final module initialisation and thread specific state
 
 
+# Another delicacy arising from relying on asynchronous CA event dispatching is
+# that we need to manually flush IO events such as caget commands.  To ensure
+# that large blocks of channel access activity really are aggregated we ensure
+# that ca_flush_io() is only called once in any scheduling cycle by requesting
+# IO flushing via a _flush_io_event object.
+class _FlushIo:
+    def __init__(self):
+        self._flush_io_event = cothread.Event()
+        self.flush_pending = False
+        cothread.Spawn(self._dispatch_flush_io, stack_size = CA_ACTION_STACK)
+
+    def _dispatch_flush_io(self):
+        while True:
+            self._flush_io_event.Wait()
+            self.flush_pending = False
+            cadef.ca_flush_io()
+
+    def __call__(self):
+        '''This should be called after any Channel Access method which generates
+        buffered requests.  ca_flush_io() will now be called during the next
+        scheduler cycle.'''
+        if not self.flush_pending:
+            self.flush_pending = True
+            self._flush_io_event.Signal()
+
+
 class _ThreadState(object):
     local = threading.local()
 
@@ -1014,6 +1040,8 @@ class _ThreadState(object):
         self.callback = cothread._Callback()
         # Create thread specific lock for subscription update merging
         self.lock = threading.Lock()
+        # Each thread needs its own instance of the ca_flush_io dispatcher
+        self.flush_io = _FlushIo()
 
         # This is a cute trick to detect termination of the thread we're
         # initialising: so long as we hang onto the weakref, when the current
@@ -1056,37 +1084,15 @@ def _catools_atexit():
     # application exit.
     #    One reason that it's rather important to do this properly is that we
     # can't safely do *any* ca_ calls once ca_context_destroy() is called!
-    _ThreadState.get().cache.purge()
-    cadef.ca_flush_io()
+    #
+    # _ThreadState won't get notified through its cleanup() method when the main
+    # thread closes, so call its cleanup here.
+    _ThreadState.get().cleanup(None)
     cadef.ca_context_destroy()
 
 
-# Another delicacy arising from relying on asynchronous CA event dispatching is
-# that we need to manually flush IO events such as caget commands.  To ensure
-# that large blocks of channel access activity really are aggregated we ensure
-# that ca_flush_io() is only called once in any scheduling cycle by requesting
-# IO flushing via a _flush_io_event object.
-class _FlushIo:
-    def __init__(self):
-        self._flush_io_event = cothread.Event()
-        self.flush_pending = False
-        cothread.Spawn(self._dispatch_flush_io, stack_size = CA_ACTION_STACK)
-
-    def _dispatch_flush_io(self):
-        while True:
-            self._flush_io_event.Wait()
-            self.flush_pending = False
-            cadef.ca_flush_io()
-
-    def __call__(self):
-        '''This should be called after any Channel Access method which generates
-        buffered requests.  ca_flush_io() will now be called during the next
-        scheduler cycle.'''
-        if not self.flush_pending:
-            self.flush_pending = True
-            self._flush_io_event.Signal()
-
-_flush_io = _FlushIo()
+def _flush_io():
+    _ThreadState.get().flush_io()
 
 
 # The value of the exception handler below is rather doubtful...
