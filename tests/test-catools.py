@@ -9,7 +9,7 @@ import unittest
 
 import cothread
 from cothread import catools
-from cothread.epicsarch import epics_host_arch
+from cothread.load_ca import epics_host_arch
 
 _test_db = """
 record(ao, "$(P)ao") {
@@ -29,7 +29,6 @@ class TestCA(unittest.TestCase):
         self.ioc.join(1.0)
 
     def test_getput(self):
-        cothread.PrepareThread() # no-op here, but required for test_mt_getput
         V = catools.caget(self.P+'ao')
         self.assertEqual(V, 0)
 
@@ -37,9 +36,9 @@ class TestCA(unittest.TestCase):
 
         V = catools.caget(self.P+'ao')
         self.assertEqual(V, 42)
+        self.tpass = True
 
     def test_monitor(self):
-        cothread.PrepareThread()
         E = cothread.Event()
         S = catools.camonitor(self.P+'ao', E.Signal)
 
@@ -51,18 +50,23 @@ class TestCA(unittest.TestCase):
         V = E.Wait(2.0)
         self.assertEqual(V, 42)
         S.close()
+        self.tpass = True
 
     def test_mt_getput(self):
 
+        self.tpass = False
         T = threading.Thread(target=self.test_getput)
         T.start()
         T.join(5.0)
+        self.assertTrue(self.tpass)
 
     def test_mt_monitor(self):
 
+        self.tpass = False
         T = threading.Thread(target=self.test_monitor)
         T.start()
         T.join(5.0)
+        self.assertTrue(self.tpass)
 
 class SoftIoc(threading.Thread):
     def __init__(self, db,macros=None):
@@ -90,12 +94,12 @@ class SoftIoc(threading.Thread):
         except:
             import traceback
             traceback.print_exc()
-            print 'exception in IOC worker'
+            print('exception in IOC worker')
 
     def _run(self):
         self._start_event.Signal(1)
         T = tempfile.NamedTemporaryFile()
-        T.write(self.db)
+        T.write(self.db.encode('UTF-8'))
         T.flush()
 
         cmd = [self._exe]
@@ -109,7 +113,7 @@ class SoftIoc(threading.Thread):
             os.execv(self._exe, cmd)
             os.abort() # never gets here
 
-        fd = os.fdopen(rawfd, "r+")
+        fd = os.fdopen(rawfd, "r+b", buffering=0)
 
         self._ioc_pid = pid
 
@@ -124,7 +128,7 @@ class SoftIoc(threading.Thread):
             #print '>>',L,
             lines.append(L)
             if not L:
-                print lines
+                print(lines)
                 raise RuntimeError("IOC stopped early")
 
         fd.close()

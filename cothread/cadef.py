@@ -46,8 +46,9 @@ __all__ = [
 
 
 import ctypes
-from .load_ca import libca
+from . import load_ca
 
+libca = load_ca.get_libca()
 
 
 # -----------------------------------------------------------------------------

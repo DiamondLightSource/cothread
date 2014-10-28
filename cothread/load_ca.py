@@ -36,6 +36,8 @@ import ctypes
 import platform
 import os
 
+__all__ = ['_libca_path', 'epics_host_arch']
+
 
 # Figure out the libraries that need to be loaded and the loading method.
 load_library = ctypes.cdll.LoadLibrary
@@ -47,6 +49,26 @@ elif system == 'Darwin':
     lib_files = ['libca.dylib']
 else:
     lib_files = ['libca.so']
+
+
+# Returns EPICS host architecture string
+def _get_arch():
+    # Mapping from host architecture to EPICS host architecture name can be done
+    # with a little careful guesswork.  As EPICS architecture names are a little
+    # arbitrary this isn't guaranteed to work.
+    system_map = {
+        ('Linux',   '32bit'):   'linux-x86',
+        ('Linux',   '64bit'):   'linux-x86_64',
+        ('Darwin',  '32bit'):   'darwin-x86',
+        ('Darwin',  '64bit'):   'darwin-x86',
+        ('Windows', '32bit'):   'win32-x86',
+        ('Windows', '64bit'):   'windows-x64',  # Not quite yet!
+    }
+    try:
+        return os.environ['EPICS_HOST_ARCH']
+    except KeyError:
+        bits = platform.architecture()[0]
+        return system_map[(system, bits)]
 
 
 def _libca_path(load_libca_path):
@@ -82,30 +104,10 @@ def _libca_path(load_libca_path):
     # No local install, no local configuration, no override.  Try for standard
     # environment variable configuration instead.
     epics_base = os.environ['EPICS_BASE']
-    # Mapping from host architecture to EPICS host architecture name can be done
-    # with a little careful guesswork.  As EPICS architecture names are a little
-    # arbitrary this isn't guaranteed to work.
-    system_map = {
-        ('Linux',   '32bit'):   'linux-x86',
-        ('Linux',   '64bit'):   'linux-x86_64',
-        ('Darwin',  '32bit'):   'darwin-x86',
-        ('Darwin',  '64bit'):   'darwin-x86',
-        ('Windows', '32bit'):   'win32-x86',
-        ('Windows', '64bit'):   'windows-x64',  # Not quite yet!
-    }
-    bits = platform.architecture()[0]
-    epics_host_arch = system_map[(system, bits)]
     return os.path.join(epics_base, 'lib', epics_host_arch)
 
 
-if __name__ == '__main__':
-    # If run standalone we are a helper script.  Write out the relevant
-    # definitions for the use of our caller.
-    libca_path = _libca_path(False)
-    print('CATOOLS_LIBCA_PATH=\'%s\'' % libca_path)
-    print('LIB_FILES=\'%s\'' % ' '.join(lib_files))
-
-else:
+def get_libca():
     # Load the library (or libraries).
     try:
         # First try loading the libraries directly without searching anywhere.
@@ -121,3 +123,15 @@ else:
         else:
             for lib in lib_files:
                 libca = load_library(os.path.join(libca_path, lib))
+
+    return libca
+
+
+epics_host_arch = _get_arch()
+
+if __name__ == '__main__':
+    # If run standalone we are a helper script.  Write out the relevant
+    # definitions for the use of our caller.
+    libca_path = _libca_path(False)
+    print('CATOOLS_LIBCA_PATH=\'%s\'' % libca_path)
+    print('LIB_FILES=\'%s\'' % ' '.join(lib_files))
