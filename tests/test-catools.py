@@ -9,7 +9,7 @@ import unittest
 
 import cothread
 from cothread import catools
-from cothread.epicsarch import epics_host_arch
+from cothread.load_ca import epics_host_arch
 
 _test_db = """
 record(ao, "$(P)ao") {
