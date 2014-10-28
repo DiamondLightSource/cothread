@@ -29,7 +29,6 @@ class TestCA(unittest.TestCase):
         self.ioc.join(1.0)
 
     def test_getput(self):
-        cothread.PrepareThread() # no-op here, but required for test_mt_getput
         V = catools.caget(self.P+'ao')
         self.assertEqual(V, 0)
 
@@ -37,9 +36,9 @@ class TestCA(unittest.TestCase):
 
         V = catools.caget(self.P+'ao')
         self.assertEqual(V, 42)
+        self.tpass = True
 
     def test_monitor(self):
-        cothread.PrepareThread()
         E = cothread.Event()
         S = catools.camonitor(self.P+'ao', E.Signal)
 
@@ -51,18 +50,23 @@ class TestCA(unittest.TestCase):
         V = E.Wait(2.0)
         self.assertEqual(V, 42)
         S.close()
+        self.tpass = True
 
     def test_mt_getput(self):
 
+        self.tpass = False
         T = threading.Thread(target=self.test_getput)
         T.start()
         T.join(5.0)
+        self.assertTrue(self.tpass)
 
     def test_mt_monitor(self):
 
+        self.tpass = False
         T = threading.Thread(target=self.test_monitor)
         T.start()
         T.join(5.0)
+        self.assertTrue(self.tpass)
 
 class SoftIoc(threading.Thread):
     def __init__(self, db,macros=None):
