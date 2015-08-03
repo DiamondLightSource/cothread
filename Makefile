@@ -31,6 +31,14 @@ install: dist
             --install-dir=$(INSTALL_DIR) \
             --script-dir=$(SCRIPT_DIR) dist/*.egg
 
+# publish
+publish: default
+	$(PYTHON) setup.py sdist upload
+
+# publish to test pypi
+testpublish: default
+	$(PYTHON) setup.py sdist upload -r pypitest
+
 docs: cothread/_coroutine.so
 	sphinx-build -b html docs docs/html
 

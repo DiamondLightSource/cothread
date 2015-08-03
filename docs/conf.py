@@ -18,8 +18,11 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.append(os.path.abspath('.'))
 
-from pkg_resources import require
-require('numpy')
+try:
+    from pkg_resources import require
+    require('numpy')
+except:
+    pass
 sys.path.append(os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
