@@ -509,6 +509,34 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
     ``action()`` should return as soon as possible to avoid blocking subsequent
     callbacks -- if more work needs to be done, call ``Spawn()``.
 
+..  function:: CallbackResult(action, *args, **kargs, \
+        callback_queue=Callback, callback_timeout=None, callback_spawn=True)
+
+    This is similar to :func:`Callback`: this can be called from any Python
+    thread, and ``action(*args, **kargs)`` will be called in cothread's own
+    thread.  The difference is that the this function will block until
+    `action` returns, and the result will be returned as the result from
+    :func:`CallbackResult`.  For example, the following can be used to perform
+    channel access from an arbitrary thread::
+
+        value = CallbackResult(caget, pv)
+
+    The following arguments are processed by :func:`CallbackResult`, all others
+    are pass through to `action`:
+
+    `callback_queue`
+        By default the standard :func:`Callback` queue is used for dispatch to
+        the cothread core, but a separate callback method can be specified here.
+
+    `callback_timeout`
+        By default the thread will block indefinitely until `action` completes,
+        or a specific timeout can be specified here.
+
+    `callback_spawn`
+        By default a new cothread will be spawned for each callback; this can
+        help to avoid interlock problems as mentioned above under
+        :func:`Callback`, but adds overhead.
+
 
 ..  function:: iqt(poll_interval=0.05, run_exec=True, argv=None)
 

@@ -75,6 +75,7 @@ import bisect
 import traceback
 import collections
 import thread
+import threading
 
 from . import _coroutine
 
@@ -108,6 +109,7 @@ __all__ = [
 
     'Timer',            # One-shot cancellable timer
     'Callback',         # Simple asynchronous synchronisation
+    'CallbackResult',   # Asynchronous synchronisation with result
 ]
 
 
@@ -961,6 +963,46 @@ class _Callback:
             os.write(self.signal, '-')
 
 
+def CallbackResult(action, *args, **kargs):
+    '''Perform action in the main cothread and return a result.'''
+    callback = kargs.pop('callback_queue', Callback)
+    timeout  = kargs.pop('callback_timeout', None)
+    spawn    = kargs.pop('callback_spawn', True)
+
+    if _scheduler_thread_id == thread.get_ident():
+        return action(*args, **kargs)
+    else:
+        event = threading.Event()
+        action_result = [False, None]
+        def do_action():
+            try:
+                action_result[0] = True
+                action_result[1] = action(*args, **kargs)
+            except:
+                action_result[0] = False
+                action_result[1] = sys.exc_info()
+            event.set()
+
+        # Hand the action over to the cothread carrying thread for action and
+        # wait for the result.
+        if spawn:
+            callback(Spawn, do_action)
+        else:
+            callback(do_action)
+        event.wait(timeout)
+
+        # Return result or raise caught exception as appropriate.
+        ok, result = action_result
+        if ok:
+            return result
+        else:
+            raise result[0], result[1], result[2]
+
+        # Note: raising entire stack backtrace context might be dangerous, need
+        # to think about this carefully, particularly if the corresponding stack
+        # has been swapped out...
+
+
 class Timer(object):
     '''A cancellable one-shot or auto-retriggering timer.'''
 
@@ -1096,8 +1138,8 @@ _scheduler_thread_id = thread.get_ident()
 # Thread validation: ensure cothreads aren't used across threads!
 def _validate_thread():
     assert _scheduler_thread_id == thread.get_ident(), \
-        'Cannot use cothread with multiple threads.  Consider using ' \
-        'Callback or ThreadedEventQueue if necessary.'
+        'Cannot call into cothread from another thread.  Consider using ' \
+        'Callback or CallbackResult.'
 
 # This is the asynchronous callback method.
 Callback = _Callback()
