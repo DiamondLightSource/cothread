@@ -425,6 +425,13 @@ Functions
         ``.ok==False`` is returned.
 
 
+..  function:: cainfo(pvs, timeout=5, throw=True)
+
+    This is an alias for :func:`connect` with `cainfo` and `wait` set to
+    ``True``.  Returns a :class:`ca_info` structure containing information about
+    the connected PV or a list of structures, as appropriate.
+
+
 ..  _Values:
 
 Working with Values
