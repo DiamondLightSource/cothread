@@ -33,7 +33,7 @@ install: dist
 
 # publish
 publish: default
-	$(PYTHON) setup.py register sdist upload
+	$(PYTHON) setup.py register -r pypi sdist upload -r pypi
 
 # publish to test pypi
 testpublish: default
