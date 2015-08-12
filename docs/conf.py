@@ -18,8 +18,11 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.append(os.path.abspath('.'))
 
-from pkg_resources import require
-require('numpy')
+try:
+    from pkg_resources import require
+    require('numpy')
+except:
+    pass
 sys.path.append(os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
@@ -49,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Cothread'
-copyright = u'2011, Michael Abbott'
+copyright = u'2007-2015, Michael Abbott, Diamond Light Source Ltd'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

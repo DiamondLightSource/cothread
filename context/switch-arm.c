@@ -29,6 +29,14 @@
 
 // Coroutine frame switching for ARM
 
+// If Vector Floating Point support is present then we need to preserve the VFP
+// registers d8-d15.
+#ifdef __VFP_FP__
+#define IF_VFP_FP(code)    code
+#else
+#define IF_VFP_FP(code)
+#endif
+
 __asm__(
 "       .text\n"
 "       .align  2\n"
@@ -41,9 +49,13 @@ __asm__(
 
 FNAME(switch_frame)
 "       stmfd   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}\n"
+IF_VFP_FP(
+"       fstmfdd sp!, {d8-d15}\n")
 "       str     sp, [r0]\n"
 "       mov     sp, r1\n"
 "       mov     r0, r2\n"
+IF_VFP_FP(
+"       fldmfdd sp!, {d8-d15}\n")
 "       ldmfd   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}\n"
 FSIZE(switch_frame)
 
@@ -58,6 +70,8 @@ FNAME(create_frame)
 "       mov     ip, lr\n"              // Save LR so can use same STM slot
 "       ldr     lr, =action_entry\n"
 "       stmfd   r0!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}\n"
+IF_VFP_FP(
+"       fstmfdd r0!, {d8-d15}\n")
 "       bx      ip\n"
 
 "action_entry:\n"

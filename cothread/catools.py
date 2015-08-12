@@ -66,6 +66,7 @@ __all__ = [
     'caget',            # Read PVs from channel access
     'camonitor',        # Monitor PVs over channel access
     'connect',          # Establish PV connection
+    'cainfo',           # Returns ca_info describing PV connection
 ] + dbr.__all__ + cadef.__all__
 
 
@@ -979,6 +980,12 @@ def connect(pvs, **kargs):
         return connect_one(pvs, **kargs)
     else:
         return connect_array(pvs, **kargs)
+
+
+def cainfo(pvs, **args):
+    '''Rreturns a ca_info structure for the given PVs.  See the documentation
+    for connect() for more detail.'''
+    return connect(pvs, cainfo = True, wait = True, **args)
 
 
 

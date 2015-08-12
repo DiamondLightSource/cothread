@@ -45,6 +45,7 @@ from .cothread import *
 from .input_hook import *
 from .coselect import *
 from .cosocket import *
+from .version import __version__
 
 # Publish all public symbols from cothread and input_hook as default exports.
 # The coselect functions aren't exported by default but are available.

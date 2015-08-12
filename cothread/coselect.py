@@ -246,6 +246,7 @@ def poll_list(event_list, timeout = None):
     constants).  This routine will cooperatively block until any descriptor
     signals a selected event (or any event from HUP, ERR, NVAL) or until
     the timeout (in seconds) occurs.'''
+    cothread.cothread._validate_thread()
     poller = _Poller(event_list)
     cothread.cothread._scheduler.poll_until(
         poller, cothread.cothread.GetDeadline(timeout))

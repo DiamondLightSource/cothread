@@ -28,21 +28,30 @@ class PV(object):
     '''PV wrapper class.  Wraps access to a single PV as a persistent object
     with simple access methods.  Always contains the latest PV value.
 
-    WARNING!  This API is a work in progress and will change in future releases
+    WARNING!  This API is a work in progress and may change in future releases
     in incompatible ways.'''
 
-    def __init__(self, pv, on_update = None, timeout = 5, **kargs):
+    def __init__(self, pv,
+            on_update = None, initial_value = None, caput_wait = False,
+            initial_timeout = (), **kargs):
+
         assert isinstance(pv, str), 'PV class only works for one PV at a time'
 
         self.name = pv
-        self.__event = cothread.Event()
-        self.__value = None
+        self.__value_event = cothread.Event()
+        self.__sync = cothread.Event(auto_reset = False)
+        self.__value = initial_value
+        self.caput_wait = caput_wait
 
+        self.__deadline_set = initial_timeout != ()
+        assert initial_value is None or not self.__deadline_set, \
+            'Cannot specify initial value and initial timeout'
+        if self.__deadline_set:
+            self.__deadline = cothread.AbsTimeout(initial_timeout)
+
+        self.on_update = on_update
         self.__monitor = catools.camonitor(
             pv, _WeakMethod(self, '_on_update'), **kargs)
-        self.on_update = on_update
-
-        self.__deadline = cothread.AbsTimeout(timeout)
 
     def __del__(self):
         self.close()
@@ -52,29 +61,37 @@ class PV(object):
 
     def _on_update(self, value):
         self.__value = value
-        self.__event.Signal(value)
+        self.__value_event.Signal(value)
+        self.__sync.Signal()
         if self.on_update:
             self.on_update(self)
 
+    def sync(self, timeout = ()):
+        '''Blocks until at least one update has been seen.'''
+        if timeout == ():
+            assert self.__deadline_set, 'Must specify sync timeout'
+            timeout = self.__deadline
+        catools.ca_timeout(self.__sync, timeout, self.name)
+
     def get(self):
         '''Returns current value.'''
-        if self.__value is None:
-            return self.get_next(self.__deadline)
-        else:
-            return self.__value
+        if self.__value is None and self.__deadline_set:
+            catools.ca_timeout(self.__sync, self.__deadline, self.name)
+        return self.__value
 
     def get_next(self, timeout = None, reset = False):
         '''Returns current value or blocks until next update.  Call .reset()
         first if more recent value required.'''
         if reset:
             self.reset()
-        return self.__event.Wait(timeout)
+        return catools.ca_timeout(self.__value_event, timeout, self.name)
 
     def reset(self):
         '''Ensures .get_next() will block until an update occurs.'''
-        self.__event.Reset()
+        self.__value_event.Reset()
 
     def caput(self, value, **kargs):
+        kargs.setdefault('wait', self.caput_wait)
         return catools.caput(self.name, value, **kargs)
 
     def caget(self, **kargs):
@@ -92,7 +109,8 @@ class PV_array(object):
     in incompatible ways.'''
 
     def __init__(self, pvs,
-            dtype = float, count = 1, on_update = None, **kargs):
+            dtype = float, count = 1, on_update = None, caput_wait = False,
+            **kargs):
 
         assert not isinstance(pvs, str), \
             'PV_array class only works for an array of PVs'
@@ -101,6 +119,7 @@ class PV_array(object):
         self.on_update = on_update
         self.dtype = dtype
         self.count = count
+        self.caput_wait = caput_wait
 
         if count == 1:
             self.shape = len(pvs)
@@ -156,6 +175,7 @@ class PV_array(object):
                 self._update_one(value, index)
 
     def caput(self, value, **kargs):
+        kargs.setdefault('wait', self.caput_wait)
         return catools.caput(self.names, value, **kargs)
 
     value = property(get, caput)
