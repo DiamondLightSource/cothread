@@ -13,7 +13,16 @@
 cothread
 ========
 
-This is what I am, and this is what I do...
+The `cothread` Python library is designed for building tools using cooperative
+threading.  This means that, with care, programs can effectively run several
+tasks simultaneously.
+
+The `cothread.catools` library is designed to support easy channel access from
+Python, and makes essential use of the features of cooperative threads -- in
+particular, `catools.camonitor()` notifies updates in the background.
+
+See the documentation for more details.
+
 
 Installation
 ------------

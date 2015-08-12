@@ -54,3 +54,6 @@ cothread/libca_path.py:
 
 cothread/_coroutine.so: $(wildcard context/*.c context/*.h)
 	$(PYTHON) setup.py build_ext -i
+
+build_ext: cothread/_coroutine.so
+.PHONY: build_ext

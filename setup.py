@@ -21,29 +21,22 @@ except ImportError:
     setup_args = {}
 
 def get_version():
-    """Extracts the version number from the version.py file.
-    """
+    '''Extracts the version number from the version.py file.
+    '''
     VERSION_FILE = 'cothread/version.py'
-    mo = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', open(VERSION_FILE).read(), re.M)
+    mo = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]',
+        open(VERSION_FILE).read(), re.M)
     if mo:
         version = mo.group(1)
         bs_version = os.environ.get('MODULEVER', '0.0')
-        assert bs_version == "0.0" or bs_version == version, \
-            "Version {} specified by the build system doesn't match {} in " \
-            "version.py".format(bs_version, version)
+        assert bs_version == '0.0' or bs_version == version, \
+            'Version %s specified by the build system doesn\'t match %s in ' \
+            'version.py' % (bs_version, version)
         return version
     else:
-        raise RuntimeError('Unable to find version string in {0}.'.format(VERSION_FILE))
+        raise RuntimeError(
+            'Unable to find version string in %s.' % VERSION_FILE)
 
-def get_readme():
-    """Strip off the header from README.rst and return it
-    """
-    readme = open("README.rst").read()
-    mo = re.search(r'cothread\n[=]*\n', readme, re.M)
-    if mo:
-        return readme[mo.start():]
-    else:
-        raise RuntimeError('Unable to find tag in {0}'.format(README_FILE))
 
 # Extension module providing core coroutine functionality.  Very similar in
 # spirit to greenlet.
@@ -77,7 +70,7 @@ setup(
     name = 'cothread',
     version = get_version(),
     description = 'Cooperative threading based utilities',
-    long_description = get_readme(),
+    long_description = open('README.rst').read(),
     author = 'Michael Abbott',
     author_email = 'Michael.Abbott@diamond.ac.uk',
     url = 'http://controls.diamond.ac.uk/downloads/python/cothread/',
@@ -89,6 +82,9 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS :: MacOS X',
         'Programming Language :: Python :: 2.7',
+        'License :: OSI Approved :: '
+            'GNU General Public License v2 or later (GPLv2+)',
     ],
     **setup_args)
