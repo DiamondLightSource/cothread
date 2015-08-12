@@ -989,7 +989,8 @@ def CallbackResult(action, *args, **kargs):
             callback(Spawn, do_action)
         else:
             callback(do_action)
-        event.wait(timeout)
+        if not event.wait(timeout):
+            raise Timedout('Timed out waiting for callback result')
 
         # Return result or raise caught exception as appropriate.
         ok, result = action_result

@@ -31,7 +31,7 @@ Full documentation is available at http://cothread.readthedocs.org
 
 License
 =======
-GPL2 License (see LICENSE)
+GPL2 License (see COPYING)
 
 .. |pypi-version| image:: https://img.shields.io/pypi/v/cothread.svg
     :target: https://pypi.python.org/pypi/cothread/
