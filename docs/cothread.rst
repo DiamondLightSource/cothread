@@ -522,7 +522,7 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
         value = CallbackResult(caget, pv)
 
     The following arguments are processed by :func:`CallbackResult`, all others
-    are pass through to `action`:
+    are passed through to `action`:
 
     `callback_queue`
         By default the standard :func:`Callback` queue is used for dispatch to

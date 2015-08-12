@@ -76,7 +76,7 @@ class PV(object):
     def get(self):
         '''Returns current value.'''
         if self.__value is None and self.__deadline_set:
-            catools.ca_timeout(self.__sync, timeout, self.name)
+            catools.ca_timeout(self.__sync, self.__deadline, self.name)
         return self.__value
 
     def get_next(self, timeout = None, reset = False):
