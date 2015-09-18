@@ -126,6 +126,14 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
         struct _frame *python_frame = thread_state->frame;
         int recursion_depth = thread_state->recursion_depth;
 
+        /* We also need to switch the exception state around: if we don't do
+         * this then we get confusion about the lifetime of exception state
+         * between coroutines.  The most obvious problem is that the exception
+         * isn't properly cleared on function return. */
+        PyObject *exc_type = thread_state->exc_type;
+        PyObject *exc_value = thread_state->exc_value;
+        PyObject *exc_traceback = thread_state->exc_traceback;
+
         /* Switch to new coroutine.  For the duration arg needs an extra
          * reference count, it'll be accounted for either on the next returned
          * result or in the entry to a new coroutine. */
@@ -137,6 +145,11 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
         thread_state = PyThreadState_GET();
         thread_state->frame = python_frame;
         thread_state->recursion_depth = recursion_depth;
+
+        /* Restore the exception state. */
+        thread_state->exc_type = exc_type;
+        thread_state->exc_value = exc_value;
+        thread_state->exc_traceback = exc_traceback;
         return result;
     }
     else
