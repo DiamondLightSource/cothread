@@ -42,6 +42,9 @@ testpublish: default
 docs: cothread/_coroutine.so
 	sphinx-build -b html docs docs/html
 
+test:
+	$(PYTHON) setup.py test
+
 clean_docs:
 	rm -rf docs/html
 

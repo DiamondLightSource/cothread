@@ -1,18 +1,19 @@
-#!/usr/bin/env python
-
+# Module imports
 from __future__ import print_function
-
-import cothread
-from cothread import cosocket, coserver
-cosocket.socket_hook()
-
 import unittest
-
 import os
 import socket
 import BaseHTTPServer as http
 from httplib import HTTPConnection
 from urllib2 import urlopen
+
+# Add cothread onto file and import
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import cothread
+from cothread import cosocket, coserver
+cosocket.socket_hook()
 
 os.environ.pop('http_proxy', None)
 os.environ.pop('HTTP_PROXY', None)
