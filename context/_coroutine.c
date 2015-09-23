@@ -78,9 +78,16 @@ static int get_cocore(PyObject *object, void **result)
 static void *coroutine_wrapper(void *action_, void *arg_)
 {
     PyThreadState *thread_state = PyThreadState_GET();
+
     /* New coroutine gets a brand new Python interpreter stack frame. */
     thread_state->frame = NULL;
     thread_state->recursion_depth = 0;
+
+    /* Also reset the exception state in case it's non NULL at this point.  We
+     * don't own these pointers at this point, coroutine_switch does. */
+    thread_state->exc_type = NULL;
+    thread_state->exc_value = NULL;
+    thread_state->exc_traceback = NULL;
 
     /* Call the given action with the passed argument. */
     PyObject *action = *(PyObject **)action_;
@@ -88,6 +95,17 @@ static void *coroutine_wrapper(void *action_, void *arg_)
     PyObject *result = PyObject_CallFunctionObjArgs(action, arg, NULL);
     Py_DECREF(action);
     Py_DECREF(arg);
+
+    /* Some of the stuff we've initialised can leak through, so far I've only
+     * seen exc_type still set at this point, but maybe other fields can also
+     * leak.  Avoid a memory leak by making sure we're not holding onto these.
+     *    All these pointers really are defunct, because as soon as we return
+     * coroutine_switch will replace all these values. */
+    Py_XDECREF(thread_state->frame);
+    Py_XDECREF(thread_state->exc_type);
+    Py_XDECREF(thread_state->exc_value);
+    Py_XDECREF(thread_state->exc_traceback);
+
     return result;
 }
 
