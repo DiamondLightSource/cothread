@@ -10,6 +10,8 @@ export PYTHONPATH = $(TOOLS)/Pygments/1-4/$(LIB_PATH)/Pygments-1.4-py2.7.egg
 
 default: cothread.html
 
+cothread.html: $(wildcard styles/*)
+
 clean:
 	rm -r cothread.html
 

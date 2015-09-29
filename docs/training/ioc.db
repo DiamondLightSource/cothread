@@ -1,0 +1,23 @@
+record(ai, "TEST:PV1")
+{
+}
+
+record(ai, "TEST:PV2")
+{
+}
+
+record(stringin, "TEST:S")
+{
+}
+
+record(waveform, "TEST:WF1")
+{
+    field(NELM, 10)
+    field(FTVL, "FLOAT")
+}
+
+record(waveform, "TEST:WF2")
+{
+    field(NELM, 10)
+    field(FTVL, "FLOAT")
+}

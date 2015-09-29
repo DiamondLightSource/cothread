@@ -15,7 +15,8 @@ Channel Access with ``cothread``
 Documentation:
     .. class:: small
 
-    file:///dls_sw/prod/common/python/cothread/2-8/docs/html/index.html
+    file:///dls_sw/prod/common/python/RHEL6-x86_64/cothread/2-13/docs/html/index.html
+
     http://www.cs.diamond.ac.uk/docs/docshome/cothread/
 
 
@@ -54,12 +55,12 @@ Preliminaries
 =============
 
 Need to import ``cothread``, all of the examples will start with
-the following code, 2.8 is the current release:
+the following code, 2.13 is the current release:
 
 .. code:: python
 
     from pkg_resources import require
-    require('cothread==2.8')
+    require('cothread==2.13')
 
     import cothread
     from cothread.catools import *
@@ -111,7 +112,7 @@ with
 
     start = time.time(); [caget(bpm) for bpm in bpms]; print time.time() - start
 
-I tend to get a difference of a factor of around 100 between these two tests.
+I tend to get a difference of a factor of around 50 between these two tests.
 
 
 Exercise: Timing test
@@ -144,6 +145,10 @@ list of values can be passed.
     # To write a repeated array to multiple TEST:PVs need to use repeat_value
     caput(['TEST:WF1', 'TEST:WF2'], [1, 2], repeat_value = True)
 
+.. container:: incremental
+
+    Note: this is the *only* case where ``repeat_value=True`` is needed.
+
 
 Example: Monitoring a PV
 ========================
@@ -163,8 +168,31 @@ Updates arrive in the background until we close the monitor, but for normal
 applications we leave the monitor open until the application exits.
 
 
-Exercise: camonitor and caput
-=============================
+``camonitor`` for Lists of PVs
+==============================
+
+If ``camonitor`` is passed a list of PVs it expects the update function to take
+a second argument which is used as an index.
+
+.. code:: python
+
+    def print_update(value, index):
+        print value.name, index, value
+
+    mm = camonitor(bpms, print_update)
+    cothread.Sleep(1)
+    for m in mm:
+        m.close()
+
+.. container:: incremental
+
+    If the index is not needed there is no particular benefit to calling
+    ``camonitor`` on lists of PVs, unlike for ``caget`` and (it depends)
+    ``caput``.
+
+
+Exercise: ``camonitor`` and ``caput``
+=====================================
 
 Use ``camonitor`` and ``caput`` to monitor ``TEST:PV1`` and add 1 to it after a
 couple of seconds.
@@ -178,6 +206,30 @@ Use ``cothread.Sleep(...)`` for sleeping.
 
 Use ``cothread.WaitForQuit()`` at the end of your script if there's nothing else
 to do while cothread does its work.
+
+
+A note on the last exercise
+===========================
+
+The obvious answer is to call ``cothread.Sleep`` in the camonitor callback
+function, eg:
+
+.. code:: python
+
+    def do_update(value):
+        cothread.Sleep(1)
+        caput(value.name, value + 1)
+
+    m = camonitor('TEST:PV1', do_update)
+    cothread.Sleep(10)
+    m.close()
+
+Unfortunately doing this has the unfortunate side effect of blocking
+all other camonitor updates during the ``Sleep``.
+
+Only one camonitor callback function is processed at a time.  If you need to do
+long lasting work in response to a PV update, push the processing somewhere else
+with ``Spawn`` or ``Event``.
 
 
 Augmented Values
@@ -225,7 +277,7 @@ However, it's not completely ordinary:
 
         print +v, type(+v)
 
-    However you should normally *never* need to use this!
+    However you should not normally need to use this!
 
 
 Getting Values with Timestamps
@@ -333,9 +385,9 @@ disconnected.  The default behaviour of ``cothread`` produces sensible results,
 but this can be overridden.
 
 
-This behaviour of raising an exception is the best default behaviour, because in
-routine naive use if a PV is unavailable then this is an unrecoverable error.
-However, this isn't always what we want.
+This behaviour of raising an exception when ``caget`` and ``caput`` fails is the
+best default behaviour, because in routine naive use if a PV is unavailable then
+this is an unrecoverable error.  However, this isn't always what we want.
 
 
 Adjusting the Timeout
@@ -352,8 +404,8 @@ an explicit argument:
 
     caget('bogus', timeout = 1)
 
-For instance, when fetching very large numbers of PVs through the gateway it can
-happen that the default five second timeout isn't long enough.
+Alternatively, when fetching very large numbers of PVs through the gateway it
+can happen that the default five second timeout isn't long enough.
 
 
 Catching Errors from ``caget``
@@ -420,12 +472,12 @@ Plotting: Preamble
 ==================
 
 A certain amount of boilerplate preamble is required to get interactive plotting
-working with ``dls-python2.6``.  We'll show the complete set:
+working with ``dls-python``.  We'll show the complete set:
 
 .. code:: python
 
     from pkg_resources import require
-    require('cothread==2.8')
+    require('cothread==2.13')
     require('matplotlib')
 
     import cothread
@@ -434,7 +486,9 @@ working with ``dls-python2.6``.  We'll show the complete set:
     import numpy
 
     cothread.iqt()
+
     import pylab
+    pylab.ion()
 
 
 Plotting: An Example
@@ -446,7 +500,6 @@ Now we can fetch and plot a waveform:
 
     wfx = caget('SR-DI-EBPM-01:SA:X')
     ll = pylab.plot(wfx)
-    pylab.show()
 
 Now let's make it update continuously:
 
@@ -454,7 +507,7 @@ Now let's make it update continuously:
 
     def update_ll(wfx):
         ll[0].set_ydata(wfx)
-        pylab.show()
+        pylab.draw()
 
     m = camonitor('SR-DI-EBPM-01:SA:X', update_ll)
 
@@ -518,7 +571,6 @@ Communicate using event objects and queues:
 
 ``cothread.EventQueue()``
     Almost exactly like an event object, but multiple values can be waiting.
-    Not actually used very often...
 
 Both objects support two methods:
 
@@ -552,7 +604,8 @@ Example: Using ``Event``
 
 Note that we always get the latest value, even though the PV updates at 5Hz.
 
-Something like this class will probably go into the next cothread release.
+Cothread already implements a fuller featured version of this class available as
+``cothread.pv.PV``, and another variant ``cothread.pv.PV_array``.
 
 
 Cothread Suspension Points

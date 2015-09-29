@@ -70,7 +70,7 @@ html>body .external {border-bottom: none;}
 .incremental, .incremental *, .incremental *:after {
   color: transparent; visibility: visible; border: 0; border: 0;}
 img.incremental {visibility: hidden;}
-.slide .current {color: green;}
+.slide .current {color: black;}
 
 .slide-display {display: inline ! important;}
 
