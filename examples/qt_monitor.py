@@ -1,4 +1,4 @@
-#!/usr/bin/env dls-python2.6
+#!/usr/bin/env dls-python
 
 '''minimal Qt example'''
 
