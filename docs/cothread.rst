@@ -142,10 +142,11 @@ not to suspend):
     This is always a suspension point.
 
 :func:`catools.caput`
-    This routine will normally cause the caller to suspend.  To avoid
-    suspension, only put to one PV, use ``wait=False``, and ensure that the
-    channel is already connected -- this will be the case if it has already
-    been successfully used in any :mod:`catools` method.
+    This routine may cause the caller to suspend.  To avoid suspension, put to
+    only one PV, use ``wait=False`` (the default), and ensure that the channel
+    is already connected -- this will be the case if it has already been
+    successfully used in any :mod:`catools` method.  To ensure suspension use
+    ``wait=True``.
 
 The :mod:`cothread.cosocket` module makes most socket operations into suspension
 points when the corresponding socket operation is not yet ready.
