@@ -42,6 +42,8 @@ class PV(object):
         self.__sync = cothread.Event(auto_reset = False)
         self.__value = initial_value
         self.caput_wait = caput_wait
+        self.datatype = kargs.get('datatype', None)
+        self.format = kargs.get('format', catools.FORMAT_RAW)
 
         self.__deadline_set = initial_timeout != ()
         assert initial_value is None or not self.__deadline_set, \
@@ -92,9 +94,12 @@ class PV(object):
 
     def caput(self, value, **kargs):
         kargs.setdefault('wait', self.caput_wait)
+        kargs.setdefault('datatype', self.datatype)
         return catools.caput(self.name, value, **kargs)
 
     def caget(self, **kargs):
+        kargs.setdefault('datatype', self.datatype)
+        kargs.setdefault('format', self.format)
         return catools.caget(self.name, **kargs)
 
     value = property(get, caput)
