@@ -110,6 +110,7 @@ __all__ = [
     'Timer',            # One-shot cancellable timer
     'Callback',         # Simple asynchronous synchronisation
     'CallbackResult',   # Asynchronous synchronisation with result
+    'scheduler_thread_id', # For checking we're in cothread's thread
 ]
 
 
@@ -898,7 +899,7 @@ class ThreadedEventQueue(object):
         '''Waits for a value to be written to the queue.  This can safely be
         called from either a cothread or another thread: the appropriate form
         of cooperative or normal blocking will be selected automatically.'''
-        if thread.get_ident() == _scheduler_thread_id:
+        if thread.get_ident() == scheduler_thread_id:
             # Normal cothread case, use cooperative wait
             poll = coselect.poll_list
         else:
@@ -970,7 +971,7 @@ def CallbackResult(action, *args, **kargs):
     timeout  = kargs.pop('callback_timeout', None)
     spawn    = kargs.pop('callback_spawn', True)
 
-    if _scheduler_thread_id == thread.get_ident():
+    if scheduler_thread_id == thread.get_ident():
         return action(*args, **kargs)
     else:
         event = threading.Event()
@@ -1134,12 +1135,12 @@ def WaitForQuit(catch_interrupt = True):
 _scheduler = _Scheduler.create()
 # We hang onto the thread ID for the cothread thread (at present there can
 # only be one) so that we can recognise when we're in another thread.
-_scheduler_thread_id = thread.get_ident()
+scheduler_thread_id = thread.get_ident()
 
 
 # Thread validation: ensure cothreads aren't used across threads!
 def _validate_thread():
-    assert _scheduler_thread_id == thread.get_ident(), \
+    assert scheduler_thread_id == thread.get_ident(), \
         'Cannot call into cothread from another thread.  Consider using ' \
         'Callback or CallbackResult.'
 
