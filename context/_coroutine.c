@@ -188,6 +188,21 @@ static PyObject *coroutine_getcurrent(PyObject *self, PyObject *args)
 }
 
 
+static PyObject *coroutine_is_equal(PyObject *self, PyObject *args)
+{
+    struct cocore *cocore1, *cocore2;
+    if (PyArg_ParseTuple(args, "O&O&", get_cocore, &cocore1, get_cocore, &cocore2))
+    {
+        if (cocore1 == cocore2)
+            Py_RETURN_TRUE;
+        else
+            Py_RETURN_FALSE;
+    }
+    else
+        return NULL;
+}
+
+
 static PyObject *enable_check_stack(PyObject *self, PyObject *arg)
 {
     int is_true = PyObject_IsTrue(arg);
@@ -259,6 +274,9 @@ static PyObject *install_readline_hook(PyObject *self, PyObject *arg)
 static PyMethodDef module_methods[] = {
     { "get_current", coroutine_getcurrent, METH_NOARGS,
       "_coroutine.getcurrent()\nReturns the current coroutine." },
+    { "is_equal", coroutine_is_equal, METH_VARARGS,
+      "is_equal(coroutine1, coroutine2)\n\
+Compares two coroutine objects for equality" },
     { "create", coroutine_create, METH_VARARGS,
       "create(parent, action, stack_size)\n\
 Creates a new coroutine with the given action to invoke.  The parent\n\
