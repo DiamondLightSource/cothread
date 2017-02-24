@@ -93,6 +93,7 @@ __all__ = [
     'Yield',            # Suspend task for immediate resumption
 
     'Event',            # Event for waiting and signalling
+    'RLock',            # Recursive lock
     'Pulse',            # Event for dynamic condition variables
     'EventQueue',       # Queue of objects with event handling
     'ThreadedEventQueue',   # Event queue designed to work with threads
@@ -1164,3 +1165,50 @@ def Yield(timeout = 0):
     waiting to be run.'''
     _validate_thread()
     _scheduler.do_yield(GetDeadline(timeout))
+
+
+class RLock(object):
+    """A reentrant lock."""
+
+    __slots__ = [
+        '__event',          # Underlying event object
+        '__owner',          # The coroutine that has locked
+        '__count',          # The number of times the owner has locked
+    ]
+
+    def __init__(self):
+        self.__event = Event()
+        # Start off with the event set so acquire will not block
+        self.__event.Signal()
+        self.__owner = None
+        self.__count = 0
+
+    def acquire(self, timeout=None):
+        """Acquire the lock if necessary and increment the recursion level."""
+        # Inspired by threading.RLock
+        me = _coroutine.get_current()
+        if self.__owner and _coroutine.is_equal(self.__owner, me):
+            # if we are the owner then just increment the count
+            self.__count += 1
+        else:
+            # otherwise wait until it is unlocked
+            self.__event.Wait(timeout=timeout)
+            self.__owner = me
+            self.__count = 1
+
+    def release(self):
+        """Release a lock, decrementing the recursion level."""
+        assert self.__owner and _coroutine.is_equal(
+                self.__owner, _coroutine.get_current()), \
+            "cannot release un-acquired lock"
+        self.__count -= 1
+        if self.__count == 0:
+            self.__owner = None
+            # Wakeup one cothread waiting on acquire()
+            self.__event.Signal()
+
+    # Needed to make it a context manager
+    __enter__ = acquire
+
+    def __exit__(self, t, v, tb):
+        self.release()
