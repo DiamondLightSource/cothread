@@ -142,10 +142,11 @@ not to suspend):
     This is always a suspension point.
 
 :func:`catools.caput`
-    This routine will normally cause the caller to suspend.  To avoid
-    suspension, only put to one PV, use ``wait=False``, and ensure that the
-    channel is already connected -- this will be the case if it has already
-    been successfully used in any :mod:`catools` method.
+    This routine may cause the caller to suspend.  To avoid suspension, put to
+    only one PV, use ``wait=False`` (the default), and ensure that the channel
+    is already connected -- this will be the case if it has already been
+    successfully used in any :mod:`catools` method.  To ensure suspension use
+    ``wait=True``.
 
 The :mod:`cothread.cosocket` module makes most socket operations into suspension
 points when the corresponding socket operation is not yet ready.
@@ -350,6 +351,59 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
 
         Resets the signal and erases its value.  Also erases any exception
         written to the event.
+
+
+..  class:: RLock()
+
+    The :class:`RLock` is a reentrant lock that can be used to protect access
+    or modification of variables by two cothreads at the same time. It is
+    reentrant because once it is acquired by a cothread, that same cothread
+    may acquire it again without blocking. This same cothread must release it
+    once for each time it has acquired it.
+
+    It can be used as a context manager to acquire that lock and guarantee that
+    release will be called even if an exception is raised. For example::
+
+        lock = RLock()
+        x, y = 0, 0
+
+        with lock:
+            x = 1
+            some_function_that_yields_control()
+            y = 1
+
+    Now as long as any other function that uses x and y also protects access
+    with this same lock, x and y will always be in a consistent state. It also
+    means that some_function_that_yields_control() can also acquire the lock
+    without causing a deadlock.
+
+    The following methods are supported:
+
+    ..  method:: acquire(timeout=None)
+
+        Acquire the lock if necessary and increment the recursion level.
+
+        If this cothread already owns the lock, increment the recursion level
+        by one, and return immediately. Otherwise, if another cothread owns the
+        lock, block until the lock is unlocked. Once the lock is unlocked (not
+        owned by any cothread), then grab ownership, set the recursion level to
+        one, and return. If more than one thread is blocked waiting until the
+        lock is unlocked, only one at a time will be able to grab ownership of
+        the lock.
+
+    ..  method:: release()
+
+        Release a lock, decrementing the recursion level
+
+        If after the decrement it is zero, reset the lock to unlocked (not owned
+        by any cothread), and if any other cothreads are blocked waiting for the
+        lock to become unlocked, allow exactly one of them to proceed. If after
+        the decrement the recursion level is still nonzero, the lock remains
+        locked and owned by the calling cothread.
+
+        Only call this method when the calling cothread owns the lock. An
+        AssertionError is raised if this method is called when the lock is
+        unlocked or the cothread doesn't own the lock.
 
 
 ..  class:: Pulse()

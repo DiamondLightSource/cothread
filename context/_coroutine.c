@@ -78,9 +78,16 @@ static int get_cocore(PyObject *object, void **result)
 static void *coroutine_wrapper(void *action_, void *arg_)
 {
     PyThreadState *thread_state = PyThreadState_GET();
+
     /* New coroutine gets a brand new Python interpreter stack frame. */
     thread_state->frame = NULL;
     thread_state->recursion_depth = 0;
+
+    /* Also reset the exception state in case it's non NULL at this point.  We
+     * don't own these pointers at this point, coroutine_switch does. */
+    thread_state->exc_type = NULL;
+    thread_state->exc_value = NULL;
+    thread_state->exc_traceback = NULL;
 
     /* Call the given action with the passed argument. */
     PyObject *action = *(PyObject **)action_;
@@ -88,6 +95,17 @@ static void *coroutine_wrapper(void *action_, void *arg_)
     PyObject *result = PyObject_CallFunctionObjArgs(action, arg, NULL);
     Py_DECREF(action);
     Py_DECREF(arg);
+
+    /* Some of the stuff we've initialised can leak through, so far I've only
+     * seen exc_type still set at this point, but maybe other fields can also
+     * leak.  Avoid a memory leak by making sure we're not holding onto these.
+     *    All these pointers really are defunct, because as soon as we return
+     * coroutine_switch will replace all these values. */
+    Py_XDECREF(thread_state->frame);
+    Py_XDECREF(thread_state->exc_type);
+    Py_XDECREF(thread_state->exc_value);
+    Py_XDECREF(thread_state->exc_traceback);
+
     return result;
 }
 
@@ -126,6 +144,14 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
         struct _frame *python_frame = thread_state->frame;
         int recursion_depth = thread_state->recursion_depth;
 
+        /* We also need to switch the exception state around: if we don't do
+         * this then we get confusion about the lifetime of exception state
+         * between coroutines.  The most obvious problem is that the exception
+         * isn't properly cleared on function return. */
+        PyObject *exc_type = thread_state->exc_type;
+        PyObject *exc_value = thread_state->exc_value;
+        PyObject *exc_traceback = thread_state->exc_traceback;
+
         /* Switch to new coroutine.  For the duration arg needs an extra
          * reference count, it'll be accounted for either on the next returned
          * result or in the entry to a new coroutine. */
@@ -137,6 +163,11 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
         thread_state = PyThreadState_GET();
         thread_state->frame = python_frame;
         thread_state->recursion_depth = recursion_depth;
+
+        /* Restore the exception state. */
+        thread_state->exc_type = exc_type;
+        thread_state->exc_value = exc_value;
+        thread_state->exc_traceback = exc_traceback;
         return result;
     }
     else
@@ -154,6 +185,21 @@ static PyObject *coroutine_getcurrent(PyObject *self, PyObject *args)
         /* First time through initialise the cocore library. */
         SET_TLS(base_coroutine, initialise_cocore_thread());
     return PyCapsule_New(get_current_cocore(), CAPSULE_NAME, NULL);
+}
+
+
+static PyObject *coroutine_is_equal(PyObject *self, PyObject *args)
+{
+    struct cocore *cocore1, *cocore2;
+    if (PyArg_ParseTuple(args, "O&O&", get_cocore, &cocore1, get_cocore, &cocore2))
+    {
+        if (cocore1 == cocore2)
+            Py_RETURN_TRUE;
+        else
+            Py_RETURN_FALSE;
+    }
+    else
+        return NULL;
 }
 
 
@@ -228,6 +274,9 @@ static PyObject *install_readline_hook(PyObject *self, PyObject *arg)
 static PyMethodDef module_methods[] = {
     { "get_current", coroutine_getcurrent, METH_NOARGS,
       "_coroutine.getcurrent()\nReturns the current coroutine." },
+    { "is_equal", coroutine_is_equal, METH_VARARGS,
+      "is_equal(coroutine1, coroutine2)\n\
+Compares two coroutine objects for equality" },
     { "create", coroutine_create, METH_VARARGS,
       "create(parent, action, stack_size)\n\
 Creates a new coroutine with the given action to invoke.  The parent\n\

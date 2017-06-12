@@ -1,1 +1,3 @@
 include context/*
+include README.rst
+

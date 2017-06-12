@@ -24,7 +24,7 @@ class MyScope(widget, Ui_Scope):
         widget.__init__(self)
         self.setupUi(self)
 
-        self.channel.setText('SR21C-DI-EBPM-01:FR:WFX')
+        self.channel.setText('SR23C-DI-EBPM-08:FR:WFX')
         self.monitor = None
         # make any contents fill the empty frame
         grid = QtGui.QGridLayout(self.axes)
@@ -39,13 +39,13 @@ class MyScope(widget, Ui_Scope):
             self.monitor.close()
         # connect new channel
         self.monitor = camonitor(name, self.on_event)
-        QtGui.QMessageBox.warning(self, "I'm a warning", "Warning text")
 
     def on_event(self, value):
         '''camonitor callback'''
         if value.ok:
             x = arange(value.shape[0])
             self.c.setData(x, value)
+            print('set data', value)
 
     def makeplot(self):
         '''set up plotting'''

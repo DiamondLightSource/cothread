@@ -75,6 +75,7 @@ setup(
     license = 'GPL2',
     packages = ['cothread', 'cothread.tools'],
     ext_modules = ext_modules,
+    test_suite="tests",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
