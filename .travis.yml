@@ -1,0 +1,46 @@
+sudo: false
+language: python
+python:
+  - "2.7"
+#  - "3.3"
+#  - "3.4"
+#  - "3.5"
+#  - "3.6"
+
+env:
+  - PYMALCOLM_USE_COTHREAD=YES
+  - PYMALCOLM_USE_COTHREAD=NO
+
+addons:
+  apt:
+    packages:
+      - qt4-qmake
+      - libqt4-dev
+      - libhdf5-serial-dev
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages
+    - ${VIRTUAL_ENV}/bin
+
+install:
+  - env
+  - ls -al ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages
+  - ls -al ${VIRTUAL_ENV}/bin
+  - ci/install_pyqt.sh
+  - python -c "import PyQt4;print(PyQt4)"
+  - pip install -r requirements/test.txt
+  - pip install coveralls
+  - ls -al ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages  
+  - ldd ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/PyQt4/*.so
+  - ls -al ${VIRTUAL_ENV}/bin
+  - python setup.py bdist_egg
+  
+# command to run tests
+script:
+  - pytest --cov=malcolm --log-format='%(asctime)s.%(msecs)03d %(filename)-25s %(lineno)4d %(levelname)-8s %(message)s' --log-date-format='%Y-%m-%d %H:%M:%S' tests
+
+# submit coverage
+after_script:
+  - coveralls
