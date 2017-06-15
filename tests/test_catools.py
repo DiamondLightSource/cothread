@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import os
 from cothread import counittest, catools
+
+here = os.path.dirname(__file__)
+
 
 class SoftIocTest(counittest.TestCase):
     iocexe = 'softIoc'
     iocload = (
-        ('tests/test_unittest.db', 'P=$(TESTPREFIX)'),
+        (os.path.join(here, 'soft_records.db'), 'P=$(TESTPREFIX)'),
     )
     iocpost = "dbl\r"
-
-    def test_nothing(self):
-        self.assertTrue(True)
 
     def test_ai(self):
         # wait for CA server to start

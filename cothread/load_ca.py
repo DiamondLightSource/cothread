@@ -38,7 +38,7 @@ import ctypes
 import platform
 import os
 
-from .epicsarch import epics_host_arch
+from epicsarch import epics_host_arch
 
 # Figure out the libraries that need to be loaded and the loading method.
 load_library = ctypes.cdll.LoadLibrary
