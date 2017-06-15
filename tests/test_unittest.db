@@ -1,0 +1,6 @@
+record(ai, "$(P)ai") {
+  field(VAL, "$(VAL=42)")
+}
+
+record(stringin, "$(P)si") {
+}

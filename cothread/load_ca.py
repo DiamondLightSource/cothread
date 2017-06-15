@@ -38,6 +38,7 @@ import ctypes
 import platform
 import os
 
+from .epicsarch import epics_host_arch
 
 # Figure out the libraries that need to be loaded and the loading method.
 load_library = ctypes.cdll.LoadLibrary
@@ -84,19 +85,6 @@ def _libca_path(load_libca_path):
     # No local install, no local configuration, no override.  Try for standard
     # environment variable configuration instead.
     epics_base = os.environ['EPICS_BASE']
-    # Mapping from host architecture to EPICS host architecture name can be done
-    # with a little careful guesswork.  As EPICS architecture names are a little
-    # arbitrary this isn't guaranteed to work.
-    system_map = {
-        ('Linux',   '32bit'):   'linux-x86',
-        ('Linux',   '64bit'):   'linux-x86_64',
-        ('Darwin',  '32bit'):   'darwin-x86',
-        ('Darwin',  '64bit'):   'darwin-x86',
-        ('Windows', '32bit'):   'win32-x86',
-        ('Windows', '64bit'):   'windows-x64',  # Not quite yet!
-    }
-    bits = platform.architecture()[0]
-    epics_host_arch = system_map[(system, bits)]
     return os.path.join(epics_base, 'lib', epics_host_arch)
 
 
