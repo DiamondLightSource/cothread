@@ -7,16 +7,21 @@ python:
   - "3.5"
   - "3.6"
 
+
+
 # Get epics base
-before_script:
-  - curl  http://epics.nsls2.bnl.gov/debian/repo-key.pub | sudo apt-key add -
-  - echo "deb http://epics.nsls2.bnl.gov/debian/ wheezy main contrib" | sudo tee -a /etc/apt/sources.list
-  - sudo apt-get update -qq
-  - sudo apt-get install epics-dev build-essential
+addons:
+  apt:
+    sources:
+      - sourceline: 'deb http://epics.nsls2.bnl.gov/debian/ wheezy main contrib'
+        key_url: 'http://epics.nsls2.bnl.gov/debian/repo-key.pub'
+
+    packages:
+      - epics-dev
+      - build-essential
 
 env:
-- EPICS_BASE=/usr/lib/epics
-- EPICS_HOST_ARCH=linux-x86_64
+- EPICS_BASE=/usr/lib/epics EPICS_HOST_ARCH=linux-x86_64
 
 cache:
   directories:
@@ -28,15 +33,15 @@ install:
   - env
   - ls -al ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages
   - ls -al ${VIRTUAL_ENV}/bin
-  - pip install numpy
-  - pip install pytest pytest-cov coveralls
+  - pip install numpy pytest
+  - pip install pytest-cov coveralls
   - ls -al ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages  
   - ls -al ${VIRTUAL_ENV}/bin
-  - make PYTHON=python install
+  - make PYTHON=python dist build_ext
 
 # command to run tests
 script:
-  - pytest --cov=cothread --tb=native -vv tests
+  - py.test --cov=cothread --tb=native -vv tests
 
 # submit coverage
 after_script:
