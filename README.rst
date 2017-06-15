@@ -1,4 +1,4 @@
-|pypi-version| |readthedocs|
+|build_status| |coverage| |pypi-version| |readthedocs|
 
 cothread
 ========
@@ -40,3 +40,11 @@ GPL2 License (see COPYING)
 .. |readthedocs| image:: https://readthedocs.org/projects/cothread/badge/?version=latest
     :target: https://readthedocs.org/projects/cothread/?badge=latest
     :alt: Documentation Status
+
+.. |build_status| image:: https://travis-ci.org/dls-controls/cothread.svg?style=flat
+    :target: https://travis-ci.org/dls-controls/cothread
+    :alt: Build Status
+
+.. |coverage| image:: https://coveralls.io/repos/dls-controls/cothread/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/dls-controls/cothread?branch=master
+    :alt: Test coverage
