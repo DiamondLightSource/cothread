@@ -7,6 +7,17 @@ python:
   - "3.5"
   - "3.6"
 
+# Get epics base
+before_script:
+  - curl  http://epics.nsls2.bnl.gov/debian/repo-key.pub | sudo apt-key add -
+  - echo "deb http://epics.nsls2.bnl.gov/debian/ wheezy main contrib" | sudo tee -a /etc/apt/sources.list
+  - sudo apt-get update -qq
+  - sudo apt-get install epics-dev build-essential
+
+env:
+- EPICS_BASE=/usr/lib/epics
+- EPICS_HOST_ARCH=linux-x86_64
+
 cache:
   directories:
     - $HOME/.cache/pip
@@ -22,7 +33,7 @@ install:
   - ls -al ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages  
   - ls -al ${VIRTUAL_ENV}/bin
   - make PYTHON=python install
-  
+
 # command to run tests
 script:
   - pytest --cov=cothread --tb=native -vv tests
