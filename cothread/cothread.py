@@ -435,7 +435,7 @@ class _Scheduler(object):
 
         if isinstance(result, tuple):
             # This case arises if we are main and the scheduler just died.
-            raise result[0], result[1], result[2]
+            raise result[1].with_traceback(result[2])
         else:
             return result
 
@@ -485,7 +485,7 @@ class _Scheduler(object):
             # to die.  Make sure our wakeup is cancelled, and then
             # re-raise the offending exception.
             wakeup.wakeup(result)
-            raise result[0], result[1], result[2]
+            raise result[1].with_traceback(result[2])
         else:
             return result == _WAKEUP_TIMEOUT
 
