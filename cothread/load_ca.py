@@ -32,6 +32,8 @@
 # This file can also be run as a standalone script to discover the path to
 # libca.
 
+from __future__ import print_function
+
 import ctypes
 import platform
 import os

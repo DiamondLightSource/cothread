@@ -36,6 +36,7 @@ import numpy
 import datetime
 
 from . import cadef
+from . import py23
 
 
 __all__ = [
@@ -608,9 +609,10 @@ def _datatype_to_dbr(datatype):
         # with filtering through our array of acceptable types.
         return NumpyCharCodeToDbr[numpy.dtype(datatype).char]
     except Exception as error:
-        raise InvalidDatatype(
-            'Datatype "%s" not supported for channel access' % datatype) \
-            from error
+        py23.raise_from(
+            InvalidDatatype(
+                'Datatype "%s" not supported for channel access' % datatype),
+            error)
 
 def _type_to_dbrcode(datatype, format):
     '''Converts a datatype and format request to a dbr value, or raises an

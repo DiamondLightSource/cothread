@@ -46,6 +46,8 @@ Supports the following methods:
 See the documentation for the individual functions for more details on using
 them.'''
 
+from __future__ import print_function
+
 import os
 import sys
 import atexit
@@ -56,6 +58,7 @@ import threading
 from . import cothread
 from . import cadef
 from . import dbr
+from . import py23
 
 from .dbr import *
 from .cadef import *
@@ -68,6 +71,7 @@ __all__ = [
     'connect',          # Establish PV connection
     'cainfo',           # Returns ca_info describing PV connection
 ] + dbr.__all__ + cadef.__all__
+
 
 
 def _check_env(name, default):
@@ -103,6 +107,11 @@ class ca_nothing(Exception):
 
     def __bool__(self):
         return self.ok
+
+    def __iter__(self):
+        '''This is *not* supposed to be an iterable object, but the base class
+        appears to have a different opinion.  So enforce this.'''
+        raise TypeError('iteration over non-sequence')
 
 
 def maybe_throw(function):
@@ -140,7 +149,7 @@ def ca_timeout(event, timeout, name):
     try:
         return event.Wait(timeout)
     except cothread.Timedout as timeout:
-        raise ca_nothing(name, cadef.ECA_TIMEOUT) from timeout
+        py23.raise_from(ca_nothing(name, cadef.ECA_TIMEOUT), timeout)
 
 
 # ----------------------------------------------------------------------------
