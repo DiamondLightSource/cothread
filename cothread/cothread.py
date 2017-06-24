@@ -66,13 +66,14 @@ Similarly the EventQueue can be used for communication.
 # It might be worth taking a close look at:
 #   http://wiki.secondlife.com/wiki/Eventlet
 
+from __future__ import print_function
+
 import sys
 import os
 import time
 import bisect
 import traceback
 import collections
-import _thread
 import threading
 
 from . import _coroutine
@@ -81,6 +82,11 @@ if os.environ.get('COTHREAD_CHECK_STACK'):
     _coroutine.enable_check_stack(True)
 
 from . import coselect
+
+if sys.version_info >= (3,):
+    import _thread
+else:
+    import thread as _thread
 
 
 __all__ = [
@@ -113,6 +119,15 @@ __all__ = [
 ]
 
 
+
+if sys.version_info >= (3,):
+    def raise_with_traceback(result):
+        raise result[1].with_traceback(result[2])
+else:
+    exec('''
+def raise_with_traceback(result):
+    raise result[0], result[1], result[2]
+''')
 
 
 class _TimerQueue(object):
@@ -435,7 +450,7 @@ class _Scheduler(object):
 
         if isinstance(result, tuple):
             # This case arises if we are main and the scheduler just died.
-            raise result[1].with_traceback(result[2])
+            raise_with_traceback(result)
         else:
             return result
 
@@ -485,7 +500,7 @@ class _Scheduler(object):
             # to die.  Make sure our wakeup is cancelled, and then
             # re-raise the offending exception.
             wakeup.wakeup(result)
-            raise result[1].with_traceback(result[2])
+            raise_with_traceback(result)
         else:
             return result == _WAKEUP_TIMEOUT
 
@@ -703,7 +718,7 @@ class Spawn(EventBase):
             try:
                 # Re-raise the exception that actually killed the task here
                 # where it can be received by whoever waits on the task.
-                raise result[1].with_traceback(result[2])
+                raise_with_traceback(result)
             finally:
                 # In this case result and self.__result contain a traceback.  To
                 # avoid circular references which will delay garbage collection,
@@ -999,7 +1014,7 @@ def CallbackResult(action, *args, **kargs):
         if ok:
             return result
         else:
-            raise result[1].with_traceback(result[2])
+            raise_with_traceback(result)
 
         # Note: raising entire stack backtrace context might be dangerous, need
         # to think about this carefully, particularly if the corresponding stack
