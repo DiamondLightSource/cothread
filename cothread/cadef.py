@@ -47,6 +47,7 @@ __all__ = [
 
 import ctypes
 from .load_ca import libca
+from . import py23
 
 
 
@@ -138,7 +139,7 @@ class CAException(Exception):
         self.function = function
     def __str__(self):
         return '%s calling %s' % (
-            ca_message(self.status).decode(), self.function.__name__)
+            ca_message(self.status), self.function.__name__)
 
 
 
@@ -192,6 +193,7 @@ ctypes.pythonapi.Py_DecRef.argtypes = [ctypes.py_object]
 ca_message = libca.ca_message
 ca_message.argtypes = [ctypes.c_long]
 ca_message.restype = ctypes.c_char_p
+ca_message.errcheck = py23.auto_decode
 
 
 #   channel_name = ca_name(channel)
@@ -200,6 +202,7 @@ ca_message.restype = ctypes.c_char_p
 ca_name = libca.ca_name
 ca_name.argtypes = [ctypes.c_void_p]
 ca_name.restype = ctypes.c_char_p
+ca_name.errcheck = py23.auto_decode
 
 
 #   @exception_handler
@@ -243,7 +246,7 @@ ca_element_count.errcheck = expect_connected(0)
 # recovered by calling ca_puser(channel_id).
 ca_create_channel = libca.ca_create_channel
 ca_create_channel.argtypes = [
-    ctypes.c_char_p, connection_handler, ctypes.py_object,
+    py23.auto_encode, connection_handler, ctypes.py_object,
     ctypes.c_int, ctypes.c_void_p]
 ca_create_channel.errcheck = expect_ECA_NORMAL
 
@@ -397,6 +400,7 @@ ca_state.argtypes = [ctypes.c_void_p]
 ca_host_name = libca.ca_host_name
 ca_host_name.argtypes = [ctypes.c_void_p]
 ca_host_name.restype = ctypes.c_char_p
+ca_host_name.errcheck = py23.auto_decode
 
 
 #   read = ca_read_access(channel_id)

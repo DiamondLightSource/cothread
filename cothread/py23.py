@@ -34,6 +34,8 @@ if sys.version_info < (3,):
     auto_encode = ctypes.c_char_p
     def auto_decode(result, func, args):
         return result
+    def decode(s):
+        return s
 
 else:
     class auto_encode(ctypes.c_char_p):
@@ -42,10 +44,13 @@ else:
             if value is None:
                 return value
             else:
-                return value.encode()
+                return value.encode('UTF-8')
 
     def auto_decode(result, func, args):
         if result is None:
             return result
         else:
-            return result.decode()
+            return result.decode('UTF-8')
+
+    def decode(s):
+        return s.decode('UTF-8')

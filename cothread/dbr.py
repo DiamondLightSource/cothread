@@ -51,6 +51,7 @@ __all__ = [
     'DBR_DOUBLE',       # 64 bit float
 
     'DBR_CHAR_STR',     # Long strings as char arrays
+    'DBR_CHAR_UNICODE', # Long unicode strings as char arrays
     'DBR_ENUM_STR',     # Enums as strings, default otherwise
     'DBR_CHAR_BYTES',   # Long byte strings as char arrays
 
@@ -221,7 +222,7 @@ def copy_attributes_ctrl(self, other):
     other.status = self.status
     other.severity = self.severity
 
-    other.units = ctypes.string_at(self.units).decode()
+    other.units = py23.decode(ctypes.string_at(self.units))
     other.upper_disp_limit = self.upper_disp_limit
     other.lower_disp_limit = self.lower_disp_limit
     other.upper_alarm_limit = self.upper_alarm_limit
@@ -411,7 +412,8 @@ class dbr_ctrl_enum(ctypes.Structure):
         other.status = self.status
         other.severity = self.severity
         other.enums = [
-            ctypes.string_at(s).decode() for s in self.raw_strs[:self.no_str]]
+            py23.decode(ctypes.string_at(s))
+            for s in self.raw_strs[:self.no_str]]
 
 class dbr_ctrl_char(ctypes.Structure):
     dtype = numpy.uint8
@@ -519,6 +521,7 @@ DBR_CLASS_NAME = 38
 # Special value for DBR_CHAR as str special processing.
 DBR_ENUM_STR = 996
 DBR_CHAR_BYTES = 997
+DBR_CHAR_UNICODE = 998
 DBR_CHAR_STR = 999
 
 
@@ -682,7 +685,7 @@ def _string_at(raw_value, count):
 
 # Conversion from char array to strings
 def _convert_char_str(raw_dbr, count):
-    return ca_str(_string_at(raw_dbr.raw_value, count).decode())
+    return ca_str(py23.decode(_string_at(raw_dbr.raw_value, count)))
 
 # Conversion from char array to bytes strings
 def _convert_char_bytes(raw_dbr, count):
@@ -690,9 +693,9 @@ def _convert_char_bytes(raw_dbr, count):
 
 # Arrays of standard strings.
 def _convert_str_str(raw_dbr, count):
-    return ca_str(_make_strings(raw_dbr, count)[0].decode())
+    return ca_str(py23.decode(_make_strings(raw_dbr, count)[0]))
 def _convert_str_str_array(raw_dbr, count):
-    strings = [s.decode() for s in _make_strings(raw_dbr, count)]
+    strings = [py23.decode(s) for s in _make_strings(raw_dbr, count)]
     return _string_array(strings, count, 'U')
 
 # Arrays of bytes strings.
@@ -841,7 +844,7 @@ def value_to_dbr(channel, datatype, value):
             result = _require_value(value, 'S%d' % count)
         except UnicodeEncodeError:
             # Unicode needs to be encoded
-            result = _require_value(value.encode(), 'S%d' % count)
+            result = _require_value(value.encode('UTF-8'), 'S%d' % count)
         assert result.shape[0] == 1, \
             'Can\'t put array of strings as char array'
         return DBR_CHAR, count, result.ctypes.data, result
@@ -861,7 +864,7 @@ def value_to_dbr(channel, datatype, value):
                 value = _require_value(value, None)
                 result = numpy.empty(value.shape, str_dtype)
                 for n, s in enumerate(value):
-                    result[n] = s.encode()
+                    result[n] = s.encode('UTF-8')
         else:
             # Numpy can do all the conversion for all the remaining data types.
             result = _require_value(value, dtype)

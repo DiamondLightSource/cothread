@@ -73,7 +73,6 @@ __all__ = [
 ] + dbr.__all__ + cadef.__all__
 
 
-
 def _check_env(name, default):
     '''For stacks that are created at startup we allow the stack size to be
     specified in an environment variable for overriding the default.'''
@@ -103,10 +102,11 @@ class ca_nothing(Exception):
         return 'ca_nothing(%r, %d)' % (self.name, self.errorcode)
 
     def __str__(self):
-        return '%s: %s' % (self.name, cadef.ca_message(self.errorcode).decode())
+        return '%s: %s' % (self.name, cadef.ca_message(self.errorcode))
 
     def __bool__(self):
         return self.ok
+    __nonzero__ = __bool__   # For python 2
 
     def __iter__(self):
         '''This is *not* supposed to be an iterable object, but the base class
@@ -198,7 +198,7 @@ class Channel(object):
 
         chid = ctypes.c_void_p()
         cadef.ca_create_channel(
-            name.encode(), self.on_ca_connect, ctypes.py_object(self),
+            name, self.on_ca_connect, ctypes.py_object(self),
             0, ctypes.byref(chid))
         # Setting this allows a channel object to autoconvert into the chid
         # when passed to ca_ functions.
@@ -1054,6 +1054,6 @@ if False:
     @exception_handler
     def catools_exception(args):
         '''print ca exception message'''
-        print('catools_exception:', args.ctx,
-            cadef.ca_message(args.stat).decode(), file = sys.stderr)
+        print('catools_exception:', decode(args.ctx),
+            cadef.ca_message(args.stat), file = sys.stderr)
     cadef.ca_add_exception_event(catools_exception, 0)

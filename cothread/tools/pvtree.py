@@ -1,6 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # Simple tool for viewing the chain of PV dependencies.
+
+from __future__ import print_function
 
 import sys
 import re

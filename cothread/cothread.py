@@ -121,6 +121,7 @@ __all__ = [
 
 
 
+
 class _TimerQueue(object):
     '''A timer queue: objects are held on the queue in timeout sequence.'''
 
@@ -695,6 +696,7 @@ class Spawn(EventBase):
     def __bool__(self):
         '''Tests whether the event is signalled.'''
         return bool(self.__result)
+    __nonzero__ = __bool__
 
     def Wait(self, timeout = None):
         '''Waits until the task has completed.  May raise an exception if the
@@ -753,6 +755,7 @@ class Event(EventBase):
     def __bool__(self):
         '''Tests whether the event is signalled.'''
         return bool(self.__value)
+    __nonzero__ = __bool__
 
     def Wait(self, timeout = None):
         '''The caller will block until the event becomes true, or until the
