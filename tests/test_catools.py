@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 import os
 from cothread import catools
-import counittest
+
+if __name__ == '__main__':
+    import counittest
+else:
+    from . import counittest
 
 here = os.path.dirname(__file__)
 
@@ -35,5 +39,5 @@ class SoftIocTest(counittest.TestCase):
         V = catools.caget(si)
         self.assertEqual(V, 'hello world')
 
-if __name__=='__main__':
+if __name__ == '__main__':
     counittest.main()
