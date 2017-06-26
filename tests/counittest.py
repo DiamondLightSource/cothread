@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import unittest as _unittest
 
 import re
@@ -8,9 +10,10 @@ import sys, os, pty, errno, tempfile
 from signal import SIGKILL
 
 import socket as _socket
-from . import coselect, cosocket
-from .cothread import Spawn, Sleep, Event, Timedout
-from .epicsarch import epics_host_arch
+from cothread import coselect, cosocket
+from cothread import Spawn, Sleep, Event, Timedout
+from cothread.load_ca import epics_host_arch
+from cothread import py23
 
 __all__ = [
     'IOCTestCaseMixin',
@@ -166,13 +169,13 @@ class IOCTestCaseMixin(object):
                "IOC not running"
 
         if not self.kill(self._child_pid, 0):
-            print 'IOC process already stopped'
+            print('IOC process already stopped')
 
         else:
             self.iocCmd("exit")
 
             if not self.waitpid(self._child_pid):
-                print 'iocStop timeout, killing IOC'
+                print('iocStop timeout, killing IOC')
                 self.kill(self._child_pid, SIGKILL)
 
         self._ttyrecv.AbortWait()
@@ -186,7 +189,7 @@ class IOCTestCaseMixin(object):
     def iocCmd(self, cmd):
         """Enter a command string to the IOC shell
         """
-        self._tty.write(cmd.lstrip()+'\r')
+        self._tty.write((cmd.lstrip()+'\r').encode())
 
     def waitFor(self, lines, regex=False, timeout=None):
         """Wait for the given text to appear on the IOC stdout or stderr
@@ -202,7 +205,7 @@ class IOCTestCaseMixin(object):
         if not isinstance(lines, (list, tuple)):
             lines = [lines]
         for i in range(len(lines)):
-            if isinstance(lines[i], (str, unicode)):
+            if isinstance(lines[i], str):
                 if not regex:
                     lines[i] = re.escape(lines[i])
                 lines[i] = re.compile(lines[i], re.MULTILINE)
@@ -226,7 +229,7 @@ class IOCTestCaseMixin(object):
     def assertIOCRunning(self):
         M = self.waitFor('All initialization complete')
         self.assertEqual(M, 'All initialization complete')
-        print M
+        print(M)
 
     def assertPVEqual(self, pv, value, msg=None, timeout=None):
         """Check the the value of the named PV is exactly equal
@@ -289,7 +292,7 @@ class IOCTestCaseMixin(object):
         # seperate cothread
         try:
             while True:
-                T = self._tty.read(1024)
+                T = py23.decode(self._tty.read(1024))
                 if not T:
                     return
                 self._tty_in += T

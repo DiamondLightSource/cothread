@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from cothread import counittest, catools
+from cothread import catools
+import counittest
 
 here = os.path.dirname(__file__)
 
