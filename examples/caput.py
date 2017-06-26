@@ -1,5 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Simple example of caget tool using cothread.
+
+from __future__ import print_function
 
 import require
 from cothread.catools import *

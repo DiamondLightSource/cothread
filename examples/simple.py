@@ -1,6 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 '''Channel Access Example'''
+
+from __future__ import print_function
 
 # load correct version of catools
 import require

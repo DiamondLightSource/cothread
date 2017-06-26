@@ -1,6 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 '''Form Example with Monitor'''
+
+from __future__ import print_function
 
 import os, sys
 

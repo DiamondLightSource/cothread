@@ -1,5 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Simple example of camonitor tool catools library
+
+from __future__ import print_function
 
 import sys
 import optparse
