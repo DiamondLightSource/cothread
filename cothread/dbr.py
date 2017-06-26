@@ -31,6 +31,7 @@
 header file db_access.h
 '''
 
+import sys
 import ctypes
 import numpy
 import datetime
@@ -163,11 +164,29 @@ class ca_str(str):
     def __pos__(self):
         return str(self)
 
-class ca_bytes(bytes):
-    __doc__ = ca_doc_string
-    datetime = timestamp_to_datetime
-    def __pos__(self):
-        return bytes(self)
+
+# Overlapping handling for python 2 and python 3.  We have three types with two
+# different semantics: str, bytes, unicode.  In python2 str is bytes, while in
+# python3 str is unicode.  We walk a delicate balancing act to get the right
+# behaviour in both environments!
+if sys.version_info < (3,):
+    ca_bytes = ca_str
+    class ca_unicode(bytes):
+        __doc__ = ca_doc_string
+        datetime = timestamp_to_datetime
+        def __pos__(self):
+            return unicode(self)
+    str_char_code = 'S'
+else:
+    class ca_bytes(bytes):
+        __doc__ = ca_doc_string
+        datetime = timestamp_to_datetime
+        def __pos__(self):
+            return bytes(self)
+    ca_unicode = ca_str
+    str_char_code = 'U'
+    unicode = str
+
 
 class ca_int(int):
     __doc__ = ca_doc_string
@@ -630,7 +649,7 @@ def _type_to_dbrcode(datatype, format):
       - FORMAT_CTRL: retrieve limit and control data
     '''
     if datatype not in BasicDbrTypes:
-        if datatype in [DBR_CHAR_STR, DBR_CHAR_BYTES]:
+        if datatype in [DBR_CHAR_STR, DBR_CHAR_BYTES, DBR_CHAR_UNICODE]:
             datatype = DBR_CHAR     # Retrieve this type using char array
         elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
             return datatype         # format is meaningless in this case
@@ -691,18 +710,31 @@ def _convert_char_str(raw_dbr, count):
 def _convert_char_bytes(raw_dbr, count):
     return ca_bytes(_string_at(raw_dbr.raw_value, count))
 
+# Conversion from char array to unicode strings
+def _convert_char_unicode(raw_dbr, count):
+    return ca_unicode(_string_at(raw_dbr.raw_value, count).decode('UTF-8'))
+
+
 # Arrays of standard strings.
 def _convert_str_str(raw_dbr, count):
     return ca_str(py23.decode(_make_strings(raw_dbr, count)[0]))
 def _convert_str_str_array(raw_dbr, count):
     strings = [py23.decode(s) for s in _make_strings(raw_dbr, count)]
-    return _string_array(strings, count, 'U')
+    return _string_array(strings, count, str_char_code)
 
 # Arrays of bytes strings.
 def _convert_str_bytes(raw_dbr, count):
     return ca_bytes(_make_strings(raw_dbr, count)[0])
 def _convert_str_bytes_array(raw_dbr, count):
     return _string_array(_make_strings(raw_dbr, count), count, 'S')
+
+# Arrays of unicode strings.
+def _convert_str_unicode(raw_dbr, count):
+    return ca_str(_make_strings(raw_dbr, count)[0].decode('UTF-8'))
+def _convert_str_unicode_array(raw_dbr, count):
+    strings = [s.decode('UTF-8') for s in _make_strings(raw_dbr, count)]
+    return _string_array(strings, count, 'U')
+
 
 # For everything that isn't a string we either return a scalar or a ca_array
 def _convert_other(raw_dbr, count):
@@ -755,11 +787,16 @@ def type_to_dbr(channel, datatype, format):
     elif dtype is numpy.uint8 and datatype == DBR_CHAR_BYTES:
         # Conversion from char array to bytes strings
         convert = _convert_char_bytes
+    elif dtype is numpy.uint8 and datatype == DBR_CHAR_UNICODE:
+        # Conversion from char array to unicode strings
+        convert = _convert_char_unicode
     else:
         if dtype is str_dtype:
             # String arrays, either unicode or normal.
             if isinstance(datatype, type) and issubclass(datatype, bytes):
                 convert = (_convert_str_bytes, _convert_str_bytes_array)
+            elif isinstance(datatype, type) and issubclass(datatype, unicode):
+                convert = (_convert_str_unicode, _convert_str_unicode_array)
             else:
                 convert = (_convert_str_str, _convert_str_str_array)
         else:
@@ -827,7 +864,7 @@ def value_to_dbr(channel, datatype, value):
 
     # If no datatype specified then use the target datatype.
     if datatype is None:
-        if isinstance(value, (str, bytes)):
+        if isinstance(value, (str, bytes, unicode)):
             # Give strings with no datatype special treatment, let the IOC do
             # the decoding.  It's safer this way.
             datatype = DBR_STRING
