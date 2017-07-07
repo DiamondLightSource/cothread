@@ -16,6 +16,7 @@ here = os.path.dirname(__file__)
 
 
 class SoftIocTest(counittest.TestCase):
+    maxDiff=None
     iocexe = 'softIoc'
     iocload = (
         (os.path.join(here, 'soft_records.db'), 'P=$(TESTPREFIX)'),
@@ -42,20 +43,20 @@ class SoftIocTest(counittest.TestCase):
 
     def test_monitor(self):
         self.assertIOCRunning()
-        ai = self.testprefix + 'ai'
+        longout = self.testprefix + 'longout'
 
         values = []
 
         def callback(value):
             values.append(value)
 
-        m = catools.camonitor(ai, callback, notify_disconnect=True)
+        m = catools.camonitor(longout, callback, notify_disconnect=True)
 
         # Wait for connection
         while not values:
             cothread.Sleep(0.1)
-        catools.caput(ai, 43, wait=True)
-        catools.caput(ai, 44, wait=True)
+        catools.caput(longout, 43, wait=True)
+        catools.caput(longout, 44, wait=True)
         self.iocStop()
 
         # Can't call iocStop twice...
@@ -65,18 +66,33 @@ class SoftIocTest(counittest.TestCase):
         self.iocStop = iocStop
         m.close()
 
-        assert len(values) == 4
-        assert values[:3] == [42, 43, 44]
-        assert [v.ok for v in values] == [True, True, True, False]
+        self.assertEqual(len(values), 4)
+        self.assertEqual(values[:3], [42, 43, 44])
+        self.assertEqual([v.ok for v in values], [True, True, True, False])
 
-    def test_ai(self):
+    def test_longout(self):
         # wait for CA server to start
         self.assertIOCRunning()
 
-        ai = self.testprefix+'ai'
-        v = catools.caget(ai, timeout=1)
-
-        self.assertEqual(v, 42.0)
+        longout = self.testprefix+'longout'
+        v = catools.caget(longout, timeout=1, format=catools.FORMAT_CTRL)
+        self.assertDictEqual(v.__dict__, dict(
+            datatype=catools.DBR_LONG,
+            element_count=1,
+            lower_alarm_limit=2,
+            lower_ctrl_limit=10,
+            lower_disp_limit=0,
+            lower_warning_limit=5,
+            name=longout,
+            ok=True,
+            severity=0,
+            status=0,
+            units='',
+            upper_alarm_limit=98,
+            upper_ctrl_limit=90,
+            upper_disp_limit=100,
+            upper_warning_limit=96))
+        self.assertEqual(v, 42)
 
     def test_si(self):
         self.assertIOCRunning()
@@ -93,22 +109,21 @@ class SoftIocTest(counittest.TestCase):
     def test_info(self):
         self.assertIOCRunning()
         si = self.testprefix+'si'
-        ai = self.testprefix + 'ai'
-        infos = catools.cainfo([ai, si])
+        longout = self.testprefix + 'longout'
+        infos = catools.cainfo([longout, si])
         self.assertEqual([v.ok for v in infos], [True, True])
         self.assertMultiLineEqual(str(infos[0]), """%s:
     State: connected
     Host: %s
     Access: True, True
-    Data type: double
-    Count: 1""" % (ai, infos[0].host))
+    Data type: long
+    Count: 1""" % (longout, infos[0].host))
         self.assertMultiLineEqual(str(infos[1]), """%s:
     State: connected
     Host: %s
     Access: True, True
     Data type: string
     Count: 1""" % (si, infos[1].host))
-
 
     def test_pvtree(self):
         from cothread.tools.pvtree import main
@@ -125,8 +140,8 @@ class SoftIocTest(counittest.TestCase):
         f.seek(0)
         self.assertMultiLineEqual(f.read(), """%(testprefix)scalc (calc, ) 42 NO_ALARM NO_ALARM
 %(testprefix)scalc.CALC A
-%(testprefix)scalc.INPA %(testprefix)sai CP NMS
-  %(testprefix)sai (ai, 'Soft Channel') 42 INVALID UDF
+%(testprefix)scalc.INPA %(testprefix)slongout CP NMS
+  %(testprefix)slongout (longout, 'Soft Channel') 42 NO_ALARM NO_ALARM
 """ % self.__dict__)
 
 
