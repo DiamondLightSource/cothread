@@ -37,6 +37,70 @@ class ExceptionTest(unittest.TestCase):
         self.assertRaises(KeyboardInterrupt, cothread.Sleep, 2)
 
 
+class EventQueueTest(unittest.TestCase):
+    def setUp(self):
+        self.o = cothread.EventQueue()
+
+    def test_signalled(self):
+        l = []
+
+        def waiter():
+            l.append(self.o.Wait())
+
+        s = cothread.Spawn(waiter)
+
+        # Check that it's blocked
+        self.assertRaises(cothread.Timedout, s.Wait, 0.1)
+        self.o.Signal(46)
+        s.Wait(0.1)
+        assert l == [46]
+
+    def test_iter(self):
+        self.o.Signal(4)
+        self.o.Signal("boo")
+        self.o.Signal({})
+        self.o.close()
+        self.assertEqual(list(self.o), [4, "boo", {}])
+
+
+class TimerTest(unittest.TestCase):
+    def test_oneshot(self):
+        l = []
+
+        def tick():
+            l.append(1)
+
+        t = cothread.Timer(0.1, tick, reuse=True)
+        self.assertEqual(l, [])
+        cothread.Sleep(0.2)
+        self.assertEqual(l, [1])
+        cothread.Sleep(0.2)
+        self.assertEqual(l, [1])
+        t.reset(0.05)
+        self.assertEqual(l, [1])
+        cothread.Sleep(0.1)
+        self.assertEqual(l, [1, 1])
+        cothread.Sleep(0.1)
+        self.assertEqual(l, [1, 1])
+
+    def test_multi(self):
+        l = [1]
+
+        def tick():
+            l.append(l[-1] + 2)
+
+        t = cothread.Timer(0.1, tick, retrigger=True)
+        self.assertEqual(l, [1])
+        cothread.Sleep(0.15)
+        self.assertEqual(l, [1, 3])
+        cothread.Sleep(0.1)
+        self.assertEqual(l, [1, 3, 5])
+        t.cancel()
+        cothread.Sleep(0.15)
+        self.assertEqual(l, [1, 3, 5])
+
+
+
 class RLockTest(unittest.TestCase):
     def setUp(self):
         self.v = None
