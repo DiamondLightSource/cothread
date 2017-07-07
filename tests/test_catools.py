@@ -90,11 +90,31 @@ class SoftIocTest(counittest.TestCase):
         v = catools.caget(si)
         self.assertEqual(v, 'hello world')
 
+    def test_info(self):
+        self.assertIOCRunning()
+        si = self.testprefix+'si'
+        ai = self.testprefix + 'ai'
+        infos = catools.cainfo([ai, si])
+        self.assertEqual([v.ok for v in infos], [True, True])
+        self.assertMultiLineEqual(str(infos[0]), """%s:
+    State: connected
+    Host: %s
+    Access: True, True
+    Data type: double
+    Count: 1""" % (ai, infos[0].host))
+        self.assertMultiLineEqual(str(infos[1]), """%s:
+    State: connected
+    Host: %s
+    Access: True, True
+    Data type: string
+    Count: 1""" % (si, infos[1].host))
+
+
     def test_pvtree(self):
         from cothread.tools.pvtree import main
         self.assertIOCRunning()
         calc = self.testprefix + 'calc'
-        f = tempfile.TemporaryFile()
+        f = tempfile.TemporaryFile(mode="w+t")
         stdout = sys.stdout
         sys.stdout = f
         sys.argv = ["pvtree.py", calc]
