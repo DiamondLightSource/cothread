@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-
+from __future__ import print_function
 import unittest
-
-import os
+import sys
 import socket
-import http.server as http
-from http.client import HTTPConnection
-from urllib.request import urlopen
+
+if sys.version_info < (3,):
+    import BaseHTTPServer as http
+    from httplib import HTTPConnection
+    from urllib2 import urlopen
+else:
+    import http.server as http
+    from http.client import HTTPConnection
+    from urllib.request import urlopen
 
 # Add cothread onto file and import
 import sys
