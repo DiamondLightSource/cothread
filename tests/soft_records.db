@@ -4,3 +4,8 @@ record(ai, "$(P)ai") {
 
 record(stringin, "$(P)si") {
 }
+
+record(calc, "$(P)calc") {
+  field(INPA, "$(P)ai CP")
+  field(CALC, "A")
+}

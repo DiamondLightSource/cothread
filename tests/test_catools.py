@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import sys
+import tempfile
 from cothread import catools
+
 
 if __name__ == '__main__':
     import counittest
@@ -38,6 +41,26 @@ class SoftIocTest(counittest.TestCase):
 
         V = catools.caget(si)
         self.assertEqual(V, 'hello world')
+
+    def test_pvtree(self):
+        from cothread.tools.pvtree import main
+        self.assertIOCRunning()
+        calc = self.testprefix + 'calc'
+        f = tempfile.TemporaryFile()
+        stdout = sys.stdout
+        sys.stdout = f
+        sys.argv = ["pvtree.py", calc]
+        try:
+            main()
+        finally:
+            sys.stdout = stdout
+        f.seek(0)
+        self.assertMultiLineEqual(f.read(), """%(testprefix)scalc (calc, ) 42 NO_ALARM NO_ALARM
+%(testprefix)scalc.CALC A
+%(testprefix)scalc.INPA %(testprefix)sai CP NMS
+  %(testprefix)sai (ai, 'Soft Channel') 42 INVALID UDF
+""" % self.__dict__)
+
 
 if __name__ == '__main__':
     counittest.main()
