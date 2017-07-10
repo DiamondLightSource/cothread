@@ -1047,13 +1047,3 @@ class _FlushIo:
         self._flush_io_event.Signal()
 
 _flush_io = _FlushIo()
-
-
-# The value of the exception handler below is rather doubtful...
-if False:
-    @exception_handler
-    def catools_exception(args):
-        '''print ca exception message'''
-        print('catools_exception:', decode(args.ctx),
-            cadef.ca_message(args.stat), file = sys.stderr)
-    cadef.ca_add_exception_event(catools_exception, 0)
