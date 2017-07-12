@@ -53,22 +53,26 @@ def socket_hook():
     _socket.socketpair = socketpair
 
 
-def socketpair(*args):
-    a, b = _socket_pair(*args)
-    # Now wrap them to make them co-operative
-    if sys.version_info < (3,):
-        a = cosocket(_sock=a)
-        b = cosocket(_sock=b)
-    else:
+if sys.version_info < (3,):
+    def socketpair(*args):
+        a, b = _socket_pair(*args)
+        # Now wrap them to make them co-operative
+        a = cosocket(_sock = a)
+        b = cosocket(_sock = b)
+        return a, b
+else:
+    def socketpair(*args):
+        a, b = _socket_pair(*args)
+        # Now wrap them to make them co-operative
         a = socket(a.family, a.type, a.proto, a.detach())
         b = socket(b.family, b.type, b.proto, b.detach())
-    return a, b
+        return a, b
 socketpair.__doc__ = _socket_pair.__doc__
 
 
 def create_connection(*args, **kargs):
     sock = _socket.create_connection(*args, **kargs)
-    return cosocket(_sock=sock)
+    return cosocket(_sock = sock)
 create_connection.__doc__ = _socket.create_connection.__doc__
 
 
@@ -151,7 +155,7 @@ class cosocket(object):
     @wrap
     def accept(self):
         sock, addr = self.__retry(coselect.POLLIN, self.__socket.accept, ())
-        return cosocket(_sock=sock), addr
+        return (cosocket(_sock = sock), addr)
 
     @wrap
     def recv(self, *args):
@@ -188,21 +192,13 @@ class cosocket(object):
     def dup(self):
         return cosocket(_sock=self.__socket.dup())
 
-    @property
-    def _io_refs(self):
-        return self.__socket._io_refs
-
-    @_io_refs.setter
-    def _io_refs(self, value):
-        self.__socket._io_refs = value
-
-    @wrap
-    def makefile(self, *args, **kws):
-        if sys.version_info < (3,):
-            # At this point the actual socket '_socket.socket' is wrapped by either
-            # two layers: 'socket.socket' and this class.  or a single layer: this
-            # class.  In order to handle close() properly we must copy all wrappers,
-            # but not the underlying actual socket.
+    if sys.version_info < (3,):
+        @wrap
+        def makefile(self, *args, **kws):
+            # At this point the actual socket '_socket.socket' is wrapped by
+            # either two layers: 'socket.socket' and this class.  or a single
+            # layer: this class.  In order to handle close() properly we must
+            # copy all wrappers, but not the underlying actual socket.
             sock = getattr(self.__socket, '_sock', None)
             if sock: # double wrapped
                 copy0 = _socket_socket(None, None, None, sock)
@@ -210,8 +206,19 @@ class cosocket(object):
             else: # single wrapped
                 copy1 = cosocket(None, None, None, self.__socket)
             return _socket._fileobject(copy1, *args, **kws)
-        else:
-            return _socket_socket.makefile(self, *args, **kws)
+    else:
+        @property
+        def _io_refs(self):
+            return self.__socket._io_refs
+
+        @_io_refs.setter
+        def _io_refs(self, value):
+            self.__socket._io_refs = value
+
+        # Can use the original makefile just so long as we provide the _io_refs
+        # property above.
+        makefile = _socket_socket.makefile
+
 
 del wrap
 

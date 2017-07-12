@@ -71,11 +71,11 @@ def _patch(cls):
             if hasattr(cls, 'address_family'):
                 sa = (self.socket.family, self.socket.type, self.socket.proto)
                 if sys.version_info < (3,):
-                    sk = dict(_sock=self.socket)
+                    sk = dict(_sock = self.socket)
                 else:
                     sa += (self.socket.detach(),)
                     sk = {}
-                self.socket = cosocket.socket(*sa, **sk)
+                self.socket = cosocket.cosocket(*sa, **sk)
                 if baact:
                     self.server_bind()
                     self.server_activate()
