@@ -142,24 +142,38 @@ class TestSocket(unittest.TestCase):
 
     def test_pair_makefile(self):
         """Test makefile() with socketpair()
-        which behaves the same as plain socket() in python 3.X
 
-        Underlying socket is a reference count.  So the socket in actually
-        closed when the last reference is released.
+        In python2.x they behave differently than a plain socket(). They must
+        behave like a socket._fileobject wrapping a raw _socket.socket.
+        Closing a _socket.socket is immediate, and necessary to terminate
+        readlines()
+
+        In python 3.X they behaves the same as a plain socket(). Underlying
+        socket is a reference count. So the socket in actually closed when the
+        last reference is released.
         """
 
         sA, sB = socket.socketpair()
 
         A, B = sA.makefile('w'), sB.makefile('r')
-        sA.close()
-        sB.close()
-        self.assertNotEqual(A.name, -1)
-        self.assertNotEqual(B.name, -1)
+
+        if sys.version_info < (3,):
+            self.assertNotEqual(A._sock.fileno(), -1)
+            self.assertNotEqual(B._sock.fileno(), -1)
+        else:
+            sA.close()
+            sB.close()
+            self.assertNotEqual(A.name, -1)
+            self.assertNotEqual(B.name, -1)
 
         def tx2():
             for i in range(10):
                 print(i, file=A)
-            A.close() # flush and close
+            if sys.version_info < (3,):
+                A.close()  # flush...
+                sA.close()  # Actually close the socket, completes readlines()
+            else:
+                A.close()  # flush and close
 
         tx2 = cothread.Spawn(tx2, raise_on_wait=True)
 
@@ -167,6 +181,9 @@ class TestSocket(unittest.TestCase):
         B.close()
 
         tx2.Wait(1.0)
+
+        if sys.version_info < (3,):
+            sB.close()
 
         self.assertEqual(Ls, ['0\n','1\n','2\n','3\n','4\n','5\n','6\n','7\n',
                               '8\n','9\n'])

@@ -69,10 +69,13 @@ def _patch(cls):
             self.__shut = cosocket.socketpair()
 
             if hasattr(cls, 'address_family'):
-                # TODO: this is not the same for python2
-                self.socket = cosocket.socket(
-                    self.socket.family, self.socket.type,
-                    self.socket.proto, self.socket.detach())
+                sa = (self.socket.family, self.socket.type, self.socket.proto)
+                if sys.version_info < (3,):
+                    sk = dict(_sock=self.socket)
+                else:
+                    sa += (self.socket.detach(),)
+                    sk = {}
+                self.socket = cosocket.socket(*sa, **sk)
                 if baact:
                     self.server_bind()
                     self.server_activate()

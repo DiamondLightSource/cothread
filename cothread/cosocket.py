@@ -49,33 +49,53 @@ def socket_hook():
     '''Replaces the blocking methods in the socket module with the non-blocking
     methods implemented here.  Not safe to call if other threads need the
     original methods.'''
-    _socket.socket = socket
+    _socket.socket = cosocket
     _socket.socketpair = socketpair
 
+
 def socketpair(*args):
-    A, B = _socket_pair(*args)
-    A = socket(A.family, A.type, A.proto, A.detach())
-    B = socket(B.family, B.type, B.proto, B.detach())
-    return A, B
+    a, b = _socket_pair(*args)
+    # Now wrap them to make them co-operative
+    if sys.version_info < (3,):
+        a = cosocket(_sock=a)
+        b = cosocket(_sock=b)
+    else:
+        a = socket(a.family, a.type, a.proto, a.detach())
+        b = socket(b.family, b.type, b.proto, b.detach())
+    return a, b
+socketpair.__doc__ = _socket_pair.__doc__
+
 
 def create_connection(*args, **kargs):
     sock = _socket.create_connection(*args, **kargs)
-    return socket(_sock = sock)
+    return cosocket(_sock=sock)
 create_connection.__doc__ = _socket.create_connection.__doc__
 
-class socket(_socket_socket):
-    __doc__ = _socket_socket.__doc__
 
-    def wrap(fun):
-        fun.__doc__ = getattr(_socket_socket, fun.__name__).__doc__
-        return fun
+def wrap(fun):
+    fun.__doc__ = getattr(_socket_socket, fun.__name__).__doc__
+    return fun
+
+
+class cosocket(object):
+    __doc__ = _socket_socket.__doc__
 
     def __init__(self,
             family=_socket.AF_INET, type=_socket.SOCK_STREAM, proto=0,
-            fileno=None):
-        _socket_socket.__init__(self, family, type, proto, fileno)
-        _socket_socket.setblocking(self, 0)
+            fileno=None, _sock=None):
+        # This is the real socket object we will defer all calls to
+        if _sock is None:
+            if fileno is not None:
+                _sock = _socket_socket(family, type, proto, fileno)
+            else:
+                _sock = _socket_socket(family, type, proto)
+        self.__socket = _sock
+        self.__socket.setblocking(0)
         self.__timeout = _socket.getdefaulttimeout()
+
+    def __getattr__(self, name):
+        # Delegate all attributes we've not defined to the underlying socket.
+        return getattr(self.__socket, name)
 
     @wrap
     def settimeout(self, timeout):
@@ -98,7 +118,7 @@ class socket(_socket_socket):
         # with EINPROGRESS, and then need to wait for connection to complete
         # before discovering the true result.
         try:
-            _socket_socket.connect(self, address)
+            self.__socket.connect(address)
         except _socket.error as error:
             if error.errno != errno.EINPROGRESS:
                 raise
@@ -115,7 +135,6 @@ class socket(_socket_socket):
         except _socket.error as error:
             return error.errno
 
-
     def __poll(self, event):
         if not coselect.poll_list([(self, event)], self.__timeout):
             raise _socket.error(errno.ETIMEDOUT, 'Timeout waiting for socket')
@@ -123,41 +142,40 @@ class socket(_socket_socket):
     def __retry(self, event, action, args):
         while True:
             try:
-                return action(self, *args)
+                return action(*args)
             except _socket.error as error:
                 if error.errno != errno.EAGAIN:
                     raise
             self.__poll(event)
 
-
     @wrap
     def accept(self):
-        sock, addr = self.__retry(coselect.POLLIN, _socket_socket.accept, ())
-        return (socket(sock.family, sock.type, sock.proto, sock.detach()), addr)
+        sock, addr = self.__retry(coselect.POLLIN, self.__socket.accept, ())
+        return cosocket(_sock=sock), addr
 
     @wrap
     def recv(self, *args):
-        return self.__retry(coselect.POLLIN, _socket_socket.recv, args)
+        return self.__retry(coselect.POLLIN, self.__socket.recv, args)
 
     @wrap
     def recvfrom(self, *args):
-        return self.__retry(coselect.POLLIN, _socket_socket.recvfrom, args)
+        return self.__retry(coselect.POLLIN, self.__socket.recvfrom, args)
 
     @wrap
     def recvfrom_into(self, *args):
-        return self.__retry(coselect.POLLIN, _socket_socket.recvfrom_into, args)
+        return self.__retry(coselect.POLLIN, self.__socket.recvfrom_into, args)
 
     @wrap
     def recv_into(self, *args):
-        return self.__retry(coselect.POLLIN, _socket_socket.recv_into, args)
+        return self.__retry(coselect.POLLIN, self.__socket.recv_into, args)
 
     @wrap
     def send(self, *args):
-        return self.__retry(coselect.POLLOUT, _socket_socket.send, args)
+        return self.__retry(coselect.POLLOUT, self.__socket.send, args)
 
     @wrap
     def sendto(self, *args):
-        return self.__retry(coselect.POLLOUT, _socket_socket.sendto, args)
+        return self.__retry(coselect.POLLOUT, self.__socket.sendto, args)
 
     @wrap
     def sendall(self, data, *flags):
@@ -166,4 +184,36 @@ class socket(_socket_socket):
         while sent < length:
             sent += self.send(data[sent:], *flags)
 
-    del wrap
+    @wrap
+    def dup(self):
+        return cosocket(_sock=self.__socket.dup())
+
+    @property
+    def _io_refs(self):
+        return self.__socket._io_refs
+
+    @_io_refs.setter
+    def _io_refs(self, value):
+        self.__socket._io_refs = value
+
+    @wrap
+    def makefile(self, *args, **kws):
+        if sys.version_info < (3,):
+            # At this point the actual socket '_socket.socket' is wrapped by either
+            # two layers: 'socket.socket' and this class.  or a single layer: this
+            # class.  In order to handle close() properly we must copy all wrappers,
+            # but not the underlying actual socket.
+            sock = getattr(self.__socket, '_sock', None)
+            if sock: # double wrapped
+                copy0 = _socket_socket(None, None, None, sock)
+                copy1 = cosocket(None, None, None, copy0)
+            else: # single wrapped
+                copy1 = cosocket(None, None, None, self.__socket)
+            return _socket._fileobject(copy1, *args, **kws)
+        else:
+            return _socket_socket.makefile(self, *args, **kws)
+
+del wrap
+
+# Make an alias to it
+socket = cosocket
