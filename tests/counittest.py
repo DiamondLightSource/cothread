@@ -220,7 +220,7 @@ class IOCTestCaseMixin(object):
                     ret = self._tty_in[M.start():M.end()]
 
                 # consume everything up to and including the match
-                self._tty_in = self._tty_in[M.end()]
+                #self._tty_in = self._tty_in[M.end():]
                 return ret
 
             # no matches yet.  Need more input
