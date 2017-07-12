@@ -113,13 +113,13 @@ class SoftIocTest(counittest.TestCase):
         longout = self.testprefix + 'longout'
         infos = catools.cainfo([longout, si])
         self.assertEqual([v.ok for v in infos], [True, True])
-        self.assertEquals(str(infos[0]), """%s:
+        self.assertEqual(str(infos[0]), """%s:
     State: connected
     Host: %s
     Access: True, True
     Data type: long
     Count: 1""" % (longout, infos[0].host))
-        self.assertEquals(str(infos[1]), """%s:
+        self.assertEqual(str(infos[1]), """%s:
     State: connected
     Host: %s
     Access: True, True

@@ -53,20 +53,14 @@ def socket_hook():
     _socket.socketpair = socketpair
 
 
-if sys.version_info < (3,):
-    def socketpair(*args):
-        a, b = _socket_pair(*args)
-        # Now wrap them to make them co-operative
+def socketpair(*args):
+    a, b = _socket_pair(*args)
+    # Now wrap them to make them co-operative if needed
+    if not isinstance(a, cosocket):
         a = cosocket(_sock = a)
+    if not isinstance(b, cosocket):
         b = cosocket(_sock = b)
-        return a, b
-else:
-    def socketpair(*args):
-        a, b = _socket_pair(*args)
-        # Now wrap them to make them co-operative
-        a = socket(a.family, a.type, a.proto, a.detach())
-        b = socket(b.family, b.type, b.proto, b.detach())
-        return a, b
+    return a, b
 socketpair.__doc__ = _socket_pair.__doc__
 
 
