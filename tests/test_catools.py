@@ -76,7 +76,7 @@ class SoftIocTest(counittest.TestCase):
 
         longout = self.testprefix+'longout'
         v = catools.caget(longout, timeout=1, format=catools.FORMAT_CTRL)
-        self.assertDictEqual(v.__dict__, dict(
+        self.assertEquals(v.__dict__, dict(
             datatype=catools.DBR_LONG,
             element_count=1,
             lower_alarm_limit=2,
@@ -112,13 +112,13 @@ class SoftIocTest(counittest.TestCase):
         longout = self.testprefix + 'longout'
         infos = catools.cainfo([longout, si])
         self.assertEqual([v.ok for v in infos], [True, True])
-        self.assertMultiLineEqual(str(infos[0]), """%s:
+        self.assertEquals(str(infos[0]), """%s:
     State: connected
     Host: %s
     Access: True, True
     Data type: long
     Count: 1""" % (longout, infos[0].host))
-        self.assertMultiLineEqual(str(infos[1]), """%s:
+        self.assertEquals(str(infos[1]), """%s:
     State: connected
     Host: %s
     Access: True, True
@@ -138,7 +138,7 @@ class SoftIocTest(counittest.TestCase):
         finally:
             sys.stdout = stdout
         f.seek(0)
-        self.assertMultiLineEqual(f.read(), """%(testprefix)scalc (calc, ) 42 NO_ALARM NO_ALARM
+        self.assertEquals(f.read(), """%(testprefix)scalc (calc, ) 42 NO_ALARM NO_ALARM
 %(testprefix)scalc.CALC A
 %(testprefix)scalc.INPA %(testprefix)slongout CP NMS
   %(testprefix)slongout (longout, 'Soft Channel') 42 NO_ALARM NO_ALARM
