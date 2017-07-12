@@ -26,20 +26,21 @@ class SoftIocTest(counittest.TestCase):
     def test_non_existant(self):
         self.assertIOCRunning()
 
-        ne = self.testprefix+'ne'
-        with self.assertRaises(catools.ca_nothing) as cm:
-            catools.caget(ne, timeout=0.1)
+        if sys.version_info > (2, 7):
+            ne = self.testprefix+'ne'
+            with self.assertRaises(catools.ca_nothing) as cm:
+                catools.caget(ne, timeout=0.1)
 
-        self.assertEqual(
-            repr(cm.exception),
-            "ca_nothing('%s', 80)" % ne)
-        self.assertEqual(
-            str(cm.exception),
-            "%s: User specified timeout on IO operation expired" % ne)
-        self.assertFalse(bool(cm.exception))
-        with self.assertRaises(TypeError):
-            for _ in cm.exception:
-                pass
+            self.assertEqual(
+                repr(cm.exception),
+                "ca_nothing('%s', 80)" % ne)
+            self.assertEqual(
+                str(cm.exception),
+                "%s: User specified timeout on IO operation expired" % ne)
+            self.assertFalse(bool(cm.exception))
+            with self.assertRaises(TypeError):
+                for _ in cm.exception:
+                    pass
 
     def test_monitor(self):
         self.assertIOCRunning()
