@@ -992,7 +992,7 @@ def connect(pvs, **kargs):
 
 
 def cainfo(pvs, **args):
-    '''Rreturns a ca_info structure for the given PVs.  See the documentation
+    '''Returns a ca_info structure for the given PVs.  See the documentation
     for connect() for more detail.'''
     return connect(pvs, cainfo = True, wait = True, **args)
 

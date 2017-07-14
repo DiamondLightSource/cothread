@@ -33,11 +33,11 @@ install: dist
 
 # publish
 publish: default
-	$(PYTHON) setup.py register -r pypi sdist upload -r pypi
+	$(PYTHON) setup.py sdist upload -r pypi
 
 # publish to test pypi
 testpublish: default
-	$(PYTHON) setup.py register -r pypitest sdist upload -r pypitest
+	$(PYTHON) setup.py sdist upload -r pypitest
 
 docs: cothread/_coroutine.so
 	sphinx-build -b html docs docs/html
