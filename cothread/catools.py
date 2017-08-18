@@ -553,7 +553,7 @@ def camonitor(pvs, callback, **kargs):
         if notify_disconnect is False, and that if the PV subsequently connects
         it will update as normal.
     '''
-    if isinstance(pvs, str):
+    if isinstance(pvs, (str, unicode)):
         return _Subscription(pvs, callback, **kargs)
     else:
         return [
@@ -736,7 +736,7 @@ def caget(pvs, **kargs):
     The format of values returned depends on the number of values requested
     for each PV.  If only one value is requested then the value is returned
     as a scalar, otherwise as a numpy array.'''
-    if isinstance(pvs, str):
+    if isinstance(pvs, (str, unicode)):
         return caget_one(pvs, **kargs)
     else:
         return caget_array(pvs, **kargs)
@@ -809,7 +809,7 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
 
 def caput_array(pvs, values, repeat_value=False, **kargs):
     # Bring the arrays of pvs and values into alignment.
-    if repeat_value or isinstance(values, str):
+    if repeat_value or isinstance(values, (str, unicode)):
         # If repeat_value is requested or the value is a string then we treat
         # it as a single value.
         values = [values] * len(pvs)
@@ -880,7 +880,7 @@ def caput(pvs, values, **kargs):
     If caput completed succesfully then .ok is True and .name is the
     corresponding PV name.  If throw=False was specified and a put failed
     then .errorcode is set to the appropriate ECA_ error code.'''
-    if isinstance(pvs, str):
+    if isinstance(pvs, (str, unicode)):
         return caput_one(pvs, values, **kargs)
     else:
         return caput_array(pvs, values, **kargs)
@@ -985,7 +985,7 @@ def connect(pvs, **kargs):
         connected to.  If this is set to False then instead for each failing
         PV a sentinel value with .ok == False is returned.
     '''
-    if isinstance(pvs, str):
+    if isinstance(pvs, (str, unicode)):
         return connect_one(pvs, **kargs)
     else:
         return connect_array(pvs, **kargs)
