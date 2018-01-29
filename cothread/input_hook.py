@@ -90,7 +90,7 @@ def _timer_iqt(poll_interval):
 
     # Set up a timer so that Qt polls cothread.  All the timer needs to do
     # is to yield control to the coroutine system.
-    from PyQt4 import QtCore
+    from .qt import QtCore
     timer = QtCore.QTimer()
     timer.timeout.connect(timeout)
     timer.start(poll_interval * 1e3)
@@ -114,7 +114,7 @@ def iqt(poll_interval = 0.05, run_exec = True, argv = None):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
 
-    from PyQt4 import QtCore, QtGui
+    from .qt import QtCore, QtWidgets
     global _qapp, _timer
 
     # Importing PyQt4 has an unexpected side effect: it removes the input hook!
@@ -131,7 +131,7 @@ def iqt(poll_interval = 0.05, run_exec = True, argv = None):
     if _qapp is None:
         if argv is None:
             argv = sys.argv
-        _qapp = QtGui.QApplication(argv)
+        _qapp = QtWidgets.QApplication(argv)
 
     # Arrange to get a Quit event when the last window goes.  This allows the
     # application to simply rest on WaitForQuit().
