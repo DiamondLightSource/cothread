@@ -135,7 +135,7 @@ def iqt(poll_interval = 0.05, run_exec = True, argv = None):
 
     # Arrange to get a Quit event when the last window goes.  This allows the
     # application to simply rest on WaitForQuit().
-    _qapp.lastWindowClosed.connect(cothread.Quit)
+    _qapp.aboutToQuit.connect(cothread.Quit)
 
     # Create timer.  Hang onto the timer to prevent it from vanishing.
     _timer = _timer_iqt(poll_interval)
