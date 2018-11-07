@@ -13,11 +13,16 @@ Channel Access with ``cothread``
 :Author: Michael Abbott
 
 Documentation:
-    .. class:: small
+    file:///dls_sw/prod/common/python/RHEL6-x86_64/cothread/2-15/docs/html/index.html
 
-    file:///dls_sw/prod/common/python/RHEL6-x86_64/cothread/2-13/docs/html/index.html
+    https://cothread.readthedocs.io
 
-    http://www.cs.diamond.ac.uk/docs/docshome/cothread/
+Sources:
+    file:///dls_sw/prod/common/python/RHEL6-x86_64/cothread/2-15
+    https://github.com/dls-controls/cothread
+
+Development version:
+    file:///home/mga83/epics/cothread
 
 
 Cothread
@@ -55,12 +60,12 @@ Preliminaries
 =============
 
 Need to import ``cothread``, all of the examples will start with
-the following code, 2.13 is the current release:
+the following code, 2.15 is the current release:
 
 .. code:: python
 
     from pkg_resources import require
-    require('cothread==2.13')
+    require('cothread==2.15')
 
     import cothread
     from cothread.catools import *
@@ -477,7 +482,7 @@ working with ``dls-python``.  We'll show the complete set:
 .. code:: python
 
     from pkg_resources import require
-    require('cothread==2.13')
+    require('cothread==2.15')
     require('matplotlib')
 
     import cothread
