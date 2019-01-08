@@ -81,14 +81,21 @@ def _libca_path(load_libca_path):
     #
     # 1. Firstly if CATOOLS_LIBCA_PATH is set in the environment we take that as
     #    gospel.  This allows the remaining search to be overridden.
-    # 2  If the libca_path module is present we accept the value it defines.
-    # 3. Check for local copies of the libca file(s).
-    # 4. Finally check for EPICS_BASE and compute appropriate architecture
+    # 2. If epicscorelibs is installed, allow it to provide libca.
+    # 3. If the libca_path module is present we accept the value it defines.
+    # 4. Finally check for EPICS_BASE and compute appropriate architecture.
 
     # First allow a forced override
     libca_path = os.environ.get('CATOOLS_LIBCA_PATH')
     if libca_path:
         return libca_path
+
+    # If epicscorelibs is installed, use the bundled libca.
+    try:
+        from epicscorelibs.path import get_lib
+        return get_lib('ca')
+    except ImportError:
+        pass
 
     # Next import from configuration file if present, unless this has been
     # disabled.
@@ -99,12 +106,6 @@ def _libca_path(load_libca_path):
             return libca_path
         except ImportError:
             pass
-
-    # If no libca_path, how about local copies of the files?
-    libca_path = os.path.abspath(os.path.dirname(__file__))
-    if os.path.isfile(os.path.join(libca_path, lib_files[-1])):
-        # Yes, there seems to be something locally installed.
-        return libca_path
 
     # No local install, no local configuration, no override.  Try for standard
     # environment variable configuration instead.
