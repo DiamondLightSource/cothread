@@ -14,8 +14,8 @@ python:
 addons:
   apt:
     sources:
-      - sourceline: 'deb http://epics.nsls2.bnl.gov/debian/ wheezy main contrib'
-        key_url: 'http://epics.nsls2.bnl.gov/debian/repo-key.pub'
+      - sourceline: 'deb https://epics.nsls2.bnl.gov/debian/ wheezy main contrib'
+        key_url: 'https://epics.nsls2.bnl.gov/debian/repo-key.pub'
 
     packages:
       - epics-dev
