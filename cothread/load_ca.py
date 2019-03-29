@@ -107,6 +107,12 @@ def _libca_path(load_libca_path):
         except ImportError:
             pass
 
+    # If no libca_path, how about local copies of the files?
+    libca_path = os.path.abspath(os.path.dirname(__file__))
+    if os.path.isfile(os.path.join(libca_path, lib_files[-1])):
+        # Yes, there seems to be something locally installed.
+        return libca_path
+
     # No local install, no local configuration, no override.  Try for standard
     # environment variable configuration instead.
     epics_base = os.environ['EPICS_BASE']
