@@ -13,8 +13,8 @@ python:
 addons:
   apt:
     sources:
-      - sourceline: 'deb https://epics.nsls2.bnl.gov/debian/ wheezy main contrib'
-        key_url: 'https://epics.nsls2.bnl.gov/debian/repo-key.pub'
+      - sourceline: 'deb https://epics.nsls2.bnl.gov/ wheezy main contrib'
+        key_url: 'https://epics.nsls2.bnl.gov/repo-key.pub'
 
     packages:
       - epics-dev
@@ -35,7 +35,7 @@ install:
   - ls -al ${VIRTUAL_ENV}/bin
   - pip install numpy pytest
   - pip install pytest-cov coveralls
-  - ls -al ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages  
+  - ls -al ${VIRTUAL_ENV}/lib/python${TRAVIS_PYTHON_VERSION}/site-packages
   - ls -al ${VIRTUAL_ENV}/bin
   - make PYTHON=python dist build_ext
 
