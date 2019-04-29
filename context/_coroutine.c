@@ -213,13 +213,9 @@ static PyObject *coroutine_getcurrent(PyObject *self, PyObject *args)
 static PyObject *coroutine_is_equal(PyObject *self, PyObject *args)
 {
     struct cocore *cocore1, *cocore2;
-    if (PyArg_ParseTuple(args, "O&O&", get_cocore, &cocore1, get_cocore, &cocore2))
-    {
-        if (cocore1 == cocore2)
-            Py_RETURN_TRUE;
-        else
-            Py_RETURN_FALSE;
-    }
+    if (PyArg_ParseTuple(args, "O&O&",
+            get_cocore, &cocore1, get_cocore, &cocore2))
+        return PyBool_FromLong(cocore1 == cocore2);
     else
         return NULL;
 }
