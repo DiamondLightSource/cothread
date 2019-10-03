@@ -431,12 +431,15 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
     notifier for updating complex conditions.
 
 
-..  class:: EventQueue()
+..  class:: EventQueue(max_length=None)
 
     The :class:`EventQueue` is designed to support the communication of a
     stream of values between two cothreads.  Calling :func:`len` on an event
     queue returns the number of entries currently in its queue.  An event
     queue can also be consumed as an iterator, see code example below.
+
+    Optionally a maximum queue length can be specified.  In this case attempts
+    to signal a queue with `max_length` pending elements will fail.
 
     The following methods are supported:
 
@@ -452,7 +455,16 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
     ..  method:: Signal(value)
 
         Adds the given value to the queue, waking up a waiting cothread if one
-        is waiting.  This routine does not suspend the caller.
+        is waiting.  This routine does not suspend the caller.  ``True`` is
+        returned on success.
+
+        If the queue is full, i.e. if `max_length` was specified on creation and
+        the current queue length is equal to this limit, then no action is taken
+        and ``False`` is returned.
+
+    ..  method:: Reset()
+
+        Discards all values in the queue.
 
     ..  method:: close()
 

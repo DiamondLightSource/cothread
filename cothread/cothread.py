@@ -830,6 +830,7 @@ class EventQueue(EventBase):
     __slots__ = [
         '__queue',          # Queue of values
         '__closed',         # Used to halt iteration over this queue
+        '__max_length',     # Maximum length of queue
     ]
 
     def __init__(self):
@@ -837,8 +838,9 @@ class EventQueue(EventBase):
         self.__queue = []
         self.__closed = False
 
-    def __len__(self):
+    def __len__(self, max_length = None):
         '''Returns the number of objects waiting on the queue.'''
+        self.__max_length = max_length
         return len(self.__queue)
 
     def Wait(self, timeout = None):
@@ -863,9 +865,17 @@ class EventQueue(EventBase):
     def Signal(self, value):
         '''Adds the given value to the tail of the queue.'''
         assert not self.__closed, 'Can\'t write to a closed queue'
-        self.__queue.append(value)
-        if not self._Wakeup(False):
-            self.__queue.pop(0)
+        if self.__max_length is None or len(self) < self.__max_length:
+            self.__queue.append(value)
+            if not self._Wakeup(False):
+                self.__queue.pop(0)
+            return True
+        else:
+            return False
+
+    def Reset(self):
+        '''Discards all values in queue.'''
+        self.__queue = []
 
     def close(self):
         '''An event queue can be closed.  This will cause waiting to raise
