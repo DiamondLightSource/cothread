@@ -135,7 +135,7 @@ class cosocket(object):
 
     def __poll(self, event):
         if not coselect.poll_list([(self, event)], self.__timeout):
-            raise _socket.error(errno.ETIMEDOUT, 'Timeout waiting for socket')
+            raise _socket.timeout('timed out')
 
     def __retry(self, event, action, args):
         while True:
