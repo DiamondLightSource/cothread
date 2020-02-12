@@ -223,6 +223,7 @@ ca_add_exception_event.errcheck = expect_ECA_NORMAL
 TYPENOTCONN = -1
 ca_field_type = libca.ca_field_type
 ca_field_type.argtypes = [ctypes.c_void_p]
+ca_field_type.restype = ctypes.c_short
 ca_field_type.errcheck = expect_connected(TYPENOTCONN)
 
 
