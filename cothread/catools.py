@@ -325,8 +325,15 @@ class _Subscription(object):
         self = args.usr
 
         if args.status == cadef.ECA_NORMAL:
-            # Good data: extract value from the dbr.
-            value = self.dbr_to_value(args.raw_dbr, args.type, args.count)
+            # Good data: extract value from the dbr.  Note that this can fail,
+            # for example if there is malformed UTF-8 in the result.
+            try:
+                value = self.dbr_to_value(args.raw_dbr, args.type, args.count)
+            except:
+                # If there is an error, bypass update merging and force this
+                # exception tuple into the processing chain.
+                self.__Callback(self.__signal, sys.exc_info())
+                return
         elif self.notify_disconnect:
             # Something is wrong: let the subscriber know, if they've requested
             # disconnect nofication.
@@ -361,7 +368,12 @@ class _Subscription(object):
                     self.__update_count = 0
 
             try:
-                self.callback(value)
+                if isinstance(value, tuple):
+                    # This should only happen if the asynchronous callback
+                    # caught an exception for us to re-raise here.
+                    py23.raise_with_traceback(value)
+                else:
+                    self.callback(value)
             except:
                 # We try and be robust about exceptions in handlers, but to
                 # prevent a perpetual storm of exceptions, we close the
@@ -583,8 +595,12 @@ def _caget_event_handler(args):
     ctypes.pythonapi.Py_DecRef(args.usr)
 
     if args.status == cadef.ECA_NORMAL:
-        cothread.Callback(done.Signal, dbr_to_value(
-            args.raw_dbr, args.type, args.count))
+        try:
+            value = dbr_to_value(args.raw_dbr, args.type, args.count)
+        except:
+            cothread.Callback(done.SignalException, sys.exc_info()[1])
+        else:
+            cothread.Callback(done.Signal, value)
     else:
         cothread.Callback(done.SignalException, ca_nothing(pv, args.status))
 
