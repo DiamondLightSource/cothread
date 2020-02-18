@@ -50,7 +50,7 @@ else:
         if result is None:
             return result
         else:
-            return result.decode('UTF-8')
+            return result.decode('UTF-8', 'replace')
 
     def decode(s):
-        return s.decode('UTF-8')
+        return s.decode('UTF-8', 'replace')
