@@ -833,8 +833,8 @@ class EventQueue(EventBase):
         '__max_length',     # Maximum length of queue
     ]
 
-    def __init__(self):
-        EventBase.__init__(self, max_length = None)
+    def __init__(self, max_length = None):
+        EventBase.__init__(self)
         self.__queue = []
         self.__closed = False
         self.__max_length = max_length
