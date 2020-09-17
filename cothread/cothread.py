@@ -834,13 +834,13 @@ class EventQueue(EventBase):
     ]
 
     def __init__(self):
-        EventBase.__init__(self)
+        EventBase.__init__(self, max_length = None)
         self.__queue = []
         self.__closed = False
-
-    def __len__(self, max_length = None):
-        '''Returns the number of objects waiting on the queue.'''
         self.__max_length = max_length
+
+    def __len__(self):
+        '''Returns the number of objects waiting on the queue.'''
         return len(self.__queue)
 
     def Wait(self, timeout = None):
