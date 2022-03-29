@@ -29,6 +29,21 @@ Documentation
 
 Full documentation is available at http://cothread.readthedocs.org
 
+Upload to PyPI
+==============
+
+Run the following commands to create a virtual environment, build cothread, 
+do a test upload to test.pypi.org, and finally upload it to PyPi.
+
+Ask a member of dls-controls for the username and password to use::
+
+    pipenv install numpy twine build
+    SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) pipenv run python -m build --sdist
+    pipenv run twine upload -r testpypi dist/*
+    pipenv run twine upload dist/*
+
+We set SOURCE_DATE_EPOCH from git commit for reproducible builds - see https://reproducible-builds.org/
+
 License
 =======
 GPL2 License (see COPYING)
