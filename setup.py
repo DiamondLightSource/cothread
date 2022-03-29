@@ -71,7 +71,7 @@ setup(
     long_description = open('README.rst').read(),
     author = 'Michael Abbott',
     author_email = 'Michael.Abbott@diamond.ac.uk',
-    url = 'http://controls.diamond.ac.uk/downloads/python/cothread/',
+    url = 'https://github.com/dls-controls/cothread',
     license = 'GPL2',
     packages = ['cothread', 'cothread.tools'],
     ext_modules = ext_modules,
