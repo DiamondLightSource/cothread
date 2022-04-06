@@ -876,15 +876,8 @@ def value_to_dbr(channel, datatype, value):
 
     if datatype == DBR_CHAR_STR:
         # Char arrays as strings need special treatment.
-        count = cadef.ca_element_count(channel)
-        try:
-            result = _require_value(value, 'S%d' % count)
-        except UnicodeEncodeError:
-            # Unicode needs to be encoded
-            result = _require_value(value.encode('UTF-8'), 'S%d' % count)
-        assert result.shape[0] == 1, \
-            'Can\'t put array of strings as char array'
-        return DBR_CHAR, count, result.ctypes.data, result
+        result = numpy.frombuffer(value.encode(), dtype = numpy.uint8)
+        return DBR_CHAR, len(result), result.ctypes.data, result
     elif datatype in [DBR_PUT_ACKT, DBR_PUT_ACKS]:
         # For DBR_PUT_ACKT and DBR_PUT_ACKS we return an integer
         value = ctypes.c_int32(value)
