@@ -1,0 +1,95 @@
+name: PIP Native
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  push:
+    paths-ignore:
+      - docs/**
+      - Makefile*
+  pull_request:
+
+jobs:
+  Native:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "2.7"
+
+          - os: ubuntu-latest
+            python: "3.6"
+
+          - os: ubuntu-latest
+            python: "3.7"
+
+          - os: ubuntu-latest
+            python: "3.8"
+
+          - os: ubuntu-latest
+            python: "3.9"
+
+          - os: ubuntu-latest
+            python: "3.10"
+
+          # OSX py builds
+          - os: macos-latest
+            python: "2.7"
+
+          - os: macos-latest
+            python: "3.6"
+
+          - os: macos-latest
+            python: "3.7"
+
+          - os: macos-latest
+            python: "3.8"
+
+          - os: macos-latest
+            python: "3.9"
+
+          - os: macos-latest
+            python: "3.10"
+
+            
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Automatic core dumper analysis
+        uses: mdavidsaver/ci-core-dumper@master
+
+      - name: Update Environment
+        run: |
+          set -x
+          python -m pip install -U pip
+          python -m pip install pytest
+
+      - name: Info
+        run: |
+          set -x
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV"
+          type python
+          python --version
+          python -m pip --version
+
+      - name: sdist
+        run: |
+          python setup.py sdist --formats=gztar
+          ls -l dist
+
+      - name: pip install
+        run: pip install -v dist/cothread-*.tar.gz
+
+      - name: Add epicscorelibs
+        run: pip install epicscorelibs
+
+      - name: Test
+        run: cd dist && python -m pytest --tb=native -vv --pyargs cothread
