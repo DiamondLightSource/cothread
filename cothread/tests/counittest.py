@@ -314,7 +314,7 @@ class IOCTestCaseMixin(object):
             F = find_executable(N)
             if F:
                 return F
-        raise ValueError("Can't find executable '%s'"%exe)
+        raise _unittest.SkipTest("Can't find executable '%s'"%exe)
 
     def _build_script(self):
         iocenv = self.iocenv or ''
