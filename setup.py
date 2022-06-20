@@ -73,7 +73,7 @@ setup(
     author_email = 'Michael.Abbott@diamond.ac.uk',
     url = 'https://github.com/dls-controls/cothread',
     license = 'GPL2',
-    packages = ['cothread', 'cothread.tools'],
+    packages = ['cothread', 'cothread.tools', 'cothread.tests'],
     ext_modules = ext_modules,
     test_suite="tests",
     classifiers=[
