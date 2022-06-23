@@ -79,8 +79,8 @@ FNAME(switch_frame)
 "       stp d10, d11, [sp, #-16]!\n"
 "       stp d12, d13, [sp, #-16]!\n"
 "       stp d14, d15, [sp, #-16]!\n"
-"       mov ip0, sp\n"
-"       str ip0, [x0]\n"
+"       mov x16, sp\n"
+"       str x16, [x0]\n"
 "       mov sp, x1\n"
 "       mov x0, x2\n"
 "       ldp d14, d15, [sp], #16\n"
@@ -104,7 +104,7 @@ FSIZE(switch_frame)
 //   x2      context argument to action
 FNAME(create_frame)
 "       stp x1, x2, [x0, #-16]!\n"
-"       mov ip0, lr\n"               // Save LR so can use same STP slot
+"       mov x16, lr\n"               // Save LR so can use same STP slot
 "       ldr lr, =action_entry\n"
 "       stp x19, x20, [x0, #-16]!\n"
 "       stp x21, x22, [x0, #-16]!\n"
@@ -116,7 +116,7 @@ FNAME(create_frame)
 "       stp d10, d11, [x0, #-16]!\n"
 "       stp d12, d13, [x0, #-16]!\n"
 "       stp d14, d15, [x0, #-16]!\n"
-"       br  ip0\n"
+"       br  x16\n"
 
 "action_entry:\n"
         // Receive control after first switch to new frame.  Top of stack has
