@@ -652,25 +652,25 @@ def _type_to_dbrcode(datatype, format):
         if datatype in [DBR_CHAR_STR, DBR_CHAR_BYTES, DBR_CHAR_UNICODE]:
             datatype = DBR_CHAR     # Retrieve this type using char array
         elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
-            return datatype         # format is meaningless in this case
+            return (datatype, datatype) # format is meaningless in this case
         else:
             datatype = _datatype_to_dbr(datatype)
 
     # Now take account of the format
     if format == FORMAT_RAW:
         # Use the raw datatype
-        return datatype
+        return (datatype, datatype)
     elif format == FORMAT_TIME:
         # Return corresponding DBR_TIME_XXXX value
-        return datatype + 14
+        return (datatype + 14, datatype)
     elif format == FORMAT_CTRL:
         if datatype == DBR_STRING:
             # There is no ctrl option for strings, so in this case provide
             # the richest format we have available.
-            return DBR_TIME_STRING
+            return (DBR_TIME_STRING, datatype)
         else:
             # Return corresponding DBR_CTRL_XXX value
-            return datatype + 28
+            return (datatype + 28, datatype)
     else:
         raise InvalidDatatype('Format not recognised')
 
@@ -773,7 +773,7 @@ def type_to_dbr(channel, datatype, format):
             datatype = DBR_STRING
 
     # Prepare as much beforehand for conversion.
-    dbrcode = _type_to_dbrcode(datatype, format)
+    dbrcode, base_dbrcode = _type_to_dbrcode(datatype, format)
     dbr_type = DbrCodeToType[dbrcode]
     dtype = dbr_type.dtype
     element_count = cadef.ca_element_count(channel)
@@ -830,7 +830,7 @@ def type_to_dbr(channel, datatype, format):
         result.name = name
         result.ok = True
         result.element_count = element_count
-        result.datatype = datatype
+        result.datatype = base_dbrcode
         return result
 
     return dbrcode, dbr_to_value
@@ -876,15 +876,8 @@ def value_to_dbr(channel, datatype, value):
 
     if datatype == DBR_CHAR_STR:
         # Char arrays as strings need special treatment.
-        count = cadef.ca_element_count(channel)
-        try:
-            result = _require_value(value, 'S%d' % count)
-        except UnicodeEncodeError:
-            # Unicode needs to be encoded
-            result = _require_value(value.encode('UTF-8'), 'S%d' % count)
-        assert result.shape[0] == 1, \
-            'Can\'t put array of strings as char array'
-        return DBR_CHAR, count, result.ctypes.data, result
+        result = numpy.frombuffer(value.encode(), dtype = numpy.uint8)
+        return DBR_CHAR, len(result), result.ctypes.data, result
     elif datatype in [DBR_PUT_ACKT, DBR_PUT_ACKS]:
         # For DBR_PUT_ACKT and DBR_PUT_ACKS we return an integer
         value = ctypes.c_int32(value)

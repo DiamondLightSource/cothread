@@ -95,6 +95,14 @@ class SoftIocTest(counittest.TestCase):
             upper_warning_limit=96))
         self.assertEqual(v, 42)
 
+    def test_requested_dbr(self):
+        # wait for CA server to start
+        self.assertIOCRunning()
+
+        longout = self.testprefix+'longout'
+        v = catools.caget(longout, timeout=1, datatype=int, format=catools.FORMAT_CTRL)
+        self.assertEquals(v.datatype, catools.DBR_LONG)
+
     def test_si(self):
         self.assertIOCRunning()
         si = self.testprefix+'si'
@@ -106,6 +114,11 @@ class SoftIocTest(counittest.TestCase):
 
         v = catools.caget(si)
         self.assertEqual(v, 'hello world')
+
+        catools.caput(si, 'hello € world')
+
+        v = catools.caget(si)
+        self.assertEqual(v, 'hello € world')
 
     def test_info(self):
         self.assertIOCRunning()
