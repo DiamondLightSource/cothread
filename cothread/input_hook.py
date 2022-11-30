@@ -93,7 +93,7 @@ def _timer_iqt(poll_interval):
     from .qt import QtCore
     timer = QtCore.QTimer()
     timer.timeout.connect(timeout)
-    timer.start(poll_interval * 1e3)
+    timer.start(int(poll_interval * 1e3))
 
     return timer
 
