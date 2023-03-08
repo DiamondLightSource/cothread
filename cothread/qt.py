@@ -1,7 +1,7 @@
 import sys
 
 
-qts = ['PyQt5', 'PyQt4']  ## ordered by preference
+qts = ['PyQt6', 'PyQt5', 'PyQt4']  ## ordered by preference
 
 # check if PyQt alredy imported
 QT_LIB = None
@@ -19,15 +19,27 @@ if QT_LIB is None:
             break
         except ImportError:
             pass
+
 if QT_LIB is None:
     ImportError("PyQt not found")
 
+assert QT_LIB in qts, "PyQt version not supported"
+
 # now some PyQt is imported
 
-if QT_LIB == 'PyQt5':
+exec_name = ''
+
+if QT_LIB == 'PyQt6':
+    from PyQt6 import QtCore, QtWidgets
+    exec_name = 'exec'
+
+
+elif QT_LIB == 'PyQt5':
     from PyQt5 import QtCore, QtWidgets
+    exec_name = 'exec_'
 
 
 elif QT_LIB == 'PyQt4':
     from PyQt4 import QtCore, QtGui
     QtWidgets = QtGui
+    exec_name = 'exec_'
