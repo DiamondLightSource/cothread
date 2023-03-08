@@ -114,7 +114,7 @@ def iqt(poll_interval = 0.05, run_exec = True, argv = None):
     '''Installs Qt event handling hook.  The polling interval is in
     seconds.'''
 
-    from .qt import QtCore, QtWidgets
+    from .qt import QtCore, QtWidgets, exec_name
     global _qapp, _timer
 
     # Importing PyQt4 has an unexpected side effect: it removes the input hook!
@@ -142,7 +142,7 @@ def iqt(poll_interval = 0.05, run_exec = True, argv = None):
 
     # Finally, unless we've been told not to, spawn our own exec loop.
     if run_exec:
-        cothread.Spawn(_qapp.exec_, stack_size = QT_STACK_SIZE)
+        cothread.Spawn(getattr(_qapp, exec_name), stack_size = QT_STACK_SIZE)
         cothread.Yield()
 
     return _qapp
