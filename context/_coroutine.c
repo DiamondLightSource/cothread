@@ -80,24 +80,8 @@ static void *coroutine_wrapper(void *action_, void *arg_)
     PyThreadState *thread_state = PyThreadState_GET();
 
     /* New coroutine gets a brand new Python interpreter stack frame. */
-#if PY_VERSION_HEX >= 0x30B0000
     PyThreadState *new_threadstate = PyThreadState_New(thread_state->interp);
-    thread_state = PyThreadState_Swap(new_threadstate);
-#else
-    thread_state->frame = NULL;
-    thread_state->recursion_depth = 0;
-    #if PY_VERSION_HEX >= 0x03070000
-        /* Also reset the exception state in case it's non NULL at this point.  We
-        * don't own these pointers at this point, coroutine_switch does. */
-        /* In Python 3.7 the exec info moved. */
-        thread_state->exc_state = (_PyErr_StackItem) { };
-        thread_state->exc_info = &thread_state->exc_state;
-    #else
-        thread_state->exc_type = NULL;
-        thread_state->exc_value = NULL;
-        thread_state->exc_traceback = NULL;
-    #endif
-#endif
+    PyThreadState_Swap(new_threadstate);
 
     /* Call the given action with the passed argument. */
     PyObject *action = *(PyObject **)action_;
@@ -105,26 +89,6 @@ static void *coroutine_wrapper(void *action_, void *arg_)
     PyObject *result = PyObject_CallFunctionObjArgs(action, arg, NULL);
     Py_DECREF(action);
     Py_DECREF(arg);
-
-
-#if PY_VERSION_HEX < 0x30B0000
-    /* Some of the stuff we've initialised can leak through, so far I've only
-     * seen exc_type still set at this point, but maybe other fields can also
-     * leak.  Avoid a memory leak by making sure we're not holding onto these.
-     *    All these pointers really are defunct, because as soon as we return
-     * coroutine_switch will replace all these values. */
-    Py_XDECREF(thread_state->frame);
-
-    #if PY_VERSION_HEX >= 0x03070000
-        Py_XDECREF(thread_state->exc_state.exc_type);
-        Py_XDECREF(thread_state->exc_state.exc_value);
-        Py_XDECREF(thread_state->exc_state.exc_traceback);
-    #else
-        Py_XDECREF(thread_state->exc_type);
-        Py_XDECREF(thread_state->exc_value);
-        Py_XDECREF(thread_state->exc_traceback);
-    #endif
-#endif
 
     return result;
 }
@@ -158,52 +122,14 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
     {
         PyThreadState *thread_state = PyThreadState_GET();
 
-#if PY_VERSION_HEX < 0x30B0000
-        /* Need to switch the Python interpreter's record of recursion depth and
-         * top frame around as we switch frames, otherwise the interpreter gets
-         * confused and thinks we've recursed too deep.  In truth tracking this
-         * stuff is the only reason this code is in a Python extension! */
-        struct _frame *python_frame = thread_state->frame;
-        int recursion_depth = thread_state->recursion_depth;
-
-        /* We also need to switch the exception state around: if we don't do
-         * this then we get confusion about the lifetime of exception state
-         * between coroutines.  The most obvious problem is that the exception
-         * isn't properly cleared on function return. */
-    #if PY_VERSION_HEX >= 0x03070000
-        _PyErr_StackItem exc_state = thread_state->exc_state;
-        _PyErr_StackItem *exc_info = thread_state->exc_info;
-    #else
-        PyObject *exc_type = thread_state->exc_type;
-        PyObject *exc_value = thread_state->exc_value;
-        PyObject *exc_traceback = thread_state->exc_traceback;
-    #endif
-#endif
-
         /* Switch to new coroutine.  For the duration arg needs an extra
          * reference count, it'll be accounted for either on the next returned
          * result or in the entry to a new coroutine. */
         Py_INCREF(arg);
         PyObject *result = switch_cocore(target, arg);
 
-#if PY_VERSION_HEX >= 0x30B0000
         PyThreadState_Swap(thread_state);
-#else
-        /* Restore previously saved state.  I wonder if PyThreadState_GET()
-         * really needs to be called again here... */
-        thread_state = PyThreadState_GET();
-        thread_state->frame = python_frame;
-        thread_state->recursion_depth = recursion_depth;
-        /* Restore the exception state. */
-    #if PY_VERSION_HEX >= 0x03070000
-        thread_state->exc_state = exc_state;
-        thread_state->exc_info = exc_info;
-    #else
-        thread_state->exc_type = exc_type;
-        thread_state->exc_value = exc_value;
-        thread_state->exc_traceback = exc_traceback;
-    #endif
-#endif
+
         return result;
     }
     else
