@@ -1,27 +1,29 @@
-.. _index:
+:html_theme.sidebar_secondary.remove:
 
-.. Cothread documentation master file, created by
-   sphinx-quickstart on Fri May 14 13:06:33 2010.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. include:: ../README.rst
+    :end-before: when included in index.rst
 
-Welcome to Cothread's documentation!
-====================================
+How the documentation is structured
+-----------------------------------
 
-Contents:
+The documentation is split into 2 sections:
 
-..  toctree::
-    :numbered:
-    :maxdepth: 2
+.. grid:: 2
 
-    cothread
-    catools
+    .. grid-item-card:: :material-regular:`person;4em`
+        :link: user/index
+        :link-type: doc
 
+        The User Guide contains documentation on how to install and use cothread.
 
-Indices and tables
-==================
+    .. grid-item-card:: :material-regular:`code;4em`
+        :link: developer/index
+        :link-type: doc
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-* `Selected source code <_modules/index.html>`_
+        The Developer Guide contains documentation on how to develop and contribute changes back to cothread.
+
+.. toctree::
+    :hidden:
+
+    user/index
+    developer/index

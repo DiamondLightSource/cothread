@@ -32,7 +32,7 @@ Full documentation is available at http://cothread.readthedocs.org
 Upload to PyPI
 ==============
 
-Run the following commands to create a virtual environment, build cothread, 
+Run the following commands to create a virtual environment, build cothread,
 do a test upload to test.pypi.org, and finally upload it to PyPi.
 
 Ask a member of dls-controls for the username and password to use::
