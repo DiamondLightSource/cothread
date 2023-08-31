@@ -518,13 +518,13 @@ The table below enumerates the possibilities:
     :class:`ca_array`   :class:`numpy.ndarray` Any array value
     ==================  ====================== ========================================
 
-..  class:: ca_str
-..  class:: ca_int
-..  class:: ca_float
+..  class:: cothread.dbr.ca_str
+..  class:: cothread.dbr.ca_int
+..  class:: cothread.dbr.ca_float
 
     Scalar types derived from basic Python types.
 
-..  class:: ca_array
+..  class:: cothread.dbr.ca_array
 
     Array type derived from :class:`numpy.ndarray`.  The associated
     :attr:`~numpy.ndarray.dtype` will be as close a fit to the underlying data as possible.
