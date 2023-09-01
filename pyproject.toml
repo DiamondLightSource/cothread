@@ -5,17 +5,22 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cothread"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
 ]
-description = "One line description of your module"
+description = "Build tools using cooperative threading"
 dependencies = [
-    "typing-extensions;python_version<'3.8'",
+    "numpy",
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
 license.file = "LICENSE"
@@ -41,14 +46,14 @@ dev = [
 ]
 
 [project.scripts]
-cothread = "cothread.__main__:main"
+"pvtree.py" = "cothread.tools.pvtree:main"
 
 [project.urls]
 GitHub = "https://github.com/DiamondLightSource/cothread"
 
 [[project.authors]] # Further authors may be added by duplicating this section
-email = "alex.wells@diamond.ac.uk"
-name = "AlexWells"
+email = "michael.abbott@diamond.ac.uk"
+name = "Michael Abbott"
 
 
 [tool.setuptools_scm]
@@ -99,8 +104,8 @@ skipsdist=True
 # Don't create a virtualenv for the command, requires tox-direct plugin
 direct = True
 passenv = *
-allowlist_externals = 
-    pytest 
+allowlist_externals =
+    pytest
     pre-commit
     mypy
     sphinx-build
