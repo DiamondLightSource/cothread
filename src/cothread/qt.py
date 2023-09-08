@@ -21,7 +21,7 @@ if QT_LIB is None:
             pass
 
 if QT_LIB is None:
-    ImportError("PyQt not found")
+    raise ImportError("PyQt not found")
 
 assert QT_LIB in qts, "PyQt version not supported"
 
