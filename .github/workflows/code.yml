@@ -3,9 +3,6 @@ name: Code CI
 on:
   push:
   pull_request:
-env:
-  # The target python version, which must match the Dockerfile version
-  CONTAINER_PYTHON: "3.11"
 
 jobs:
   test:
@@ -23,6 +20,11 @@ jobs:
             install: ".[dev]"
 
     runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/epics-containers/epics-base-linux-developer:23.6.1
+      volumes:
+        - /opt/hostedtoolcache:/opt/hostedtoolcache
+
     env:
       # https://github.com/pytest-dev/pytest/issues/2042
       PY_IGNORE_IMPORTMISMATCH: "1"
@@ -81,7 +83,7 @@ jobs:
       - name: Install python packages
         uses: ./.github/actions/install_requirements
         with:
-          python_version: ${{env.CONTAINER_PYTHON}}
+          python_version: "3.10"
           requirements_file: requirements.txt
           install_options: dist/*.whl
 
