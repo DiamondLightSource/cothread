@@ -1138,7 +1138,7 @@ def WaitForQuit(catch_interrupt = True):
     '''Waits for the quit event to be signalled.  If catch_interrupt is True
     then control-C will only signal the quit event and will not generate an
     exception; this does mean that the only way to interrupt a misbehaving loop
-    is to use another signal such as SIGQUIT (C-\)'''
+    is to use another signal such as SIGQUIT (C-\\)'''
     if catch_interrupt:
         import signal
         def quit(signum, frame):
