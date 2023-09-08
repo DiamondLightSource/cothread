@@ -35,6 +35,8 @@ class ExceptionTest(unittest.TestCase):
         # Generate a Ctrl-C signal and check that we receive it
         p = subprocess.Popen("sleep 1 && kill -2 %s" % pid, shell=True)
         self.assertRaises(KeyboardInterrupt, cothread.Sleep, 2)
+        p.kill()
+        p.wait(timeout=10)
 
 
 class EventQueueTest(unittest.TestCase):

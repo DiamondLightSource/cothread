@@ -77,7 +77,7 @@ class SoftIocTest(counittest.TestCase):
 
         longout = self.testprefix+'longout'
         v = catools.caget(longout, timeout=1, format=catools.FORMAT_CTRL)
-        self.assertEquals(v.__dict__, dict(
+        self.assertEqual(v.__dict__, dict(
             datatype=catools.DBR_LONG,
             element_count=1,
             lower_alarm_limit=2,
@@ -101,7 +101,7 @@ class SoftIocTest(counittest.TestCase):
 
         longout = self.testprefix+'longout'
         v = catools.caget(longout, timeout=1, datatype=int, format=catools.FORMAT_CTRL)
-        self.assertEquals(v.datatype, catools.DBR_LONG)
+        self.assertEqual(v.datatype, catools.DBR_LONG)
 
     def test_si(self):
         self.assertIOCRunning()
@@ -152,11 +152,13 @@ class SoftIocTest(counittest.TestCase):
         finally:
             sys.stdout = stdout
         f.seek(0)
-        self.assertEquals(f.read(), """%(testprefix)scalc (calc, ) 42 NO_ALARM NO_ALARM
+        self.assertEqual(f.read(), """%(testprefix)scalc (calc, ) 42 NO_ALARM NO_ALARM
 %(testprefix)scalc.CALC A
 %(testprefix)scalc.INPA %(testprefix)slongout CP NMS
   %(testprefix)slongout (longout, 'Soft Channel') 42 NO_ALARM NO_ALARM
 """ % self.__dict__)
+
+        f.close()
 
 
 if __name__ == '__main__':
