@@ -29,7 +29,6 @@ side-bar.
             how-to/build-docs
             how-to/run-tests
             how-to/static-analysis
-            how-to/lint
             how-to/update-tools
             how-to/make-release
             how-to/pin-requirements
@@ -46,6 +45,7 @@ side-bar.
             :maxdepth: 1
 
             explanations/decisions
+            explanations/notes
 
         +++
 
@@ -57,7 +57,6 @@ side-bar.
             :caption: Reference
             :maxdepth: 1
 
-            reference/standards
 
         +++
 

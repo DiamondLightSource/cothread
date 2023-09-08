@@ -3,7 +3,7 @@
 cothread
 ========
 
-The `cothread` Python library is designed for building tools using cooperative
+The ``cothread`` Python library is designed for building tools using cooperative
 threading.  This means that, with care, programs can effectively run several
 tasks simultaneously.
 
@@ -63,3 +63,7 @@ GPL2 License (see COPYING)
 .. |coverage| image:: https://coveralls.io/repos/dls-controls/cothread/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/dls-controls/cothread?branch=master
     :alt: Test coverage
+
+..
+    Anything below this line is used when viewing README.rst and will be replaced
+    when included in index.rst

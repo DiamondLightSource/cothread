@@ -4,9 +4,10 @@ Using the cothread Library
 ==========================
 
 .. module:: cothread
+    :noindex:
 
 
-The :mod:`cothread` Python library is designed for building tools using
+The :doc:`cothread<cothread>` Python library is designed for building tools using
 cooperative threading.  This means that, with care, programs can effectively
 run several tasks simultaneously.
 
@@ -24,7 +25,7 @@ Cothreads (or "cooperative threads") are an approach to concurrent programming
 where there is only one true thread of processing, but apparently concurrent
 processes (or *cothreads*) can cooperatively share the processor.  Control is
 passed from one cothread to another when the current cothread explicitly
-suspends control, ultimately via a call to a :mod:`cothread` library routine.
+suspends control, ultimately via a call to a :doc:`cothread<cothread>` library routine.
 This means that between such suspending calls control will not be interrupted.
 This has two advantages:
 
@@ -43,12 +44,8 @@ On the other hand, there is one disadvantage which needs to be kept in mind:
   to help with this (see :func:`Sleep`, :func:`select` and :class:`socket`
   below).
 
-To use the :mod:`cothread` library the following overall structure should be
+To use the :doc:`cothread<cothread>` library the following overall structure should be
 followed in the top level application::
-
-    # First the version of cothread library must be specified
-    from pkg_resources import require
-    require('cothread==2.1')    # or just require('cothread')
 
     # Import the cothread library in each module that uses it.
     import cothread
@@ -62,26 +59,15 @@ followed in the top level application::
     # Finally allow all background tasks to run to completion.
     cothread.WaitForQuit()      # Or some other blocking construct
 
-1.  ``require('cothread==2.1')``.  This statement is required by the way
-    Diamond Controls modules are managed: it is necessary to specify precisely
-    *which* version of a module is to be used.  This means that API changes
-    can be made in future releases without breaking existing code.
 
-    Alternatively ``require('cothread')`` can be used to request the most
-    recent installed version.
-
-    Note that the :func:`require` statements should only occur once in each
-    application: it is an easy mistake to place them at the head of each
-    Python module.
-
-2.  If Qt is to be used (for any graphical user interface) then the cothread
+1.  If Qt is to be used (for any graphical user interface) then the cothread
     library needs to be informed: this is done by calling :func:`iqt` before
     any work is done with Qt.  This call ensures that Qt processing will occur
     while the cothread scheduler is idle, and effectively turns Qt into
     another cothread.  The Qt application instance is created by this call and
     returned.
 
-3.  Finally the main cothread (the thread of control used to start and run the
+2.  Finally the main cothread (the thread of control used to start and run the
     program) must not exit until the program has finished.  If all the desired
     activity is in background tasks (spawned cothreads,
     :func:`catools.camonitor` processing or other background activity) then the
@@ -104,7 +90,7 @@ might be running).  Once a suspension point is reached any other cothread can
 run, in fact typically *all* other ready cothreads will run to their own
 suspension points before control is returned to the suspending cothread.
 
-The following are suspension points in the core :mod:`cothread` library:
+The following are suspension points in the core :doc:`cothread<cothread>` library:
 
 :func:`Sleep`, :func:`SleepUntil`
     The caller is always suspended, even if the expiry time has passed, so
@@ -114,9 +100,9 @@ The following are suspension points in the core :mod:`cothread` library:
     This suspends the caller until all other active cothreads have run to
     their own suspension points.
 
-`event`.\ :meth:`Wait`
+``event``.\ ``Wait``
     On a :class:`Spawn`, :class:`Pulse`, :class:`Event` or :class:`EventQueue`
-    object the :meth:`Wait` method will suspend the caller when the event object
+    object the ``Wait`` method will suspend the caller when the event object
     is not yet ready, independently of whether the timeout has already expired.
     To determine whether an event object is ready without risking suspension
     call ``bool()`` on the object.
@@ -129,7 +115,7 @@ The following are suspension points in the core :mod:`cothread` library:
         cothreads.
 
 
-The :mod:`cothread.coselect` module adds the following suspension points:
+The ``cothread.coselect`` module adds the following suspension points:
 
 :func:`select`, :class:`poll`, :func:`poll_list`
     These are all always suspension points.
@@ -145,10 +131,10 @@ not to suspend):
     This routine may cause the caller to suspend.  To avoid suspension, put to
     only one PV, use ``wait=False`` (the default), and ensure that the channel
     is already connected -- this will be the case if it has already been
-    successfully used in any :mod:`catools` method.  To ensure suspension use
+    successfully used in any :mod:`~cothread.catools` method.  To ensure suspension use
     ``wait=True``.
 
-The :mod:`cothread.cosocket` module makes most socket operations into suspension
+The ``cothread.cosocket`` module makes most socket operations into suspension
 points when the corresponding socket operation is not yet ready.
 
 
@@ -203,11 +189,11 @@ Other callbacks
 Timeouts and Deadlines
 ~~~~~~~~~~~~~~~~~~~~~~
 
-All of the waiting methods in the :mod:`cothread` library take a `timeout`
+All of the waiting methods in the :doc:`cothread<cothread>` library take a `timeout`
 argument.  This can be in one of three forms:
 
-:const:`None`
-    A timeout of :const:`None` means that the timeout will never complete, so
+``None``
+    A timeout of ``None`` means that the timeout will never complete, so
     for example a call to ``Sleep(None)`` will never return, and so is not
     useful, but this option is useful in other cases when no timeout is wanted.
 
@@ -226,19 +212,19 @@ The following helper functions are available for working with timeouts:
 ..  function:: AbsTimeout(timeout)
 
     Takes a timeout and returns a timeout, ensuring that `timeout` is in
-    deadline format (or :const:`None`).  If repeated wait functions are to be
+    deadline format (or ``None``).  If repeated wait functions are to be
     called with the same desired timeout this should be used to ensure the
     timeout is a deadline.
 
 ..  function:: Deadline(deadline)
 
-    Converts a deadline in ``time.time()`` epoch seconds into a :mod:`cothread`
+    Converts a deadline in ``time.time()`` epoch seconds into a :doc:`cothread<cothread>`
     timeout format.
 
 ..  function:: GetDeadline(timeout)
 
-    Returns the associated deadline in seconds, or returns :const:`None` if
-    `timeout` is :const:`None`.
+    Returns the associated deadline in seconds, or returns ``None`` if
+    `timeout` is ``None``.
 
 
 Cothread API
@@ -252,24 +238,22 @@ module.
         stack_size=0, ...)
 
     A new cooperative thread, or *cothread*, is created as a call to
-    ``function(arguments)`` where `arguments` can be any list of values and
-    keyword arguments (except for the `raise_on_wait` and `stack_size`
+    ``function(arguments)`` where ``arguments`` can be any list of values and
+    keyword arguments (except for the ``raise_on_wait`` and ``stack_size``
     arguments).  This routine is not a suspension point.
 
     This is the fundamental building block of the cothreading library.  It is
     quite cheap to spawn fresh cothreads, and so this constructor can be used
     freely.
 
-    The following arguments are treated specially by this routine:
-
-    `raise_on_wait`
+    :param raise_on_wait:
         By default any exception raised by running ``function(arguments)`` is
-        caught and reported by a traceback to :const:`stderr`.  If this flag is
+        caught and reported by a traceback to ``stderr``.  If this flag is
         set then instead the exception is retained and returned when
         :meth:`Wait` is called.
 
-    `stack_size`
-        If a non-zero `stack_size` is specified the new cothread is allocated
+    :param stack_size:
+        If a non-zero ``stack_size`` is specified the new cothread is allocated
         its own stack, otherwise it will share the main process stack.  The
         tradeoffs involved in whether to allocate a stack are subtle.  By
         default it is safest to leave this parameter unset.
@@ -281,8 +265,8 @@ module.
 
         This blocks until the spawned cothread completes, either by returning
         from its function call, or by raising an exception.  Note that only one
-        waiter will be woken.  If the cothread was created with `raise_on_wait`
-        set to :const:`True` then any exception raised by the cothread will be
+        waiter will be woken.  If the cothread was created with ``raise_on_wait``
+        set to ``True`` then any exception raised by the cothread will be
         re-raised when :meth:`Wait` is called.
 
 
@@ -310,10 +294,10 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
 
 ..  class:: Event(auto_reset=True)
 
-    Event objects are initially created unsignalled.  The `auto_reset` flag
+    Event objects are initially created unsignalled.  The ``auto_reset`` flag
     determines whether the signalled state of the event object is persistent,
-    and determines how many cothreads are woken when :meth:`Signal` is called
-    on an event.  The :class:`bool` state of an event object is :const:`True`
+    and determines how many cothreads are woken when :meth:`~Event.Signal` is
+    called on an event.  The :class:`bool` state of an event object is ``True``
     iff it is signalled.
 
     The following methods define the behaviour of this object.
@@ -323,10 +307,10 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
         The calling cothread will be suspended until a signal is written to the
         :class:`Event` by a call to :meth:`Signal()`, at which point the value
         passed to :meth:`Signal()` is returned.  If a timeout occurs (a timeout
-        of :const:`None` specifies no timeout) this is signalled by raising the
+        of ``None`` specifies no timeout) this is signalled by raising the
         exception :exc:`Timedout`.
 
-        If `auto_reset` was specified as :const:`True` then the signal is
+        If ``auto_reset`` was specified as ``True`` then the signal is
         consumed, and subsequent calls to :meth:`Wait` will block until further
         :meth:`Signal` calls occur.
 
@@ -335,7 +319,7 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
         The event object is marked as signalled and the value passed is recorded
         to be returned by a call to :meth:`Wait`.  If one or more cothreads are
         waiting for a signal then at least one will be woken with the new value
-        (if `auto_reset` is :const:`True` then only one will be woken, otherwise
+        (if ``auto_reset`` is ``True`` then only one will be woken, otherwise
         all will be).
 
         Note that this routine does *not* suspend the caller, even if another
@@ -439,7 +423,7 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
     queue can also be consumed as an iterator, see code example below.
 
     Optionally a maximum queue length can be specified.  In this case attempts
-    to signal a queue with `max_length` pending elements will fail.
+    to signal a queue with ``max_length`` pending elements will fail.
 
     The following methods are supported:
 
@@ -458,7 +442,7 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
         is waiting.  This routine does not suspend the caller.  ``True`` is
         returned on success.
 
-        If the queue is full, i.e. if `max_length` was specified on creation and
+        If the queue is full, i.e. if ``max_length`` was specified on creation and
         the current queue length is equal to this limit, then no action is taken
         and ``False`` is returned.
 
@@ -470,7 +454,7 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
 
         Marks the queue as closed, after which no more signals can be raised.
         Calling :meth:`Wait()` on a closed queue will cause
-        :const:`StopIteration` to be raised.
+        :py:exc:`StopIteration` to be raised.
 
     Example code using iteration over an :class:`EventQueue`::
 
@@ -491,14 +475,14 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
     The :class:`ThreadedEventQueue` behaves like an :class:`EventQueue`, but
     is designed to be used to communicate between a Python thread outside of
     the cothread library and a cothread.  Communication can occur in either
-    direction: an outside thread can call :meth:`Signal` on a threaded event
-    queue while a cothread calls :meth:`Wait`, or vice versa.  Note however that
+    direction: an outside thread can call :meth:`~Event.Signal` on a threaded event
+    queue while a cothread calls :meth:`~Event.Wait`, or vice versa.  Note however that
     for communicating from Python threads to cothread it is more efficient to
     use :func:`Callback`.
 
-    If a thread calls :meth:`Wait` it will block until a cothread (or another
-    thread) calls :meth:`Signal`.  If this is undesirable then the field
-    :attr:`.wait_descriptor` can be waited on using the standard :func:`select`
+    If a thread calls :meth:`~Event.Wait` it will block until a cothread (or another
+    thread) calls :meth:`~Event.Signal`.  If this is undesirable then the field
+    ``.wait_descriptor`` can be waited on using the standard :func:`select`
     or :func:`poll` functions.  Note that this file handle must *only* be used
     for waiting, and must not be read from!
 
@@ -506,11 +490,11 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
 ..  class:: Timer(timeout, callback, retrigger=False, reuse=False, stack_size=0)
 
     This triggers a call to `callback`, with no arguments, when `timeout`
-    expires.  If `retrigger` is :const:`True` then after `callback` completes
+    expires.  If ``retrigger`` is ``True`` then after `callback` completes
     the timer will be reenabled and the cycle will repeat, in which case
     `timeout` must be a relative timeout, otherwise only one call will occur.
-    If `retrigger` is :const:`False` then once the timer has fired it cannot be
-    reused unless `reuse` is set to :const:`True`, see :meth:`reset` below.
+    If ``retrigger`` is ``False`` then once the timer has fired it cannot be
+    reused unless ``reuse`` is set to ``True``, see :meth:`reset` below.
 
     The following two methods can be used to control the timer object:
 
@@ -519,31 +503,31 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
         The timer can be cancelled at any time by calling the :meth:`cancel()`
         method.  The timer will not fire after this call and will no longer be
         reusable.  To avoid memory leaks :meth:`cancel()` should be called on
-        timers with either `retrigger` or `reuse` set once they are no longer
+        timers with either ``retrigger`` or ``reuse`` set once they are no longer
         needed.
 
     ..  method:: reset(timeout, retrigger=None)
 
         This method allows a reusable timer to be controlled.  This applies to
-        any timer created with either `retrigger` or `reuse` set, but this
+        any timer created with either ``retrigger`` or ``reuse`` set, but this
         method cannot be called after :meth:`cancel()` has been called.
 
-        A `timeout` of :const:`None` can be specified to suspend the timer,
+        A `timeout` of ``None`` can be specified to suspend the timer,
         otherwise a new timeout must always be specified when calling
         :meth:`reset()`.  Any pending timeout will be cancelled when
         :meth:`reset()` is called.
 
-        A new value for the `retrigger` flag can also be specified.
+        A new value for the ``retrigger`` flag can also be specified.
 
 
 ..  function:: WaitForAll(event_list, timeout=None)
 
-    This routine waits for all events in `event_list` to become ready: this is
+    This routine waits for all events in ``event_list`` to become ready: this is
     done by simply iterating through all the events in turn, waiting for them
     to complete.  If `timeout` expires then an exception is raised.
 
     Note that if :func:`WaitForAll` is interrupted early by an exception or
-    timeout all pending resources for the remaining events in `event_list` will
+    timeout all pending resources for the remaining events in ``event_list`` will
     still be consumed.
 
 ..  function::
@@ -551,19 +535,18 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
         WaitForQuit(catch_interrupt=True)
 
     The routine :func:`WaitForQuit` blocks until one of the following occurrs:
-    :func:`Quit` is called, :const:`SIGINT` is received (by pressing control-C),
+    :func:`Quit` is called, :any:`signal.SIGINT` is received (by pressing control-C),
     or the last Qt window is closed.  By default (if ``catch_interrupt=True`` is
     set) keyboard interrupts are handled by a signal handler which simply calls
     :func:`Quit`.  This means that the only way to interrupt a loop without a
-    suspension point is to use another signal such as :const:`SIGQUIT`
-    (control-\\).
+    suspension point is to use another signal such as ``SIGQUIT`` (control-\\).
 
     This is designed to be used as the final blocking call at the end of the
     main program so that other event loops can run.
 
     ..  note::
 
-        This use of `catch_interrupt` to set a signal handler is an incompatible
+        This use of ``catch_interrupt`` to set a signal handler is an incompatible
         change from cothread 2.0 and earlier.
 
 ..  function:: Callback(action, *args)
@@ -590,15 +573,15 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
     The following arguments are processed by :func:`CallbackResult`, all others
     are passed through to `action`:
 
-    `callback_queue`
+    ``callback_queue``
         By default the standard :func:`Callback` queue is used for dispatch to
         the cothread core, but a separate callback method can be specified here.
 
-    `callback_timeout`
+    ``callback_timeout``
         By default the thread will block indefinitely until `action` completes,
         or a specific timeout can be specified here.
 
-    `callback_spawn`
+    ``callback_spawn``
         By default a new cothread will be spawned for each callback; this can
         help to avoid interlock problems as mentioned above under
         :func:`Callback`, but adds overhead.
@@ -614,16 +597,21 @@ and :class:`EventQueue` objects.  A :class:`Pulse` holds no values, an
     they run their own message loops) -- typically a modal window will block the
     the scheduling of other cothreads.
 
-    If :mod:`cothread` is used in a context where there is no control over the
-    Qt event loop then `run_exec` can be set to :const:`False` to ensure that
-    :mod:`cothread` doesn't try to run the event loop.
+    If :doc:`cothread<cothread>` is used in a context where there is no control over the
+    Qt event loop then ``run_exec`` can be set to ``False`` to ensure that
+    :doc:`cothread<cothread>` doesn't try to run the event loop.
+
+
+.. exception:: Timedout
+
+    Exception indicating an event has timed out.
 
 
 Coselect and Cosocket Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To enable cothreaded access to sockets and other external event generating
-sources the :mod:`cothread.coselect` library provides coperative implementations
+sources the ``cothread.coselect`` library provides coperative implementations
 of :func:`select`, :func:`poll` and :class:`socket` from the Python library
 :mod:`select` and :mod:`socket` modules.  The following methods and classes are
 provided:
@@ -637,8 +625,8 @@ provided:
 
 ..  function:: poll()
 
-    Cooperative :func:`poll` object, interface compatible with the Python
-    library :class:`select.poll` object.
+    Cooperative ``poll`` object, interface compatible with the Python
+    library :func:`select.poll` object.
 
 
 ..  function:: poll_list(event_list, timeout=None)
@@ -647,11 +635,11 @@ provided:
     function is used to implement the more compatible :func:`select` and
     :class:`poll` interfaces.
 
-    The `event_list` parameter is a list of pairs, each consisting of a
+    The ``event_list`` parameter is a list of pairs, each consisting of a
     waitable descriptor and an event mask (generated by oring together
-    :const:`POLL...` constants).  This routine will cooperatively block until
+    ``POLL...`` constants).  This routine will cooperatively block until
     any descriptor signals a selected event (or any event from
-    :const:`POLLHUP`, :const:`POLLERR`, :const:`POLLNVAL`) or until the
+    ``POLLHUP``, ``POLLERR``, ``POLLNVAL``) or until the
     timeout (in seconds) occurs.
 
 ..
@@ -665,7 +653,7 @@ provided:
 ..  class:: socket(...)
 
     This is a cooperative non-blocking wrapper of the standard :class:`socket`
-    class.  This can be imported directly from :mod:`cothread` and used with
+    class.  This can be imported directly from :doc:`cothread<cothread>` and used with
     constants and most methods from the standard :mod:`socket` module, or
     alternatively ``socket_hook()`` can be called before importing the
     :mod:`socket` module.
@@ -683,7 +671,7 @@ provided:
 ..  function:: select_hook()
 
     This function will replace the :func:`select.select` and
-    :class:`select.poll` methods in the :mod:`select` module with the
+    :func:`select.poll` methods in the :mod:`select` module with the
     non-blocking cothread compatible functions defined here.  Do not use this if
     other threads need to use functions from the :mod:`select` module.
 
@@ -706,23 +694,23 @@ Coserver Functions
 .. module:: cothread.coserver
 
 :mod:`cothread.coserver` provides coorperative versions of the server classes
-from :mod:`SocketServer` and :mod:`BaseHTTPServer` modules.
+from :mod:`socketserver` and :mod:`http.server` modules.
 
 ..  class:: TCPServer(...)
 
-    Wrapped version of :class:`SocketServer.TCPServer`.
+    Wrapped version of :class:`socketserver.TCPServer`.
 
 ..  class:: UDPServer(...)
 
-    Wrapped version of :class:`SocketServer.UDPServer`.
+    Wrapped version of :class:`socketserver.UDPServer`.
 
 ..  class:: HTTPPServer(...)
 
-    Wrapped version of :class:`BaseHTTPServer.HTTPServer`.
+    Wrapped version of :class:`http.server.HTTPServer`.
 
 ..  class:: CoThreadingMixIn()
 
-    A cooperative equivalent to :class:`SocketServer.ThreadingMixIn` which
+    A cooperative equivalent to :class:`socketserver.ThreadingMixIn` which
     spawns a new cothread to handle each request.
 
 ..  class:: CoThreadingTCPServer(...)
@@ -735,5 +723,5 @@ from :mod:`SocketServer` and :mod:`BaseHTTPServer` modules.
 
 ..  class:: BaseServer(...)
 
-    Wrapped version of :class:`SocketServer.BaseServer` provided for
+    Wrapped version of :class:`socketserver.BaseServer` provided for
     completeness.  User code will typically not use this class directly.
