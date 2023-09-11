@@ -29,8 +29,6 @@ requires-python = ">=3.7"
 
 [project.optional-dependencies]
 dev = [
-    # Use epicscorelibs for easy access to EPICS CA library in CI
-    "epicscorelibs",
     "pipdeptree",
     "pre-commit",
     "pydata-sphinx-theme>=0.12",
