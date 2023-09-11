@@ -137,7 +137,7 @@ def dtyp_to_str(dtyp):
     if dtyp.ok:
         return repr(dtyp)
     else:
-        return ''
+        return repr('')
 
 def follow_link(indent, link):
     '''The link may be a pure value, or may be a link specifier.  We

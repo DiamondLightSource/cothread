@@ -152,7 +152,9 @@ class SoftIocTest(counittest.TestCase):
         finally:
             sys.stdout = stdout
         f.seek(0)
-        self.assertEqual(f.read(), """%(testprefix)scalc (calc, ) 42 NO_ALARM NO_ALARM
+
+
+        self.assertEqual(f.read(), """%(testprefix)scalc (calc, '') 42 NO_ALARM NO_ALARM
 %(testprefix)scalc.CALC A
 %(testprefix)scalc.INPA %(testprefix)slongout CP NMS
   %(testprefix)slongout (longout, 'Soft Channel') 42 NO_ALARM NO_ALARM
