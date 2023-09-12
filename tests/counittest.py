@@ -306,12 +306,12 @@ class IOCTestCaseMixin(object):
 
     def _find_executable(self, exe):
         import os.path
-        from distutils.spawn import find_executable
+        from shutil import which
 
         path = os.path.join('bin', epics_host_arch, exe)
 
         for N in [exe, path]:
-            F = find_executable(N)
+            F = which(N)
             if F:
                 return F
         raise ValueError("Can't find executable '%s'"%exe)
