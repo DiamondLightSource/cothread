@@ -87,9 +87,9 @@ jobs:
           requirements_file: requirements.txt
           install_options: dist/*.whl
 
-      - name: Test module --version works using the installed wheel
-        # If more than one module in src/ replace with module name to test
-        run: python -m $(ls src | head -1) --version
+      - name: Test module version works using the installed wheel
+        # If this prints we can assume the module has installed correctly
+        run: python -c "import cothread; print(cothread.__version__)"
 
   release:
     # upload to PyPI and make a release on every tag
