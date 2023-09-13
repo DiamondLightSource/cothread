@@ -9,6 +9,10 @@ record(longout, "$(P)longout") {
   field(LOPR, "0")
   field(VAL, "$(VAL=42)")
   field(PINI, "YES")
+  field(HHSV, "MAJOR")
+  field(HSV, "MINOR")
+  field(LSV, "MINOR")
+  field(LLSV, "MAJOR")
 }
 
 record(stringin, "$(P)si") {
