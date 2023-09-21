@@ -21,7 +21,7 @@ extra_compile_args = [
     '-Wmissing-prototypes',
     '-Wmissing-declarations',
     '-Wstrict-prototypes']
-_coroutine = Extension('src.cothread._coroutine',
+_coroutine = Extension('cothread._coroutine',
     ['context/_coroutine.c', 'context/cocore.c', 'context/switch.c'],
     extra_compile_args = extra_compile_args,
     depends = glob.glob('context/switch-*.c') + glob.glob('context/*.h'))
