@@ -2,5 +2,9 @@
   {
     "version": "master",
     "url": "https://DiamondLightSource.github.io/cothread/master/"
+  },
+  {
+    "version": "docs_fixes",
+    "url": "https://DiamondLightSource.github.io/cothread/docs_fixes/"
   }
 ]
