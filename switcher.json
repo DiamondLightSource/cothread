@@ -1,10 +1,6 @@
 [
   {
     "version": "master",
-    "url": "https://dls-controls.github.io/cothread/master/"
-  },
-  {
-    "version": "skeleton_merge",
-    "url": "https://dls-controls.github.io/cothread/skeleton_merge/"
+    "url": "https://DiamondLightSource.github.io/cothread/master/"
   }
 ]

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>cothread &#8212; cothread 3.dev25+gc491610 documentation</title>
+    <title>cothread &#8212; cothread 3.dev26+g05fc036 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
   <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
-    <script src="_static/documentation_options.js?v=76bddaed"></script>
+    <script src="_static/documentation_options.js?v=4894c60e"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -403,7 +403,7 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <p><a class="reference external" href="https://travis-ci.org/dls-controls/cothread"><img alt="Build Status" src="https://travis-ci.org/dls-controls/cothread.svg?style=flat" /></a> <a class="reference external" href="https://coveralls.io/github/dls-controls/cothread?branch=master"><img alt="Test coverage" src="https://coveralls.io/repos/dls-controls/cothread/badge.svg?branch=master&amp;service=github" /></a> <a class="reference external" href="https://pypi.python.org/pypi/cothread/"><img alt="Latest PyPI version" src="https://img.shields.io/pypi/v/cothread.svg" /></a> <a class="reference external" href="https://readthedocs.org/projects/cothread/?badge=latest"><img alt="Documentation Status" src="https://readthedocs.org/projects/cothread/badge/?version=latest" /></a></p>
+  <p><a class="reference external" href="https://github.com/DiamondLightSource/cothread/actions/workflows/code.yml"><img alt="Code CI" src="https://github.com/DiamondLightSource/cothread/actions/workflows/code.yml/badge.svg?branch=main" /></a> <a class="reference external" href="https://github.com/DiamondLightSource/cothread/actions/workflows/docs.yml"><img alt="Docs CI" src="https://github.com/DiamondLightSource/cothread/actions/workflows/docs.yml/badge.svg?branch=main" /></a> <a class="reference external" href="https://codecov.io/gh/DiamondLightSource/cothread"><img alt="Test Coverage" src="https://codecov.io/gh/DiamondLightSource/cothread/branch/main/graph/badge.svg" /></a> <a class="reference external" href="https://pypi.org/project/cothread"><img alt="Latest PyPI version" src="https://img.shields.io/pypi/v/cothread.svg" /></a> <a class="reference external" href="https://opensource.org/licenses/Apache-2.0"><img alt="Apache License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" /></a></p>
 <section id="cothread">
 <h1>cothread<a class="headerlink" href="#cothread" title="Link to this heading">#</a></h1>
 <p>The <code class="docutils literal notranslate"><span class="pre">cothread</span></code> Python library is designed for building tools using cooperative
@@ -420,31 +420,14 @@ particular, <a class="reference internal" href="user/catools.html#cothread.catoo
 </pre></div>
 </div>
 <p>To install the latest code directly from source, type:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">dls</span><span class="o">-</span><span class="n">controls</span><span class="o">/</span><span class="n">cothread</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">DiamondLightSource</span><span class="o">/</span><span class="n">cothread</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="documentation">
 <h1>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h1>
-<p>Full documentation is available at <a class="reference external" href="http://cothread.readthedocs.org">http://cothread.readthedocs.org</a></p>
-</section>
-<section id="upload-to-pypi">
-<h1>Upload to PyPI<a class="headerlink" href="#upload-to-pypi" title="Link to this heading">#</a></h1>
-<p>Run the following commands to create a virtual environment, build cothread,
-do a test upload to test.pypi.org, and finally upload it to PyPi.</p>
-<p>Ask a member of dls-controls for the username and password to use:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>pipenv install numpy twine build
-SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) pipenv run python -m build --sdist
-pipenv run twine upload -r testpypi dist/*
-pipenv run twine upload dist/*
-</pre></div>
-</div>
-<p>We set SOURCE_DATE_EPOCH from git commit for reproducible builds - see <a class="reference external" href="https://reproducible-builds.org/">https://reproducible-builds.org/</a></p>
-</section>
-<section id="license">
-<h1>License<a class="headerlink" href="#license" title="Link to this heading">#</a></h1>
-<p>GPL2 License (see COPYING)</p>
+<p>Full documentation is available at <a class="reference external" href="https://DiamondLightSource.github.io/cothread">https://DiamondLightSource.github.io/cothread</a></p>
 <section id="how-the-documentation-is-structured">
 <h2>How the documentation is structured<a class="headerlink" href="#how-the-documentation-is-structured" title="Link to this heading">#</a></h2>
 <p>The documentation is split into 2 sections:</p>
