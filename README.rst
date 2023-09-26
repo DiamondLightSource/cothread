@@ -29,15 +29,15 @@ Documentation
 
 Full documentation is available at https://DiamondLightSource.github.io/cothread
 
-.. |code_ci| image:: https://github.com/DiamondLightSource/cothread/actions/workflows/code.yml/badge.svg?branch=main
+.. |code_ci| image:: https://github.com/DiamondLightSource/cothread/actions/workflows/code.yml/badge.svg?branch=master
     :target: https://github.com/DiamondLightSource/cothread/actions/workflows/code.yml
     :alt: Code CI
 
-.. |docs_ci| image:: https://github.com/DiamondLightSource/cothread/actions/workflows/docs.yml/badge.svg?branch=main
+.. |docs_ci| image:: https://github.com/DiamondLightSource/cothread/actions/workflows/docs.yml/badge.svg?branch=master
     :target: https://github.com/DiamondLightSource/cothread/actions/workflows/docs.yml
     :alt: Docs CI
 
-.. |coverage| image:: https://codecov.io/gh/DiamondLightSource/cothread/branch/main/graph/badge.svg
+.. |coverage| image:: https://codecov.io/gh/DiamondLightSource/cothread/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/DiamondLightSource/cothread
     :alt: Test Coverage
 
