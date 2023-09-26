@@ -1,4 +1,4 @@
-|build_status| |coverage| |pypi-version| |readthedocs|
+|code_ci| |docs_ci| |coverage| |pypi_version| |license|
 
 cothread
 ========
@@ -22,47 +22,32 @@ To install the latest release, type::
 
 To install the latest code directly from source, type::
 
-    pip install git+git://github.com/dls-controls/cothread
+    pip install git+git://github.com/DiamondLightSource/cothread
 
 Documentation
 =============
 
-Full documentation is available at http://cothread.readthedocs.org
+Full documentation is available at https://DiamondLightSource.github.io/cothread
 
-Upload to PyPI
-==============
+.. |code_ci| image:: https://github.com/DiamondLightSource/cothread/actions/workflows/code.yml/badge.svg?branch=main
+    :target: https://github.com/DiamondLightSource/cothread/actions/workflows/code.yml
+    :alt: Code CI
 
-Run the following commands to create a virtual environment, build cothread,
-do a test upload to test.pypi.org, and finally upload it to PyPi.
+.. |docs_ci| image:: https://github.com/DiamondLightSource/cothread/actions/workflows/docs.yml/badge.svg?branch=main
+    :target: https://github.com/DiamondLightSource/cothread/actions/workflows/docs.yml
+    :alt: Docs CI
 
-Ask a member of dls-controls for the username and password to use::
+.. |coverage| image:: https://codecov.io/gh/DiamondLightSource/cothread/branch/main/graph/badge.svg
+    :target: https://codecov.io/gh/DiamondLightSource/cothread
+    :alt: Test Coverage
 
-    pipenv install numpy twine build
-    SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) pipenv run python -m build --sdist
-    pipenv run twine upload -r testpypi dist/*
-    pipenv run twine upload dist/*
-
-We set SOURCE_DATE_EPOCH from git commit for reproducible builds - see https://reproducible-builds.org/
-
-License
-=======
-GPL2 License (see COPYING)
-
-.. |pypi-version| image:: https://img.shields.io/pypi/v/cothread.svg
-    :target: https://pypi.python.org/pypi/cothread/
+.. |pypi_version| image:: https://img.shields.io/pypi/v/cothread.svg
+    :target: https://pypi.org/project/cothread
     :alt: Latest PyPI version
 
-.. |readthedocs| image:: https://readthedocs.org/projects/cothread/badge/?version=latest
-    :target: https://readthedocs.org/projects/cothread/?badge=latest
-    :alt: Documentation Status
-
-.. |build_status| image:: https://travis-ci.org/dls-controls/cothread.svg?style=flat
-    :target: https://travis-ci.org/dls-controls/cothread
-    :alt: Build Status
-
-.. |coverage| image:: https://coveralls.io/repos/dls-controls/cothread/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/dls-controls/cothread?branch=master
-    :alt: Test coverage
+.. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+    :target: https://opensource.org/licenses/Apache-2.0
+    :alt: Apache License
 
 ..
     Anything below this line is used when viewing README.rst and will be replaced
