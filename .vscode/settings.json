@@ -4,7 +4,7 @@
     "python.linting.mypyEnabled": true,
     "python.linting.enabled": true,
     "python.testing.pytestArgs": [
-        "--cov=python3_pip_skeleton",
+        "--cov=cothread",
         "--cov-report",
         "xml:cov.xml"
     ],
