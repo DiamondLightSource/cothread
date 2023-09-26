@@ -6,9 +6,9 @@
 .. |emdash| unicode:: U+02014 .. EM DASH
 
 
-================================
-Channel Access with ``cothread``
-================================
+==========================================
+Training: Channel Access with ``cothread``
+==========================================
 
 :Author: Michael Abbott
 
