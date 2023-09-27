@@ -7,3 +7,4 @@ User Guide
    installation
    cothread
    catools
+   training/cothread

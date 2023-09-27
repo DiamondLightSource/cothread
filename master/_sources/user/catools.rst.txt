@@ -509,22 +509,28 @@ the result returned will be an array.
 
 The table below enumerates the possibilities:
 
-    ==================  ====================== ========================================
-    Cothread type       Derived from           For these values
-    ==================  ====================== ========================================
-    :class:`ca_str`     :class:`str`           String value
-    :class:`ca_int`     :class:`int`           Integral value
-    :class:`ca_float`   :class:`float`         Floating point value
-    :class:`ca_array`   :class:`numpy.ndarray` Any array value
-    ==================  ====================== ========================================
+    =============================== ====================== ========================================
+    Cothread type                   Derived from           For these values
+    =============================== ====================== ========================================
+    :class:`~cothread.dbr.ca_str`   :class:`str`           String value
+    :class:`~cothread.dbr.ca_int`   :class:`int`           Integral value
+    :class:`~cothread.dbr.ca_float` :class:`float`         Floating point value
+    :class:`~cothread.dbr.ca_array` :class:`numpy.ndarray` Any array value
+    =============================== ====================== ========================================
 
-..  class:: ca_str
-..  class:: ca_int
-..  class:: ca_float
+..  class:: cothread.dbr.ca_str
 
-    Scalar types derived from basic Python types.
+    Scalar type derived from basic Python type.
 
-..  class:: ca_array
+..  class:: cothread.dbr.ca_int
+
+    Scalar type derived from basic Python type.
+
+..  class:: cothread.dbr.ca_float
+
+    Scalar type derived from basic Python type.
+
+..  class:: cothread.dbr.ca_array
 
     Array type derived from :class:`numpy.ndarray`.  The associated
     :attr:`~numpy.ndarray.dtype` will be as close a fit to the underlying data as possible.

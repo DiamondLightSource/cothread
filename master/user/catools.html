@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Using the catools Library &#8212; cothread 3.dev27+gefd4838 documentation</title>
+    <title>Using the catools Library &#8212; cothread 3.dev30+g5a0e292 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
   <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
-    <script src="../_static/documentation_options.js?v=9178f701"></script>
+    <script src="../_static/documentation_options.js?v=5953ce8c"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -54,7 +54,7 @@
     <link rel="icon" href="../_static/dls-favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Developer Guide" href="../developer/index.html" />
+    <link rel="next" title="Training: Channel Access with cothread" href="training/cothread.html" />
     <link rel="prev" title="Using the cothread Library" href="cothread.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -393,6 +393,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cothread.html">Using the cothread Library</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Using the catools Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training/cothread.html">Training: Channel Access with <code class="docutils literal notranslate"><span class="pre">cothread</span></code></a></li>
 </ul>
 </div>
 </nav></div>
@@ -960,19 +961,19 @@ by the underlying length of the EPICS source, ie by its
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><a class="reference internal" href="#cothread.catools.ca_str" title="cothread.catools.ca_str"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_str</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_str" title="cothread.catools.cothread.dbr.ca_str"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_str</span></code></a></p></td>
 <td><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p></td>
 <td><p>String value</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cothread.catools.ca_int" title="cothread.catools.ca_int"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_int</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_int" title="cothread.catools.cothread.dbr.ca_int"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_int</span></code></a></p></td>
 <td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p></td>
 <td><p>Integral value</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#cothread.catools.ca_float" title="cothread.catools.ca_float"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_float</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_float" title="cothread.catools.cothread.dbr.ca_float"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_float</span></code></a></p></td>
 <td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p></td>
 <td><p>Floating point value</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#cothread.catools.ca_array" title="cothread.catools.ca_array"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_array</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_array" title="cothread.catools.cothread.dbr.ca_array"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_array</span></code></a></p></td>
 <td><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.26)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p></td>
 <td><p>Any array value</p></td>
 </tr>
@@ -980,24 +981,26 @@ by the underlying length of the EPICS source, ie by its
 </table>
 </div></blockquote>
 <dl class="py class">
-<dt class="sig sig-object py" id="cothread.catools.ca_str">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.catools.</span></span><span class="sig-name descname"><span class="pre">ca_str</span></span><a class="headerlink" href="#cothread.catools.ca_str" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="cothread.catools.ca_int">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.catools.</span></span><span class="sig-name descname"><span class="pre">ca_int</span></span><a class="headerlink" href="#cothread.catools.ca_int" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="cothread.catools.ca_float">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.catools.</span></span><span class="sig-name descname"><span class="pre">ca_float</span></span><a class="headerlink" href="#cothread.catools.ca_float" title="Link to this definition">#</a></dt>
-<dd><p>Scalar types derived from basic Python types.</p>
+<dt class="sig sig-object py" id="cothread.catools.cothread.dbr.ca_str">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.dbr.</span></span><span class="sig-name descname"><span class="pre">ca_str</span></span><a class="headerlink" href="#cothread.catools.cothread.dbr.ca_str" title="Link to this definition">#</a></dt>
+<dd><p>Scalar type derived from basic Python type.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="cothread.catools.ca_array">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.catools.</span></span><span class="sig-name descname"><span class="pre">ca_array</span></span><a class="headerlink" href="#cothread.catools.ca_array" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="cothread.catools.cothread.dbr.ca_int">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.dbr.</span></span><span class="sig-name descname"><span class="pre">ca_int</span></span><a class="headerlink" href="#cothread.catools.cothread.dbr.ca_int" title="Link to this definition">#</a></dt>
+<dd><p>Scalar type derived from basic Python type.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cothread.catools.cothread.dbr.ca_float">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.dbr.</span></span><span class="sig-name descname"><span class="pre">ca_float</span></span><a class="headerlink" href="#cothread.catools.cothread.dbr.ca_float" title="Link to this definition">#</a></dt>
+<dd><p>Scalar type derived from basic Python type.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cothread.catools.cothread.dbr.ca_array">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.dbr.</span></span><span class="sig-name descname"><span class="pre">ca_array</span></span><a class="headerlink" href="#cothread.catools.cothread.dbr.ca_array" title="Link to this definition">#</a></dt>
 <dd><p>Array type derived from <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.26)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>.  The associated
 <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.dtype.html#numpy.ndarray.dtype" title="(in NumPy v1.26)"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dtype</span></code></a> will be as close a fit to the underlying data as possible.</p>
 </dd></dl>
@@ -1704,11 +1707,11 @@ subsequent updates to the <a class="reference internal" href="#cothread.pv.PV_ar
       </div>
     </a>
     <a class="right-next"
-       href="../developer/index.html"
+       href="training/cothread.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Developer Guide</p>
+        <p class="prev-next-title">Training: Channel Access with <code class="docutils literal notranslate"><span class="pre">cothread</span></code></p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1758,10 +1761,10 @@ subsequent updates to the <a class="reference internal" href="#cothread.pv.PV_ar
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools..datatype"><code class="docutils literal notranslate"><span class="pre">.datatype</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools..element_count"><code class="docutils literal notranslate"><span class="pre">.element_count</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#values-and-their-types">Values and their Types</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.ca_str"><code class="docutils literal notranslate"><span class="pre">ca_str</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.ca_int"><code class="docutils literal notranslate"><span class="pre">ca_int</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.ca_float"><code class="docutils literal notranslate"><span class="pre">ca_float</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.ca_array"><code class="docutils literal notranslate"><span class="pre">ca_array</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.cothread.dbr.ca_str"><code class="docutils literal notranslate"><span class="pre">cothread.dbr.ca_str</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.cothread.dbr.ca_int"><code class="docutils literal notranslate"><span class="pre">cothread.dbr.ca_int</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.cothread.dbr.ca_float"><code class="docutils literal notranslate"><span class="pre">cothread.dbr.ca_float</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#cothread.catools.cothread.dbr.ca_array"><code class="docutils literal notranslate"><span class="pre">cothread.dbr.ca_array</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#augmented-values">Augmented Values</a><ul class="nav section-nav flex-column">

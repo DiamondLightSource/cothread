@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>User Guide &#8212; cothread 3.dev27+gefd4838 documentation</title>
+    <title>User Guide &#8212; cothread 3.dev30+g5a0e292 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
   <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
-    <script src="../_static/documentation_options.js?v=9178f701"></script>
+    <script src="../_static/documentation_options.js?v=5953ce8c"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -393,6 +393,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cothread.html">Using the cothread Library</a></li>
 <li class="toctree-l1"><a class="reference internal" href="catools.html">Using the catools Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training/cothread.html">Training: Channel Access with <code class="docutils literal notranslate"><span class="pre">cothread</span></code></a></li>
 </ul>
 </div>
 </nav></div>
@@ -468,6 +469,41 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="catools.html#function-reference">Function Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="catools.html#working-with-values">Working with Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="catools.html#module-cothread.pv">PV and PV_array Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="training/cothread.html">Training: Channel Access with <code class="docutils literal notranslate"><span class="pre">cothread</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#cothread">Cothread</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#cothread-catools-bindings">Cothread catools bindings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#preliminaries">Preliminaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#example-printing-a-pv">Example: Printing a PV</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#testing-speed-of-caget">Testing Speed of <code class="docutils literal notranslate"><span class="pre">caget</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#exercise-timing-test">Exercise: Timing test</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#shape-polymorphism">Shape Polymorphism</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#example-monitoring-a-pv">Example: Monitoring a PV</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#camonitor-for-lists-of-pvs"><code class="docutils literal notranslate"><span class="pre">camonitor</span></code> for Lists of PVs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#exercise-camonitor-and-caput">Exercise: <code class="docutils literal notranslate"><span class="pre">camonitor</span></code> and <code class="docutils literal notranslate"><span class="pre">caput</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#a-note-on-the-last-exercise">A note on the last exercise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#augmented-values">Augmented Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#augmented-values-are-ordinary">Augmented Values are Ordinary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#getting-values-with-timestamps">Getting Values with Timestamps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#example-gathering-updates">Example: Gathering Updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#example-circular-updates-buffer">Example: Circular Updates Buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#example-gathering-arrays">Example: Gathering Arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#example-default-error-handling">Example: Default Error Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#adjusting-the-timeout">Adjusting the Timeout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#catching-errors-from-caget">Catching Errors from <code class="docutils literal notranslate"><span class="pre">caget</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#catching-errors-from-caput">Catching Errors from <code class="docutils literal notranslate"><span class="pre">caput</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#cothread-and-qt">Cothread and Qt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#plotting-preamble">Plotting: Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#plotting-an-example">Plotting: An Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#advanced-topics">Advanced Topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#advanced-topic-cothreads">Advanced Topic: Cothreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#creating-a-cothread">Creating a Cothread</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#communicating-with-cothreads">Communicating with Cothreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#example-using-event">Example: Using <code class="docutils literal notranslate"><span class="pre">Event</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#cothread-suspension-points">Cothread Suspension Points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#cothreads-and-real-threads">Cothreads and Real Threads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="training/cothread.html#slightly-more-realistic-version">Slightly more Realistic Version</a></li>
 </ul>
 </li>
 </ul>
