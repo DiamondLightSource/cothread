@@ -44,7 +44,7 @@
     #include "switch-x86.c"
 #elif defined(__x86_64__)
     #include "switch-x86_64.c"
-#elif defined(__aarch64__)  &&  defined(__unix__)
+#elif defined(__aarch64__)  &&  (defined(__unix__)  ||  defined(__APPLE__))
     #include "switch-arm64.c"
 #elif defined(__arm__)  &&  defined(__unix__)
     #include "switch-arm.c"

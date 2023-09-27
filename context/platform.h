@@ -34,7 +34,7 @@
 /* Some cross-platform support for thread support.  If we can't use __thread
  * we'll use the posix pthread_{get,set}specific API instead. */
 
-#if defined(__APPLE__)
+#if defined(__APPLE__)  &&  !defined(__aarch64__)
 /* No __thread support on this platform, instead we use Posix pthread keys. */
 
 #include <pthread.h>
