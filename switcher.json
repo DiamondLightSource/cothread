@@ -6,5 +6,9 @@
   {
     "version": "2-19",
     "url": "https://DiamondLightSource.github.io/cothread/2-19/"
+  },
+  {
+    "version": "fix_release",
+    "url": "https://DiamondLightSource.github.io/cothread/fix_release/"
   }
 ]
