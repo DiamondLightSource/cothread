@@ -66,12 +66,26 @@ jobs:
           # Need this to get version number from last tag
           fetch-depth: 0
 
-      - name: Build sdist and wheel
+      - name: Build sdist
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) && \
-          pipx run build
+          pipx run build --sdist
 
-      - name: Upload sdist and wheel as artifacts
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.16.1
+        with:
+          output-dir: dist
+        env:
+          # Force using an older manylinux image to support more OSs
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          # Simple test that the wheel is loaded and available
+          CIBW_TEST_COMMAND: python -c "import cothread; print(cothread.__version__)"
+          # Skip all PyPy wheels (GIL deadlock detected in ThreadState_New)
+          # Skip all i686 wheels (cannot build numpy)
+          # This leaves manylinux and musllinux wheels
+          CIBW_SKIP: pp* *i686*
+
+      - name: Upload sdist and wheels as artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dist
@@ -80,16 +94,6 @@ jobs:
       - name: Check for packaging errors
         run: pipx run twine check --strict dist/*
 
-      - name: Install python packages
-        uses: ./.github/actions/install_requirements
-        with:
-          python_version: "3.10"
-          requirements_file: requirements.txt
-          install_options: dist/*.whl
-
-      - name: Test module version works using the installed wheel
-        # If this prints we can assume the module has installed correctly
-        run: python -c "import cothread; print(cothread.__version__)"
 
   release:
     # upload to PyPI and make a release on every tag
