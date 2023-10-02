@@ -4,12 +4,16 @@
     "url": "https://DiamondLightSource.github.io/cothread/master/"
   },
   {
+    "version": "2.19",
+    "url": "https://DiamondLightSource.github.io/cothread/2.19/"
+  },
+  {
     "version": "2-19",
     "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
-    "version": "2.19",
-    "url": "https://DiamondLightSource.github.io/cothread/2.19/"
+    "version": "fix_macos_build",
+    "url": "https://DiamondLightSource.github.io/cothread/fix_macos_build/"
   },
   {
     "version": "fix_release",
