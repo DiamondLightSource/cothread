@@ -63,6 +63,8 @@
  * scenes and NOT TO MOVE CODE AROUND! */
 #define COMPILER_MEMORY_BARRIER()   __asm__ __volatile__("" ::: "memory")
 
+/* For ignoring return values even when warn_unused_result is in force. */
+#define IGNORE(e)   do if(e) {} while (0)
 
 /* A single stack frame can be shared among multiple coroutines, in the style of
  * "greenlets", so we manage the stack separately.  The stack frame records the
@@ -409,7 +411,7 @@ struct cocore *initialise_cocore_thread(void)
     void *stack = malloc(FRAME_SWITCHER_STACK);
     state->switcher_coroutine = create_frame(
         STACK_BASE(stack, FRAME_SWITCHER_STACK), frame_switcher, state);
-    VALGRIND_STACK_REGISTER(stack, stack + FRAME_SWITCHER_STACK);
+    IGNORE(VALGRIND_STACK_REGISTER(stack, stack + FRAME_SWITCHER_STACK));
 
     return coroutine;
 }
