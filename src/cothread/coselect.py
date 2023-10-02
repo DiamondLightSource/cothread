@@ -29,8 +29,6 @@
 '''Support for cooperative select functions.  Replaces the functionality of
 the standard select module.'''
 
-from __future__ import absolute_import
-
 import select as _select
 import cothread
 

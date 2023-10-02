@@ -37,7 +37,6 @@ import numpy
 import datetime
 
 from . import cadef
-from . import py23
 
 
 __all__ = [
@@ -215,6 +214,11 @@ class ca_timestamp(ctypes.Structure):
 # ----------------------------------------------------------------------------
 #   DBR type definitions
 
+# Default string decoding method
+def decode(s):
+    return s.decode('UTF-8', 'replace')
+
+
 # All the following types are used to overlay dbr data returned from channel
 # access or passed into channel access.
 
@@ -241,7 +245,7 @@ def copy_attributes_ctrl(self, other):
     other.status = self.status
     other.severity = self.severity
 
-    other.units = py23.decode(ctypes.string_at(self.units))
+    other.units = decode(ctypes.string_at(self.units))
     other.upper_disp_limit = self.upper_disp_limit
     other.lower_disp_limit = self.lower_disp_limit
     other.upper_alarm_limit = self.upper_alarm_limit
@@ -431,7 +435,7 @@ class dbr_ctrl_enum(ctypes.Structure):
         other.status = self.status
         other.severity = self.severity
         other.enums = [
-            py23.decode(ctypes.string_at(s))
+            decode(ctypes.string_at(s))
             for s in self.raw_strs[:self.no_str]]
 
 class dbr_ctrl_char(ctypes.Structure):
@@ -631,10 +635,9 @@ def _datatype_to_dbr(datatype):
         # with filtering through our array of acceptable types.
         return NumpyCharCodeToDbr[numpy.dtype(datatype).char]
     except Exception as error:
-        py23.raise_from(
-            InvalidDatatype(
-                'Datatype "%s" not supported for channel access' % datatype),
-            error)
+        raise InvalidDatatype(
+            'Datatype "%s" not supported for channel access' % datatype
+        ) from error
 
 def _type_to_dbrcode(datatype, format):
     '''Converts a datatype and format request to a dbr value, or raises an
@@ -704,7 +707,7 @@ def _string_at(raw_value, count):
 
 # Conversion from char array to strings
 def _convert_char_str(raw_dbr, count):
-    return ca_str(py23.decode(_string_at(raw_dbr.raw_value, count)))
+    return ca_str(decode(_string_at(raw_dbr.raw_value, count)))
 
 # Conversion from char array to bytes strings
 def _convert_char_bytes(raw_dbr, count):
@@ -717,9 +720,9 @@ def _convert_char_unicode(raw_dbr, count):
 
 # Arrays of standard strings.
 def _convert_str_str(raw_dbr, count):
-    return ca_str(py23.decode(_make_strings(raw_dbr, count)[0]))
+    return ca_str(decode(_make_strings(raw_dbr, count)[0]))
 def _convert_str_str_array(raw_dbr, count):
-    strings = [py23.decode(s) for s in _make_strings(raw_dbr, count)]
+    strings = [decode(s) for s in _make_strings(raw_dbr, count)]
     return _string_array(strings, count, str_char_code)
 
 # Arrays of bytes strings.

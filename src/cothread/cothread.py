@@ -66,8 +66,6 @@ Similarly the EventQueue can be used for communication.
 # It might be worth taking a close look at:
 #   http://wiki.secondlife.com/wiki/Eventlet
 
-from __future__ import print_function
-
 import sys
 import os
 import time
@@ -77,7 +75,6 @@ import collections
 import threading
 
 from . import _coroutine
-from . import py23
 
 if os.environ.get('COTHREAD_CHECK_STACK'):
     _coroutine.enable_check_stack(True)
@@ -442,7 +439,7 @@ class _Scheduler(object):
 
         if isinstance(result, tuple):
             # This case arises if we are main and the scheduler just died.
-            py23.raise_with_traceback(result)
+            raise result[1].with_traceback(result[2])
         else:
             return result
 
@@ -492,7 +489,7 @@ class _Scheduler(object):
             # to die.  Make sure our wakeup is cancelled, and then
             # re-raise the offending exception.
             wakeup.wakeup(result)
-            py23.raise_with_traceback(result)
+            raise result[1].with_traceback(result[2])
         else:
             return result == _WAKEUP_TIMEOUT
 
@@ -711,7 +708,7 @@ class Spawn(EventBase):
             try:
                 # Re-raise the exception that actually killed the task here
                 # where it can be received by whoever waits on the task.
-                py23.raise_with_traceback(result)
+                raise result[1].with_traceback(result[2])
             finally:
                 # In this case result and self.__result contain a traceback.  To
                 # avoid circular references which will delay garbage collection,
@@ -1018,7 +1015,7 @@ def CallbackResult(action, *args, **kargs):
         if ok:
             return result
         else:
-            py23.raise_with_traceback(result)
+            raise result[1].with_traceback(result[2])
 
         # Note: raising entire stack backtrace context might be dangerous, need
         # to think about this carefully, particularly if the corresponding stack

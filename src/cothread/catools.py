@@ -46,8 +46,6 @@ Supports the following methods:
 See the documentation for the individual functions for more details on using
 them.'''
 
-from __future__ import print_function
-
 import os
 import sys
 import atexit
@@ -58,7 +56,6 @@ import threading
 from . import cothread
 from . import cadef
 from . import dbr
-from . import py23
 
 from .dbr import *
 from .cadef import *
@@ -154,7 +151,7 @@ def ca_timeout(event, timeout, name):
     try:
         return event.Wait(timeout)
     except cothread.Timedout as timeout:
-        py23.raise_from(ca_nothing(name, cadef.ECA_TIMEOUT), timeout)
+        raise ca_nothing(name, cadef.ECA_TIMEOUT) from timeout
 
 
 # ----------------------------------------------------------------------------
@@ -371,7 +368,7 @@ class _Subscription(object):
                 if isinstance(value, tuple):
                     # This should only happen if the asynchronous callback
                     # caught an exception for us to re-raise here.
-                    py23.raise_with_traceback(value)
+                    raise value[1].with_traceback(value[2])
                 else:
                     self.callback(value)
             except:

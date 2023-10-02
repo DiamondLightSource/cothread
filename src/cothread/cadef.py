@@ -47,7 +47,6 @@ __all__ = [
 
 import ctypes
 from .load_ca import libca
-from . import py23
 
 
 
@@ -187,13 +186,31 @@ ctypes.pythonapi.Py_DecRef.argtypes = [ctypes.py_object]
 #   libca function definitions
 
 
+# String encoding and decoding helpers for ctypes string arguments
+
+class auto_encode(ctypes.c_char_p):
+    @classmethod
+    def from_param(cls, value):
+        if value is None:
+            return value
+        else:
+            return value.encode('UTF-8')
+
+def auto_decode(result, func, args):
+    if result is None:
+        return result
+    else:
+        return result.decode('UTF-8', 'replace')
+
+
+
 #   error_message = ca_message(status_code)
 #
 # Converts channel access status code (an int) into a printable error message.
 ca_message = libca.ca_message
 ca_message.argtypes = [ctypes.c_long]
 ca_message.restype = ctypes.c_char_p
-ca_message.errcheck = py23.auto_decode
+ca_message.errcheck = auto_decode
 
 
 #   channel_name = ca_name(channel)
@@ -202,7 +219,7 @@ ca_message.errcheck = py23.auto_decode
 ca_name = libca.ca_name
 ca_name.argtypes = [ctypes.c_void_p]
 ca_name.restype = ctypes.c_char_p
-ca_name.errcheck = py23.auto_decode
+ca_name.errcheck = auto_decode
 
 
 #   @exception_handler
@@ -247,7 +264,7 @@ ca_element_count.errcheck = expect_connected(0)
 # recovered by calling ca_puser(channel_id).
 ca_create_channel = libca.ca_create_channel
 ca_create_channel.argtypes = [
-    py23.auto_encode, connection_handler, ctypes.py_object,
+    auto_encode, connection_handler, ctypes.py_object,
     ctypes.c_int, ctypes.c_void_p]
 ca_create_channel.errcheck = expect_ECA_NORMAL
 
@@ -401,7 +418,7 @@ ca_state.argtypes = [ctypes.c_void_p]
 ca_host_name = libca.ca_host_name
 ca_host_name.argtypes = [ctypes.c_void_p]
 ca_host_name.restype = ctypes.c_char_p
-ca_host_name.errcheck = py23.auto_decode
+ca_host_name.errcheck = auto_decode
 
 
 #   read = ca_read_access(channel_id)

@@ -13,7 +13,6 @@ import socket as _socket
 from cothread import coselect, cosocket
 from cothread import Spawn, Sleep, Event, Timedout
 from cothread.load_ca import epics_host_arch
-from cothread import py23
 
 __all__ = [
     'IOCTestCaseMixin',
@@ -292,7 +291,7 @@ class IOCTestCaseMixin(object):
         # seperate cothread
         try:
             while True:
-                T = py23.decode(self._tty.read(1024))
+                T = self._tty.read(1024).decode('UTF-8', 'replace')
                 if not T:
                     return
                 self._tty_in += T
