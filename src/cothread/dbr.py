@@ -51,7 +51,6 @@ __all__ = [
     'DBR_DOUBLE',       # 64 bit float
 
     'DBR_CHAR_STR',     # Long strings as char arrays
-    'DBR_CHAR_UNICODE', # Long unicode strings as char arrays
     'DBR_ENUM_STR',     # Enums as strings, default otherwise
     'DBR_CHAR_BYTES',   # Long byte strings as char arrays
 
@@ -163,29 +162,11 @@ class ca_str(str):
     def __pos__(self):
         return str(self)
 
-
-# Overlapping handling for python 2 and python 3.  We have three types with two
-# different semantics: str, bytes, unicode.  In python2 str is bytes, while in
-# python3 str is unicode.  We walk a delicate balancing act to get the right
-# behaviour in both environments!
-if sys.version_info < (3,):
-    ca_bytes = ca_str
-    class ca_unicode(bytes):
-        __doc__ = ca_doc_string
-        datetime = timestamp_to_datetime
-        def __pos__(self):
-            return unicode(self)
-    str_char_code = 'S'
-else:
-    class ca_bytes(bytes):
-        __doc__ = ca_doc_string
-        datetime = timestamp_to_datetime
-        def __pos__(self):
-            return bytes(self)
-    ca_unicode = ca_str
-    str_char_code = 'U'
-    unicode = str
-
+class ca_bytes(bytes):
+    __doc__ = ca_doc_string
+    datetime = timestamp_to_datetime
+    def __pos__(self):
+        return bytes(self)
 
 class ca_int(int):
     __doc__ = ca_doc_string
@@ -544,7 +525,6 @@ DBR_CLASS_NAME = 38
 # Special value for DBR_CHAR as str special processing.
 DBR_ENUM_STR = 996
 DBR_CHAR_BYTES = 997
-DBR_CHAR_UNICODE = 998
 DBR_CHAR_STR = 999
 
 
@@ -604,7 +584,7 @@ NumpyCharCodeToDbr = {
     'I':    DBR_LONG,       # uintc  = uint32
 
     # Unicode is supported by decoding from DBR_STRING
-    'U':    DBR_STRING,     # str => unicode
+    'U':    DBR_STRING,     # str
 
     # We translate machine native integers to DBR_LONG as EPICS has no support
     # for 64-bit integers, but not allowing int as an argument is too confusing.
@@ -652,7 +632,7 @@ def _type_to_dbrcode(datatype, format):
       - FORMAT_CTRL: retrieve limit and control data
     '''
     if datatype not in BasicDbrTypes:
-        if datatype in [DBR_CHAR_STR, DBR_CHAR_BYTES, DBR_CHAR_UNICODE]:
+        if datatype in [DBR_CHAR_STR, DBR_CHAR_BYTES]:
             datatype = DBR_CHAR     # Retrieve this type using char array
         elif datatype in [DBR_STSACK_STRING, DBR_CLASS_NAME]:
             return (datatype, datatype) # format is meaningless in this case
@@ -713,30 +693,19 @@ def _convert_char_str(raw_dbr, count):
 def _convert_char_bytes(raw_dbr, count):
     return ca_bytes(_string_at(raw_dbr.raw_value, count))
 
-# Conversion from char array to unicode strings
-def _convert_char_unicode(raw_dbr, count):
-    return ca_unicode(_string_at(raw_dbr.raw_value, count).decode('UTF-8'))
-
 
 # Arrays of standard strings.
 def _convert_str_str(raw_dbr, count):
     return ca_str(decode(_make_strings(raw_dbr, count)[0]))
 def _convert_str_str_array(raw_dbr, count):
     strings = [decode(s) for s in _make_strings(raw_dbr, count)]
-    return _string_array(strings, count, str_char_code)
+    return _string_array(strings, count, 'U')
 
 # Arrays of bytes strings.
 def _convert_str_bytes(raw_dbr, count):
     return ca_bytes(_make_strings(raw_dbr, count)[0])
 def _convert_str_bytes_array(raw_dbr, count):
     return _string_array(_make_strings(raw_dbr, count), count, 'S')
-
-# Arrays of unicode strings.
-def _convert_str_unicode(raw_dbr, count):
-    return ca_str(_make_strings(raw_dbr, count)[0].decode('UTF-8'))
-def _convert_str_unicode_array(raw_dbr, count):
-    strings = [s.decode('UTF-8') for s in _make_strings(raw_dbr, count)]
-    return _string_array(strings, count, 'U')
 
 
 # For everything that isn't a string we either return a scalar or a ca_array
@@ -790,16 +759,11 @@ def type_to_dbr(channel, datatype, format):
     elif dtype is numpy.uint8 and datatype == DBR_CHAR_BYTES:
         # Conversion from char array to bytes strings
         convert = _convert_char_bytes
-    elif dtype is numpy.uint8 and datatype == DBR_CHAR_UNICODE:
-        # Conversion from char array to unicode strings
-        convert = _convert_char_unicode
     else:
         if dtype is str_dtype:
-            # String arrays, either unicode or normal.
+            # String arrays
             if isinstance(datatype, type) and issubclass(datatype, bytes):
                 convert = (_convert_str_bytes, _convert_str_bytes_array)
-            elif isinstance(datatype, type) and issubclass(datatype, unicode):
-                convert = (_convert_str_unicode, _convert_str_unicode_array)
             else:
                 convert = (_convert_str_str, _convert_str_str_array)
         else:
@@ -867,7 +831,7 @@ def value_to_dbr(channel, datatype, value):
 
     # If no datatype specified then use the target datatype.
     if datatype is None:
-        if isinstance(value, (str, bytes, unicode)):
+        if isinstance(value, (str, bytes)):
             # Give strings with no datatype special treatment, let the IOC do
             # the decoding.  It's safer this way.
             datatype = DBR_STRING
@@ -893,7 +857,7 @@ def value_to_dbr(channel, datatype, value):
                 # We'll let numpy do most of the heavy lifting.
                 result = _require_value(value, str_dtype)
             except UnicodeEncodeError:
-                # Whoops, looks like unicode, need to encode each string.
+                # Whoops, looks like we need to encode each string.
                 value = _require_value(value, None)
                 result = numpy.empty(value.shape, str_dtype)
                 for n, s in enumerate(value):

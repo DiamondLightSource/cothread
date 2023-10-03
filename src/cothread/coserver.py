@@ -24,14 +24,8 @@ from the SocketServer and BaseHTTPServer modules
 
 import sys
 
-if sys.version_info < (3,):
-    from SocketServer import BaseServer, TCPServer, UDPServer, ThreadingMixIn
-    from BaseHTTPServer import HTTPServer, test as _test
-    from SimpleHTTPServer import SimpleHTTPRequestHandler
-
-else:
-    from socketserver import BaseServer, TCPServer, UDPServer, ThreadingMixIn
-    from http.server import HTTPServer, SimpleHTTPRequestHandler, test as _test
+from socketserver import BaseServer, TCPServer, UDPServer, ThreadingMixIn
+from http.server import HTTPServer, SimpleHTTPRequestHandler, test as _test
 
 from . import cothread
 from . import cosocket
