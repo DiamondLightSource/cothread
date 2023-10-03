@@ -20,7 +20,7 @@
     "url": "https://DiamondLightSource.github.io/cothread/fix_release/"
   },
   {
-    "version": "no-py23",
-    "url": "https://DiamondLightSource.github.io/cothread/no-py23/"
+    "version": "modify_versioning",
+    "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
   }
 ]
