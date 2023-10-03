@@ -4,19 +4,23 @@
     "url": "https://DiamondLightSource.github.io/cothread/master/"
   },
   {
-    "version": "2-19",
-    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
+    "version": "2.19.1",
+    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
   },
   {
     "version": "2.19",
     "url": "https://DiamondLightSource.github.io/cothread/2.19/"
   },
   {
-    "version": "2.19.1",
-    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
+    "version": "2-19",
+    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
     "version": "fix_release",
     "url": "https://DiamondLightSource.github.io/cothread/fix_release/"
+  },
+  {
+    "version": "no-py23",
+    "url": "https://DiamondLightSource.github.io/cothread/no-py23/"
   }
 ]

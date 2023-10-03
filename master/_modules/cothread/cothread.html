@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cothread.cothread &#8212; cothread 2.20.dev2+gd7456f2 documentation</title>
+    <title>cothread.cothread &#8212; cothread 2.19.2.dev1+g033f0b0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
   <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
-    <script src="../../_static/documentation_options.js?v=0dd58d67"></script>
+    <script src="../../_static/documentation_options.js?v=47bc9615"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -499,8 +499,6 @@ document.write(`
 <span class="c1"># It might be worth taking a close look at:</span>
 <span class="c1">#   http://wiki.secondlife.com/wiki/Eventlet</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
-
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -510,7 +508,6 @@ document.write(`
 <span class="kn">import</span> <span class="nn">threading</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">_coroutine</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">py23</span>
 
 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;COTHREAD_CHECK_STACK&#39;</span><span class="p">):</span>
     <span class="n">_coroutine</span><span class="o">.</span><span class="n">enable_check_stack</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
@@ -875,7 +872,7 @@ document.write(`
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="c1"># This case arises if we are main and the scheduler just died.</span>
-            <span class="n">py23</span><span class="o">.</span><span class="n">raise_with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">result</span>
 
@@ -925,7 +922,7 @@ document.write(`
             <span class="c1"># to die.  Make sure our wakeup is cancelled, and then</span>
             <span class="c1"># re-raise the offending exception.</span>
             <span class="n">wakeup</span><span class="o">.</span><span class="n">wakeup</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-            <span class="n">py23</span><span class="o">.</span><span class="n">raise_with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">result</span> <span class="o">==</span> <span class="n">_WAKEUP_TIMEOUT</span>
 
@@ -1160,7 +1157,7 @@ document.write(`
             <span class="k">try</span><span class="p">:</span>
                 <span class="c1"># Re-raise the exception that actually killed the task here</span>
                 <span class="c1"># where it can be received by whoever waits on the task.</span>
-                <span class="n">py23</span><span class="o">.</span><span class="n">raise_with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
             <span class="k">finally</span><span class="p">:</span>
                 <span class="c1"># In this case result and self.__result contain a traceback.  To</span>
                 <span class="c1"># avoid circular references which will delay garbage collection,</span>
@@ -1513,7 +1510,7 @@ document.write(`
         <span class="k">if</span> <span class="n">ok</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">result</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">py23</span><span class="o">.</span><span class="n">raise_with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
 
 
         <span class="c1"># Note: raising entire stack backtrace context might be dangerous, need</span>
