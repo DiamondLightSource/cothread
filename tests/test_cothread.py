@@ -1,5 +1,7 @@
 # Module imports
 import unittest
+import multiprocessing as mp
+import time
 
 # Add cothread onto file and import
 import sys
@@ -149,6 +151,23 @@ class RLockTest(unittest.TestCase):
         s.Wait()
         assert self.v == 1
 
+
+
+def test_cothread_with_multiprocessing():
+    """Test that cothread works with multiprocessing.
+    Note that Python >=3.11 uses Python's APIs for the thread state handling.
+    <=3.10 uses hand-crafted state handling."""
+
+    TIMEOUT = 0.2
+    def target():
+        cothread.Sleep(TIMEOUT)
+
+    proc = mp.Process(target=target)
+    before = time.time()
+    proc.start()
+    proc.join()
+    after = time.time()
+    assert float(after - before) > TIMEOUT
 
 
 if __name__ == '__main__':
