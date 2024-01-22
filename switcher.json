@@ -26,5 +26,9 @@
   {
     "version": "modify_versioning",
     "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
+  },
+  {
+    "version": "remove-sys-version",
+    "url": "https://DiamondLightSource.github.io/cothread/remove-sys-version/"
   }
 ]
