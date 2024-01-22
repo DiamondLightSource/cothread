@@ -16,15 +16,15 @@
     "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
+    "version": "fix__array_deprecation",
+    "url": "https://DiamondLightSource.github.io/cothread/fix__array_deprecation/"
+  },
+  {
     "version": "fix_release",
     "url": "https://DiamondLightSource.github.io/cothread/fix_release/"
   },
   {
     "version": "modify_versioning",
     "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
-  },
-  {
-    "version": "use-version-specific-code",
-    "url": "https://DiamondLightSource.github.io/cothread/use-version-specific-code/"
   }
 ]
