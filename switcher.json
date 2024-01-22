@@ -4,6 +4,10 @@
     "url": "https://DiamondLightSource.github.io/cothread/master/"
   },
   {
+    "version": "2.20.0",
+    "url": "https://DiamondLightSource.github.io/cothread/2.20.0/"
+  },
+  {
     "version": "2.19.1",
     "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
   },
@@ -22,9 +26,5 @@
   {
     "version": "modify_versioning",
     "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
-  },
-  {
-    "version": "remove-sys-version",
-    "url": "https://DiamondLightSource.github.io/cothread/remove-sys-version/"
   }
 ]
