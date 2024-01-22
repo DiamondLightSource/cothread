@@ -22,3 +22,26 @@ record(calc, "$(P)calc") {
   field(INPA, "$(P)longout CP")
   field(CALC, "A")
 }
+
+record(longout, "$(P)rec1") {
+  field(VAL, "123")
+  field(PINI, "YES")
+}
+
+record(longout, "$(P)rec2") {
+  field(VAL, "456")
+  field(PINI, "YES")
+}
+
+
+record(calc, "$(P)inc1") {
+  field(VAL, "0")
+  field(CALC, "VAL+1")
+  field(SCAN, ".1 second")
+}
+
+record(calc, "$(P)inc2") {
+  field(VAL, "0")
+  field(CALC, "VAL+1")
+  field(SCAN, ".1 second")
+}
