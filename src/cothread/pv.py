@@ -26,10 +26,7 @@ class _WeakMethod:
 
 class PV(object):
     '''PV wrapper class.  Wraps access to a single PV as a persistent object
-    with simple access methods.  Always contains the latest PV value.
-
-    WARNING!  This API is a work in progress and may change in future releases
-    in incompatible ways.'''
+    with simple access methods.  Always contains the latest PV value.'''
 
     def __init__(self, pv,
             on_update = None, initial_value = None, caput_wait = False,
@@ -108,10 +105,7 @@ class PV(object):
 class PV_array(object):
     '''PV waveform wrapper class.  Wraps access to a list of PVs as a single
     waveform with simple access methods.  This class will only work if all of
-    the PVs are of the same datatype and the same length.
-
-    WARNING!  This API is a work in progress and may change in future releases
-    in incompatible ways.'''
+    the PVs are of the same datatype and the same length.'''
 
     def __init__(self, pvs,
             dtype = float, count = 1, on_update = None, caput_wait = False,
@@ -164,7 +158,7 @@ class PV_array(object):
             self.on_update(self, index)
 
     def get(self):
-        return +self.__value
+        return numpy.copy(self.__value)
 
     def caget(self, **kargs):
         dtype = kargs.pop('dtype', self.dtype)
@@ -184,10 +178,10 @@ class PV_array(object):
         return catools.caput(self.names, value, **kargs)
 
     value = property(get, caput)
-    ok        = property(lambda self: +self.__ok)
-    timestamp = property(lambda self: +self.__timestamp)
-    severity  = property(lambda self: +self.__severity)
-    status    = property(lambda self: +self.__status)
+    ok        = property(lambda self: numpy.copy(self.__ok))
+    timestamp = property(lambda self: numpy.copy(self.__timestamp))
+    severity  = property(lambda self: numpy.copy(self.__severity))
+    status    = property(lambda self: numpy.copy(self.__status))
 
     @property
     def all_ok(self):
