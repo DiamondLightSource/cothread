@@ -73,6 +73,7 @@ import bisect
 import traceback
 import collections
 import threading
+import _thread
 
 from . import _coroutine
 
@@ -80,11 +81,6 @@ if os.environ.get('COTHREAD_CHECK_STACK'):
     _coroutine.enable_check_stack(True)
 
 from . import coselect
-
-if sys.version_info >= (3,):
-    import _thread
-else:
-    import thread as _thread
 
 
 __all__ = [

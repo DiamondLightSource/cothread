@@ -83,12 +83,6 @@ K = 1024
 CA_ACTION_STACK         = _check_env('CATOOLS_ACTION_STACK', 0)
 
 
-if sys.version_info < (3,):
-    pv_string_types = (str, unicode)
-else:
-    pv_string_types = str
-
-
 class ca_nothing(Exception):
     '''This value is returned as a success or failure indicator from caput,
     as a failure indicator from caget, and may be raised as an exception to
@@ -567,7 +561,7 @@ def camonitor(pvs, callback, **kargs):
         if notify_disconnect is False, and that if the PV subsequently connects
         it will update as normal.
     '''
-    if isinstance(pvs, pv_string_types):
+    if isinstance(pvs, str):
         return _Subscription(pvs, callback, **kargs)
     else:
         return [
@@ -754,7 +748,7 @@ def caget(pvs, **kargs):
     The format of values returned depends on the number of values requested
     for each PV.  If only one value is requested then the value is returned
     as a scalar, otherwise as a numpy array.'''
-    if isinstance(pvs, pv_string_types):
+    if isinstance(pvs, str):
         return caget_one(pvs, **kargs)
     else:
         return caget_array(pvs, **kargs)
@@ -827,7 +821,7 @@ def caput_one(pv, value, datatype=None, wait=False, timeout=5, callback=None):
 
 def caput_array(pvs, values, repeat_value=False, **kargs):
     # Bring the arrays of pvs and values into alignment.
-    if repeat_value or isinstance(values, pv_string_types):
+    if repeat_value or isinstance(values, str):
         # If repeat_value is requested or the value is a string then we treat
         # it as a single value.
         values = [values] * len(pvs)
@@ -898,7 +892,7 @@ def caput(pvs, values, **kargs):
     If caput completed succesfully then .ok is True and .name is the
     corresponding PV name.  If throw=False was specified and a put failed
     then .errorcode is set to the appropriate ECA_ error code.'''
-    if isinstance(pvs, pv_string_types):
+    if isinstance(pvs, str):
         return caput_one(pvs, values, **kargs)
     else:
         return caput_array(pvs, values, **kargs)
@@ -1003,7 +997,7 @@ def connect(pvs, **kargs):
         connected to.  If this is set to False then instead for each failing
         PV a sentinel value with .ok == False is returned.
     '''
-    if isinstance(pvs, pv_string_types):
+    if isinstance(pvs, str):
         return connect_one(pvs, **kargs)
     else:
         return connect_array(pvs, **kargs)
