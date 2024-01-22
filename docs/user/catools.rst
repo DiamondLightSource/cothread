@@ -932,11 +932,6 @@ These two classes can be imported from :mod:`cothread.pv`.
 Note that both classes will automatically unsubscribe from their PVs when
 deleted.
 
-..  note::
-
-    Note that both of these classes are still somewhat experimental and may
-    change in future releases.
-
 
 ..  class:: PV(pv, on_update=None, initial_value=None, caput_wait=False, \
     [initial_timeout], **kargs)

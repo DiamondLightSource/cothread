@@ -26,10 +26,7 @@ class _WeakMethod:
 
 class PV(object):
     '''PV wrapper class.  Wraps access to a single PV as a persistent object
-    with simple access methods.  Always contains the latest PV value.
-
-    WARNING!  This API is a work in progress and may change in future releases
-    in incompatible ways.'''
+    with simple access methods.  Always contains the latest PV value.'''
 
     def __init__(self, pv,
             on_update = None, initial_value = None, caput_wait = False,
@@ -108,10 +105,7 @@ class PV(object):
 class PV_array(object):
     '''PV waveform wrapper class.  Wraps access to a list of PVs as a single
     waveform with simple access methods.  This class will only work if all of
-    the PVs are of the same datatype and the same length.
-
-    WARNING!  This API is a work in progress and may change in future releases
-    in incompatible ways.'''
+    the PVs are of the same datatype and the same length.'''
 
     def __init__(self, pvs,
             dtype = float, count = 1, on_update = None, caput_wait = False,
