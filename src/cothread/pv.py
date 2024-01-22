@@ -158,7 +158,7 @@ class PV_array(object):
             self.on_update(self, index)
 
     def get(self):
-        return +self.__value
+        return numpy.copy(self.__value)
 
     def caget(self, **kargs):
         dtype = kargs.pop('dtype', self.dtype)
@@ -178,10 +178,10 @@ class PV_array(object):
         return catools.caput(self.names, value, **kargs)
 
     value = property(get, caput)
-    ok        = property(lambda self: +self.__ok)
-    timestamp = property(lambda self: +self.__timestamp)
-    severity  = property(lambda self: +self.__severity)
-    status    = property(lambda self: +self.__status)
+    ok        = property(lambda self: numpy.copy(self.__ok))
+    timestamp = property(lambda self: numpy.copy(self.__timestamp))
+    severity  = property(lambda self: numpy.copy(self.__severity))
+    status    = property(lambda self: numpy.copy(self.__status))
 
     @property
     def all_ok(self):
