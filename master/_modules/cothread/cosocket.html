@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cothread.cosocket &#8212; cothread 2.19.2.dev11+gf498c71 documentation</title>
+    <title>cothread.cosocket &#8212; cothread 2.19.2.dev13+g3b658d1 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="../../_static/documentation_options.js?v=119dabbb"></script>
+    <script src="../../_static/documentation_options.js?v=e20d9ca8"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -646,32 +646,17 @@ document.write(`
     <span class="k">def</span> <span class="nf">dup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">cosocket</span><span class="p">(</span><span class="n">_sock</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__socket</span><span class="o">.</span><span class="n">dup</span><span class="p">())</span>
 
-    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,):</span>
-        <span class="nd">@wrap</span>
-        <span class="k">def</span> <span class="nf">makefile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
-            <span class="c1"># At this point the actual socket &#39;_socket.socket&#39; is wrapped by</span>
-            <span class="c1"># either two layers: &#39;socket.socket&#39; and this class.  or a single</span>
-            <span class="c1"># layer: this class.  In order to handle close() properly we must</span>
-            <span class="c1"># copy all wrappers, but not the underlying actual socket.</span>
-            <span class="n">sock</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__socket</span><span class="p">,</span> <span class="s1">&#39;_sock&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sock</span><span class="p">:</span> <span class="c1"># double wrapped</span>
-                <span class="n">copy0</span> <span class="o">=</span> <span class="n">_socket_socket</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
-                <span class="n">copy1</span> <span class="o">=</span> <span class="n">cosocket</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">copy0</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span> <span class="c1"># single wrapped</span>
-                <span class="n">copy1</span> <span class="o">=</span> <span class="n">cosocket</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__socket</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_socket</span><span class="o">.</span><span class="n">_fileobject</span><span class="p">(</span><span class="n">copy1</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nd">@property</span>
-        <span class="k">def</span> <span class="nf">_io_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__socket</span><span class="o">.</span><span class="n">_io_refs</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_io_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__socket</span><span class="o">.</span><span class="n">_io_refs</span>
 
-        <span class="nd">@_io_refs</span><span class="o">.</span><span class="n">setter</span>
-        <span class="k">def</span> <span class="nf">_io_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__socket</span><span class="o">.</span><span class="n">_io_refs</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="nd">@_io_refs</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_io_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__socket</span><span class="o">.</span><span class="n">_io_refs</span> <span class="o">=</span> <span class="n">value</span>
 
-        <span class="c1"># Can use the original makefile just so long as we provide the _io_refs</span>
-        <span class="c1"># property above.</span>
-        <span class="n">makefile</span> <span class="o">=</span> <span class="n">_socket_socket</span><span class="o">.</span><span class="n">makefile</span>
+    <span class="c1"># Can use the original makefile just so long as we provide the _io_refs</span>
+    <span class="c1"># property above.</span>
+    <span class="n">makefile</span> <span class="o">=</span> <span class="n">_socket_socket</span><span class="o">.</span><span class="n">makefile</span>
 
 
 <span class="k">del</span> <span class="n">wrap</span>

@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cothread.coserver &#8212; cothread 2.19.2.dev11+gf498c71 documentation</title>
+    <title>cothread.coserver &#8212; cothread 2.19.2.dev13+g3b658d1 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="../../_static/documentation_options.js?v=119dabbb"></script>
+    <script src="../../_static/documentation_options.js?v=e20d9ca8"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -475,14 +475,8 @@ document.write(`
 
 <span class="kn">import</span> <span class="nn">sys</span>
 
-<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,):</span>
-    <span class="kn">from</span> <span class="nn">SocketServer</span> <span class="kn">import</span> <span class="n">BaseServer</span><span class="p">,</span> <span class="n">TCPServer</span><span class="p">,</span> <span class="n">UDPServer</span><span class="p">,</span> <span class="n">ThreadingMixIn</span>
-    <span class="kn">from</span> <span class="nn">BaseHTTPServer</span> <span class="kn">import</span> <span class="n">HTTPServer</span><span class="p">,</span> <span class="n">test</span> <span class="k">as</span> <span class="n">_test</span>
-    <span class="kn">from</span> <span class="nn">SimpleHTTPServer</span> <span class="kn">import</span> <span class="n">SimpleHTTPRequestHandler</span>
-
-<span class="k">else</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">socketserver</span> <span class="kn">import</span> <span class="n">BaseServer</span><span class="p">,</span> <span class="n">TCPServer</span><span class="p">,</span> <span class="n">UDPServer</span><span class="p">,</span> <span class="n">ThreadingMixIn</span>
-    <span class="kn">from</span> <span class="nn">http.server</span> <span class="kn">import</span> <span class="n">HTTPServer</span><span class="p">,</span> <span class="n">SimpleHTTPRequestHandler</span><span class="p">,</span> <span class="n">test</span> <span class="k">as</span> <span class="n">_test</span>
+<span class="kn">from</span> <span class="nn">socketserver</span> <span class="kn">import</span> <span class="n">BaseServer</span><span class="p">,</span> <span class="n">TCPServer</span><span class="p">,</span> <span class="n">UDPServer</span><span class="p">,</span> <span class="n">ThreadingMixIn</span>
+<span class="kn">from</span> <span class="nn">http.server</span> <span class="kn">import</span> <span class="n">HTTPServer</span><span class="p">,</span> <span class="n">SimpleHTTPRequestHandler</span><span class="p">,</span> <span class="n">test</span> <span class="k">as</span> <span class="n">_test</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">cothread</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">cosocket</span>

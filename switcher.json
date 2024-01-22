@@ -4,16 +4,16 @@
     "url": "https://DiamondLightSource.github.io/cothread/master/"
   },
   {
-    "version": "2-19",
-    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
+    "version": "2.19.1",
+    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
   },
   {
     "version": "2.19",
     "url": "https://DiamondLightSource.github.io/cothread/2.19/"
   },
   {
-    "version": "2.19.1",
-    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
+    "version": "2-19",
+    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
     "version": "fix_release",
@@ -22,5 +22,9 @@
   {
     "version": "modify_versioning",
     "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
+  },
+  {
+    "version": "remove-sys-version",
+    "url": "https://DiamondLightSource.github.io/cothread/remove-sys-version/"
   }
 ]
