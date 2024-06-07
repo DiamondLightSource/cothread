@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: cothread
+  title: Cothread
+  description:  Cooperative Python Threads and EPICS Channel Access bindings library 
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: DiamondLightSource/cothread
+  tags:
+    - python
+    - epics
+spec:
+  type: library
+  lifecycle: production
+  owner: group:Controls 
+spec:
+  type: library
+  lifecycle: production
+  owner: group:Controls 
+  
