@@ -21,7 +21,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/epics-containers/epics-base-linux-developer:23.6.1
+      image: ghcr.io/epics-containers/epics-base-developer:7.0.9ec3
       volumes:
         - /opt/hostedtoolcache:/opt/hostedtoolcache
 
