@@ -26,5 +26,9 @@
   {
     "version": "modify_versioning",
     "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
+  },
+  {
+    "version": "py3.11_fixes",
+    "url": "https://DiamondLightSource.github.io/cothread/py3.11_fixes/"
   }
 ]
