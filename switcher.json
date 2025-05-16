@@ -20,6 +20,10 @@
     "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
+    "version": "ci_fixes",
+    "url": "https://DiamondLightSource.github.io/cothread/ci_fixes/"
+  },
+  {
     "version": "fix_release",
     "url": "https://DiamondLightSource.github.io/cothread/fix_release/"
   },
