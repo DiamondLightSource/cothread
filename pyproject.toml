@@ -39,6 +39,7 @@ dev = [
     "sphinx-design",
     "tox-direct",
     "types-mock",
+    "psutil",
 ]
 
 [project.scripts]

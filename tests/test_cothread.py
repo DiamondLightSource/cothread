@@ -3,6 +3,8 @@ import unittest
 import multiprocessing as mp
 import time
 
+import psutil
+
 # Add cothread onto file and import
 import sys
 import os
@@ -168,6 +170,33 @@ def test_cothread_with_multiprocessing():
     proc.join()
     after = time.time()
     assert float(after - before) > TIMEOUT
+
+def test_threadstate_memory_leak():
+    """Test that the memory leak reported in issue #70 is fixed and does not
+    reoccur"""
+
+    process = psutil.Process()
+
+    vms_start = process.memory_info().vms
+
+    def test():
+        pass
+
+    # Arbitrary large number of spawns. On my machine with the memory leak
+    # active,this results in a leak of approximately 2GiB.
+    for i in range(500000):
+        cothread.Spawn(test)
+        cothread.Yield()
+
+    vms_end = process.memory_info().vms
+
+    print(f"VMS start {vms_start} end {vms_end} diff {vms_end-vms_start}")
+
+    memory_increase = vms_end - vms_start
+
+    # With the memory leak fixed, the memory increase on my machine is only
+    # 16384 bytes. Added an order of magnitude for future safety.
+    assert memory_increase < 200000
 
 
 if __name__ == '__main__':
