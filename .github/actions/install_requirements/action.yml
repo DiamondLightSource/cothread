@@ -29,10 +29,10 @@ runs:
 
     - name: Create lockfile
       run: |
-        mkdir -p lockfiles-${{ inputs.python_version }}
-        pip freeze --exclude-editable > lockfiles-${{ inputs.python_version }}/${{ inputs.requirements_file }}
+        mkdir -p lockfiles
+        pip freeze --exclude-editable > lockfiles/${{ inputs.requirements_file }}
         # delete the self referencing line and make sure it isn't blank
-        sed -i'' -e '/file:/d' lockfiles-${{ inputs.python_version }}/${{ inputs.requirements_file }}
+        sed -i'' -e '/file:/d' lockfiles/${{ inputs.requirements_file }}
       shell: bash
 
     - name: Upload lockfiles
@@ -49,7 +49,7 @@ runs:
     - name: If requirements file exists, check it matches pip installed packages
       run: |
         if [ -s ${{ inputs.requirements_file }} ]; then
-          if ! diff -u ${{ inputs.requirements_file }} lockfiles-${{ inputs.python_version }}/${{ inputs.requirements_file }}; then
+          if ! diff -u ${{ inputs.requirements_file }} lockfiles/${{ inputs.requirements_file }}; then
             echo "Error: ${{ inputs.requirements_file }} need the above changes to be exhaustive"
             exit 1
           fi
