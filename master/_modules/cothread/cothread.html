@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cothread.cothread &#8212; cothread 2.20.1.dev3+gbb62450 documentation</title>
+    <title>cothread.cothread &#8212; cothread 2.20.1.dev11+g2bebd66 documentation</title>
   
   
   
@@ -15,46 +15,51 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-  
-  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
-
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=87e54e7c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
   
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341" />
-  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=3ee479438cf8b5e0d341"></script>
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../_static/documentation_options.js?v=e5546e7e"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/documentation_options.js?v=8eb3582f"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=30646c52"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/cothread/cothread';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.15.3';
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://DiamondLightSource.github.io/cothread/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'master';
-        DOCUMENTATION_OPTIONS.show_version_warning_banner = false;
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
         </script>
     <link rel="icon" href="../../_static/dls-favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="master" />
   </head>
   
   
@@ -70,19 +75,8 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <input type="checkbox"
-          class="sidebar-toggle"
-          id="pst-primary-sidebar-checkbox"/>
-  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
-  
-  <input type="checkbox"
-          class="sidebar-toggle"
-          id="pst-secondary-sidebar-checkbox"/>
-  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
-  
-  <div class="search-button__wrapper">
-    <div class="search-button__overlay"></div>
-    <div class="search-button__search-container">
+  <dialog id="pst-search-dialog">
+    
 <form class="bd-search d-flex align-items-center"
       action="../../search.html"
       method="get">
@@ -90,7 +84,6 @@
   <input type="search"
          class="form-control"
          name="q"
-         id="search-input"
          placeholder="Search the docs ..."
          aria-label="Search the docs ..."
          autocomplete="off"
@@ -98,8 +91,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form></div>
-  </div>
+</form>
+  </dialog>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -108,7 +101,7 @@
   
     <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -117,6 +110,8 @@
     
       <div class="navbar-item">
 
+  
+    
   
 
 <a class="navbar-brand logo" href="../../index.html">
@@ -131,7 +126,7 @@
     
     
     <img src="../../_static/dls-logo.svg" class="logo__image only-light" alt=""/>
-    <script>document.write(`<img src="../../_static/dls-logo.svg" class="logo__image only-dark" alt=""/>`);</script>
+    <img src="../../_static/dls-logo.svg" class="logo__image only-dark pst-js-only" alt=""/>
   
   
     <p class="title logo__title">cothread</p>
@@ -145,24 +140,24 @@
     <div class="me-auto navbar-header-items__center">
       
         <div class="navbar-item">
-<nav class="navbar-nav">
+<nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../../user/index.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../../developer/index.html">
     Developer Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-external" href="https://github.com/DiamondLightSource/cothread/releases">
     Release Notes
   </a>
@@ -179,31 +174,23 @@
         <div class="navbar-item navbar-persistent--container">
           
 
- <script>
- document.write(`
-   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <span class="search-button__default-text">Search</span>
-    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-   </button>
- `);
- </script>
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
         </div>
       
       
         <div class="navbar-item">
 
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
-  </button>
-`);
-</script></div>
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
       
-        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+        <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
         <li class="nav-item">
           
@@ -214,7 +201,7 @@ document.write(`
           
           
           
-          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i></span>
+          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
             <span class="sr-only">GitHub</span></a>
         </li>
         <li class="nav-item">
@@ -226,34 +213,30 @@ document.write(`
           
           
           
-          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fas fa-cube fa-lg" aria-hidden="true"></i></span>
+          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i>
             <span class="sr-only">PyPI</span></a>
         </li>
 </ul></div>
       
         <div class="navbar-item">
-<script>
-document.write(`
-  <div class="version-switcher__container dropdown">
-    <button id="pst-version-switcher-button-2"
-      type="button"
-      class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle"
-      data-bs-toggle="dropdown"
-      aria-haspopup="listbox"
-      aria-controls="pst-version-switcher-list-2"
-      aria-label="Version switcher list"
-    >
-      Choose version  <!-- this text may get changed later by javascript -->
-      <span class="caret"></span>
-    </button>
-    <div id="pst-version-switcher-list-2"
-      class="version-switcher__menu dropdown-menu list-group-flush py-0"
-      role="listbox" aria-labelledby="pst-version-switcher-button-2">
-      <!-- dropdown will be populated by javascript on page load -->
-    </div>
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
   </div>
-`);
-</script></div>
+</div></div>
       
     </div>
     
@@ -262,15 +245,11 @@ document.write(`
   
     <div class="navbar-persistent--mobile">
 
- <script>
- document.write(`
-   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <span class="search-button__default-text">Search</span>
-    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-   </button>
- `);
- </script>
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
     </div>
   
 
@@ -287,7 +266,8 @@ document.write(`
       
         
       
-      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
         
 
   
@@ -299,24 +279,24 @@ document.write(`
           
           
             <div class="navbar-item">
-<nav class="navbar-nav">
+<nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../../user/index.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../../developer/index.html">
     Developer Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-external" href="https://github.com/DiamondLightSource/cothread/releases">
     Release Notes
   </a>
@@ -334,17 +314,13 @@ document.write(`
         
           <div class="navbar-item">
 
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
-  </button>
-`);
-</script></div>
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
         
-          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+          <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
         <li class="nav-item">
           
@@ -355,7 +331,7 @@ document.write(`
           
           
           
-          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i></span>
+          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
             <span class="sr-only">GitHub</span></a>
         </li>
         <li class="nav-item">
@@ -367,34 +343,30 @@ document.write(`
           
           
           
-          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fas fa-cube fa-lg" aria-hidden="true"></i></span>
+          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i>
             <span class="sr-only">PyPI</span></a>
         </li>
 </ul></div>
         
           <div class="navbar-item">
-<script>
-document.write(`
-  <div class="version-switcher__container dropdown">
-    <button id="pst-version-switcher-button-3"
-      type="button"
-      class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle"
-      data-bs-toggle="dropdown"
-      aria-haspopup="listbox"
-      aria-controls="pst-version-switcher-list-3"
-      aria-label="Version switcher list"
-    >
-      Choose version  <!-- this text may get changed later by javascript -->
-      <span class="caret"></span>
-    </button>
-    <div id="pst-version-switcher-list-3"
-      class="version-switcher__menu dropdown-menu list-group-flush py-0"
-      role="listbox" aria-labelledby="pst-version-switcher-button-3">
-      <!-- dropdown will be populated by javascript on page load -->
-    </div>
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
   </div>
-`);
-</script></div>
+</div></div>
         
       </div>
     
@@ -402,9 +374,14 @@ document.write(`
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -422,8 +399,6 @@ document.write(`
       
         <div class="header-article-item">
 
-
-
 <nav aria-label="Breadcrumb" class="d-print-none">
   <ul class="bd-breadcrumbs">
     
@@ -435,7 +410,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">cothread.cothread</li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">cothread.cothread</span></li>
   </ul>
 </nav>
 </div>
@@ -521,21 +496,21 @@ document.write(`
 <span class="c1"># It might be worth taking a close look at:</span>
 <span class="c1">#   http://wiki.secondlife.com/wiki/Eventlet</span>
 
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">bisect</span>
-<span class="kn">import</span> <span class="nn">traceback</span>
-<span class="kn">import</span> <span class="nn">collections</span>
-<span class="kn">import</span> <span class="nn">threading</span>
-<span class="kn">import</span> <span class="nn">_thread</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bisect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">collections</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">_thread</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">_coroutine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_coroutine</span>
 
 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;COTHREAD_CHECK_STACK&#39;</span><span class="p">):</span>
     <span class="n">_coroutine</span><span class="o">.</span><span class="n">enable_check_stack</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">coselect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">coselect</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -570,14 +545,14 @@ document.write(`
 
 
 
-<span class="k">class</span> <span class="nc">_TimerQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_TimerQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;A timer queue: objects are held on the queue in timeout sequence.&#39;&#39;&#39;</span>
 
     <span class="c1"># The queue is implemented using the bisect function to insert objects</span>
     <span class="c1"># into the queue without having to resort the list.  This is cheap and</span>
     <span class="c1"># cheerful to implement and runs fast enough.</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># We maintain the list of timeouts and the associated tasks separately</span>
         <span class="c1"># so that bisect searching can safely search the timeouts list without</span>
         <span class="c1"># trying to compare wakeups.</span>
@@ -585,17 +560,17 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">__wakeups</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Adds value to the queue with the specified timeout.&#39;&#39;&#39;</span>
         <span class="n">index</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__timeouts</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__timeouts</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__wakeups</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Returns the timeout of the queue.  Only valid if queue not empty.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__timeouts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">wake_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wake_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">index</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_right</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__timeouts</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
         <span class="n">expired</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__wakeups</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__timeouts</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span>
@@ -606,11 +581,11 @@ document.write(`
                 <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Returns the number of entries on the queue.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__timeouts</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;This is called to cancel a timeout.  We add this to our garbage</span>
 <span class="sd">        count, triggering a garbage collect if appropriate.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -626,26 +601,26 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">=</span> <span class="mi">0</span>
 
 
-<span class="k">class</span> <span class="nc">_WakeupQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_WakeupQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">&#39;__waiters&#39;</span><span class="p">,</span>        <span class="c1"># List of wakeup objects pending wakeup</span>
         <span class="s1">&#39;__garbage&#39;</span><span class="p">,</span>        <span class="c1"># Count of expired wakeup objects</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__waiters</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Every time a timeout occurs a waiter is left behind on the timer</span>
         <span class="c1"># queue.  We keep count of these as &quot;garbage&quot;, and at the appropriate</span>
         <span class="c1"># time we can garbage collect the queue.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__waiters</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waiter</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waiter</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__waiters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">waiter</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">wake</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wake_all</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wake</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wake_all</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__waiters</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">wake_all</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__waiters</span><span class="p">:</span>
@@ -663,7 +638,7 @@ document.write(`
                 <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__waiters</span><span class="p">[:</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># A cancelled wait becomes garbage on the waiting queue.  We keep</span>
         <span class="c1"># count of how much garbage there is -- once the queue has more</span>
         <span class="c1"># garbage than waiters it&#39;s probably time to rebuild the queue and</span>
@@ -676,7 +651,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">__garbage</span> <span class="o">=</span> <span class="mi">0</span>
 
 
-<span class="k">class</span> <span class="nc">_Wakeup</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Wakeup</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;A _Wakeup object is used when a task is to be suspended on one or more</span>
 <span class="sd">    queues.  On wakeup the original task is woken, but only once: this is</span>
 <span class="sd">    used to ensure that entries on other queues are effectively cancelled.&#39;&#39;&#39;</span>
@@ -688,13 +663,13 @@ document.write(`
         <span class="s1">&#39;__timers&#39;</span><span class="p">,</span>         <span class="c1"># Timeout queue for this wakeup</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wakeup_task</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">timers</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wakeup_task</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">timers</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__task</span> <span class="o">=</span> <span class="n">_coroutine</span><span class="o">.</span><span class="n">get_current</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__wakeup_task</span> <span class="o">=</span> <span class="n">wakeup_task</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__queue</span> <span class="o">=</span> <span class="n">queue</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__timers</span> <span class="o">=</span> <span class="n">timers</span>
 
-    <span class="k">def</span> <span class="nf">wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__task</span><span class="p">:</span>
             <span class="c1"># Let the scheduler know that this task has been woken, and forget</span>
             <span class="c1"># about it, so we don&#39;t wake it again.</span>
@@ -719,7 +694,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">woken</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">woken</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__task</span> <span class="ow">is</span> <span class="kc">None</span>
 
 
@@ -737,14 +712,14 @@ document.write(`
 <span class="c1">#          a shared _Wakeup() object;</span>
 <span class="c1">#       2) the .wakeup() method is always used before resuming the task.</span>
 
-<span class="k">class</span> <span class="nc">_Scheduler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Scheduler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Coroutine activity scheduler.&#39;&#39;&#39;</span>
 
     <span class="c1"># The scheduler runs in a dedicated stack.  It doesn&#39;t need much stack.</span>
     <span class="n">SCHEDULER_STACK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Creates the scheduler in its own coroutine and starts it running.</span>
 <span class="sd">        We switch to the scheduler long enough for it to complete</span>
 <span class="sd">        initialisation.&#39;&#39;&#39;</span>
@@ -757,7 +732,7 @@ document.write(`
         <span class="k">return</span> <span class="n">_coroutine</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">scheduler_task</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">__scheduler</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">main_task</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__scheduler</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">main_task</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;The top level scheduler loop.  Starts by creating the scheduler,</span>
 <span class="sd">        and then manages dispatching from the top level.&#39;&#39;&#39;</span>
 
@@ -786,7 +761,7 @@ document.write(`
                 <span class="c1"># to re-raise the exception.  Pass through the exception info.</span>
                 <span class="n">_coroutine</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">main_task</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># List of all tasks that are currently ready to be dispatched.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__ready_queue</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># List of tasks waiting for ready_queue to become empty</span>
@@ -806,7 +781,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_poll_block</span> <span class="o">=</span> <span class="n">coselect</span><span class="o">.</span><span class="n">poll_block</span>
 
 
-    <span class="k">def</span> <span class="nf">__tick</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__tick</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;This must be called regularly to ensure that all waiting tasks are</span>
 <span class="sd">        processed.  It processes all tasks that are ready to run and then runs</span>
 <span class="sd">        all timers that have expired.&#39;&#39;&#39;</span>
@@ -828,7 +803,7 @@ document.write(`
         <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">reason</span> <span class="ow">in</span> <span class="n">ready_queue</span><span class="p">:</span>
             <span class="n">_coroutine</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__schedule_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__schedule_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;This runs a scheduler loop without returning.&#39;&#39;&#39;</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="c1"># Dispatch all waiting tasks</span>
@@ -851,7 +826,7 @@ document.write(`
             <span class="c1"># Finally suspend until something is ready.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__wakeup_poll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__poll_suspend</span><span class="p">(</span><span class="n">delay</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">__poll_suspend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__poll_suspend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Suspends the scheduler until the appropriate ready condition is</span>
 <span class="sd">        reached.  Returns lists of ready file descriptors and events.&#39;&#39;&#39;</span>
         <span class="n">poll_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__poll_queue</span> <span class="o">=</span> \
@@ -865,7 +840,7 @@ document.write(`
             <span class="c1"># operation we need.</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__poll_callback</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="n">poll_list</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">poll_scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ready_list</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">poll_scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ready_list</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;This is called when the scheduler needs to be controlled from</span>
 <span class="sd">        outside.  It will perform a full round of scheduling before returing</span>
 <span class="sd">        control to the caller.</span>
@@ -895,18 +870,18 @@ document.write(`
             <span class="k">return</span> <span class="n">result</span>
 
 
-    <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">stack_size</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">stack_size</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Spawns a new task: function is spawned as a new background task</span>
 <span class="sd">        as a child of the scheduler task.&#39;&#39;&#39;</span>
         <span class="n">task</span> <span class="o">=</span> <span class="n">_coroutine</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__coroutine</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">stack_size</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__ready_queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">task</span><span class="p">,</span> <span class="n">_WAKEUP_NORMAL</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">do_yield</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">until</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">do_yield</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">until</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Hands control to the next task with work to do, will return as</span>
 <span class="sd">        soon as there is time.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait_until</span><span class="p">(</span><span class="n">until</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__yield_queue</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">wait_until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">until</span><span class="p">,</span> <span class="n">suspend_queue</span><span class="p">,</span> <span class="n">wakeup</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wait_until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">until</span><span class="p">,</span> <span class="n">suspend_queue</span><span class="p">,</span> <span class="n">wakeup</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;The calling task is suspended.  If a deadline is given then the</span>
 <span class="sd">        task will definitely be woken up when the deadline is reached if not</span>
 <span class="sd">        before.  If a suspend_queue is given then the task is added to it</span>
@@ -944,7 +919,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">result</span> <span class="o">==</span> <span class="n">_WAKEUP_TIMEOUT</span>
 
-    <span class="k">def</span> <span class="nf">poll_until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poller</span><span class="p">,</span> <span class="n">until</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">poll_until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poller</span><span class="p">,</span> <span class="n">until</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Cooperative poll: the calling task is suspended until one of</span>
 <span class="sd">        the specified waitable objects becomes ready or the timeout expires.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -960,17 +935,17 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">wait_until</span><span class="p">(</span><span class="n">until</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">poller</span><span class="o">.</span><span class="n">wakeup</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">__Wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">until</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__Wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">until</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">until</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_Wakeup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__wakeup_task</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_Wakeup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__wakeup_task</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__timer_queue</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__wakeup_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__wakeup_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reason</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__ready_queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">task</span><span class="p">,</span> <span class="n">reason</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">__wakeup_poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poll_result</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__wakeup_poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poll_result</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Called with the result of a system poll: a list of file descriptors</span>
 <span class="sd">        and wakeup reasons.  Each waiting task is informed.&#39;&#39;&#39;</span>
         <span class="c1"># Work through all the notified files: with each file is a received</span>
@@ -1000,14 +975,14 @@ document.write(`
 
 <div class="viewcode-block" id="Timedout">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Timedout">[docs]</a>
-<span class="k">class</span> <span class="nc">Timedout</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Timedout</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Waiting for event timed out.&#39;&#39;&#39;</span></div>
 
 
 
 <div class="viewcode-block" id="AbsTimeout">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.AbsTimeout">[docs]</a>
-<span class="k">def</span> <span class="nf">AbsTimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">AbsTimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;A timeout is represented in one of three forms:</span>
 
 <span class="sd">    None            A timeout that never expires</span>
@@ -1026,7 +1001,7 @@ document.write(`
 
 <div class="viewcode-block" id="GetDeadline">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.GetDeadline">[docs]</a>
-<span class="k">def</span> <span class="nf">GetDeadline</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">GetDeadline</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Returns the deadline associated with the given timeout, or None if there</span>
 <span class="sd">    is no deadline.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1039,13 +1014,13 @@ document.write(`
 
 <div class="viewcode-block" id="Deadline">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Deadline">[docs]</a>
-<span class="k">def</span> <span class="nf">Deadline</span><span class="p">(</span><span class="n">deadline</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">Deadline</span><span class="p">(</span><span class="n">deadline</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Converts a deadline into a timeout.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">deadline</span><span class="p">,)</span></div>
 
 
 
-<span class="k">class</span> <span class="nc">EventBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;The base class for implementing events and signals.&#39;&#39;&#39;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span>
@@ -1053,7 +1028,7 @@ document.write(`
         <span class="s1">&#39;__wait_abort&#39;</span><span class="p">,</span>     <span class="c1"># Count of abortable waits.</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># List of tasks currently waiting to be woken up.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__wait_queue</span> <span class="o">=</span> <span class="n">_WakeupQueue</span><span class="p">()</span>
         <span class="c1"># Number of aborted waits that need to be emulated.  This is</span>
@@ -1061,7 +1036,7 @@ document.write(`
         <span class="c1"># simulated.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__wait_abort</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">_WaitUntil</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_WaitUntil</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Suspends the calling task until _Wakeup() is called.  Raises an</span>
 <span class="sd">        exception if a timeout occurs first.&#39;&#39;&#39;</span>
         <span class="c1"># If the event object is not ready we always yield control to ensure</span>
@@ -1070,7 +1045,7 @@ document.write(`
         <span class="k">if</span> <span class="n">_scheduler</span><span class="o">.</span><span class="n">wait_until</span><span class="p">(</span><span class="n">GetDeadline</span><span class="p">(</span><span class="n">timeout</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">__wait_queue</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">Timedout</span><span class="p">(</span><span class="s1">&#39;Timed out waiting for event&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_Wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wake_all</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_Wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wake_all</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Wakes one or all waiting tasks.  Returns False if an aborted wait</span>
 <span class="sd">        needs to be emulated.&#39;&#39;&#39;</span>
         <span class="n">_validate_thread</span><span class="p">()</span>
@@ -1086,13 +1061,13 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">__wait_queue</span><span class="o">.</span><span class="n">wake</span><span class="p">(</span><span class="n">wake_all</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__wait_abort</span> <span class="o">+=</span> <span class="mi">1</span>
 
 
 <div class="viewcode-block" id="Spawn">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Spawn">[docs]</a>
-<span class="k">class</span> <span class="nc">Spawn</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Spawn</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;This class is used to wrap cooperative threads: every task (except</span>
 <span class="sd">    for main) managed by the scheduler should be an instance of this class.&#39;&#39;&#39;</span>
 
@@ -1107,7 +1082,7 @@ document.write(`
     <span class="c1"># Set of all active processes for debugging</span>
     <span class="n">Cothreads</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;The given function and arguments will be called as a new task.</span>
 <span class="sd">        All of the arguments will be be passed through to function, except for</span>
 <span class="sd">        the special keyword raise_on_wait which defaults to False.</span>
@@ -1126,7 +1101,7 @@ document.write(`
         <span class="n">_scheduler</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__run</span><span class="p">,</span> <span class="n">kargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;stack_size&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Cothreads</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Try for normal successful result.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__result</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span>
@@ -1155,14 +1130,14 @@ document.write(`
         <span class="c1"># See wait_until() for an explanation of this return value.</span>
         <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Tests whether the event is signalled.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__result</span><span class="p">)</span>
     <span class="n">__nonzero__</span> <span class="o">=</span> <span class="fm">__bool__</span>
 
 <div class="viewcode-block" id="Spawn.Wait">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Spawn.Wait">[docs]</a>
-    <span class="k">def</span> <span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Waits until the task has completed.  May raise an exception if the</span>
 <span class="sd">        task terminated with an exception and raise_on_wait was selected.</span>
 <span class="sd">        Can only be called once, as the result is deleted after call.&#39;&#39;&#39;</span>
@@ -1185,7 +1160,7 @@ document.write(`
                 <span class="k">del</span> <span class="n">result</span></div>
 
 
-    <span class="k">def</span> <span class="nf">AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Called instead of performing a proper wait to release any resources</span>
 <span class="sd">        that might be consumed until the wait occurs.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__result</span><span class="p">:</span>
@@ -1199,7 +1174,7 @@ document.write(`
 
 <div class="viewcode-block" id="Event">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Event">[docs]</a>
-<span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Event</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Any number of tasks can wait for an event to occur.  A single value</span>
 <span class="sd">    can also be associated with the event.&#39;&#39;&#39;</span>
 
@@ -1208,7 +1183,7 @@ document.write(`
         <span class="s1">&#39;__auto_reset&#39;</span><span class="p">,</span>     <span class="c1"># Whether value is consumed when taken</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">auto_reset</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">auto_reset</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;An event object is either signalled or reset.  Any task can wait</span>
 <span class="sd">        for the object to become signalled, and it will be suspended until</span>
 <span class="sd">        this occurs.</span>
@@ -1220,14 +1195,14 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">__value</span> <span class="o">=</span> <span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__auto_reset</span> <span class="o">=</span> <span class="n">auto_reset</span>
 
-    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Tests whether the event is signalled.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__value</span><span class="p">)</span>
     <span class="n">__nonzero__</span> <span class="o">=</span> <span class="fm">__bool__</span>
 
 <div class="viewcode-block" id="Event.Wait">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Event.Wait">[docs]</a>
-    <span class="k">def</span> <span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;The caller will block until the event becomes true, or until the</span>
 <span class="sd">        timeout occurs if a timeout is specified.  A Timeout exception is</span>
 <span class="sd">        raised if a timeout occurs.&#39;&#39;&#39;</span>
@@ -1251,7 +1226,7 @@ document.write(`
             <span class="k">raise</span> <span class="n">result</span></div>
 
 
-    <span class="k">def</span> <span class="nf">AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Called instead of performing a proper wait to release any resources</span>
 <span class="sd">        that might be consumed until the wait occurs.&#39;&#39;&#39;</span>
         <span class="c1"># If this isn&#39;t an auto_reset event then our aborted wait makes no</span>
@@ -1265,7 +1240,7 @@ document.write(`
 
 <div class="viewcode-block" id="Event.Signal">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Event.Signal">[docs]</a>
-    <span class="k">def</span> <span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Signals the event.  Any waiting tasks are scheduled to be woken.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__value</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Wakeup</span><span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__auto_reset</span><span class="p">):</span>
@@ -1274,7 +1249,7 @@ document.write(`
 
 <div class="viewcode-block" id="Event.SignalException">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Event.SignalException">[docs]</a>
-    <span class="k">def</span> <span class="nf">SignalException</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SignalException</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Signals the event with an exception: the next call to wait will</span>
 <span class="sd">        receive an exception instead of a normal return value.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__value</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
@@ -1284,7 +1259,7 @@ document.write(`
 
 <div class="viewcode-block" id="Event.Reset">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Event.Reset">[docs]</a>
-    <span class="k">def</span> <span class="nf">Reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Resets the event (and erases the value).&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__value</span> <span class="o">=</span> <span class="p">()</span></div>
 </div>
@@ -1293,20 +1268,20 @@ document.write(`
 
 <div class="viewcode-block" id="Pulse">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Pulse">[docs]</a>
-<span class="k">class</span> <span class="nc">Pulse</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Pulse</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Somewhat equivalent to pthread condition variable: any number of waiters</span>
 <span class="sd">    will be woken by calling the Signal() method, but there is no state and</span>
 <span class="sd">    nothing is returned from Wait().&#39;&#39;&#39;</span>
 
 <div class="viewcode-block" id="Pulse.Wait">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Pulse.Wait">[docs]</a>
-    <span class="k">def</span> <span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_WaitUntil</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Pulse.Signal">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Pulse.Signal">[docs]</a>
-    <span class="k">def</span> <span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wake_all</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wake_all</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_Wakeup</span><span class="p">(</span><span class="n">wake_all</span><span class="p">)</span></div>
 
 
@@ -1316,7 +1291,7 @@ document.write(`
 
 <div class="viewcode-block" id="EventQueue">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.EventQueue">[docs]</a>
-<span class="k">class</span> <span class="nc">EventQueue</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventQueue</span><span class="p">(</span><span class="n">EventBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;A queue of objects.  A queue can also be treated as an iterator.&#39;&#39;&#39;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span>
@@ -1325,19 +1300,19 @@ document.write(`
         <span class="s1">&#39;__max_length&#39;</span><span class="p">,</span>     <span class="c1"># Maximum length of queue</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_length</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_length</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">EventBase</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__queue</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__closed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__max_length</span> <span class="o">=</span> <span class="n">max_length</span>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Returns the number of objects waiting on the queue.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__queue</span><span class="p">)</span>
 
 <div class="viewcode-block" id="EventQueue.Wait">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.EventQueue.Wait">[docs]</a>
-    <span class="k">def</span> <span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Returns the next object from the queue, or raises a Timeout</span>
 <span class="sd">        exception if the timeout expires first.&#39;&#39;&#39;</span>
         <span class="n">deadline</span> <span class="o">=</span> <span class="n">AbsTimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
@@ -1349,7 +1324,7 @@ document.write(`
             <span class="k">raise</span> <span class="ne">StopIteration</span></div>
 
 
-    <span class="k">def</span> <span class="nf">AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">AbortWait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Called instead of performing a proper wait to release any resources</span>
 <span class="sd">        that might be consumed until the wait occurs.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__queue</span><span class="p">:</span>
@@ -1359,7 +1334,7 @@ document.write(`
 
 <div class="viewcode-block" id="EventQueue.Signal">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.EventQueue.Signal">[docs]</a>
-    <span class="k">def</span> <span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Adds the given value to the tail of the queue.&#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__closed</span><span class="p">,</span> <span class="s1">&#39;Can</span><span class="se">\&#39;</span><span class="s1">t write to a closed queue&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__max_length</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__max_length</span><span class="p">:</span>
@@ -1373,14 +1348,14 @@ document.write(`
 
 <div class="viewcode-block" id="EventQueue.Reset">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.EventQueue.Reset">[docs]</a>
-    <span class="k">def</span> <span class="nf">Reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Discards all values in queue.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__queue</span> <span class="o">=</span> <span class="p">[]</span></div>
 
 
 <div class="viewcode-block" id="EventQueue.close">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.EventQueue.close">[docs]</a>
-    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;An event queue can be closed.  This will cause waiting to raise</span>
 <span class="sd">        the StopIteration exception (once existing entries have been read),</span>
 <span class="sd">        and will prevent any further signals to the queue.&#39;&#39;&#39;</span>
@@ -1388,13 +1363,13 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_Wakeup</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;An event queue can itself be treated as an iterator: this allows</span>
 <span class="sd">        event dispatching using a for loop, and provides some support for</span>
 <span class="sd">        combining queues.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wait</span><span class="p">()</span>
     <span class="fm">__next__</span> <span class="o">=</span> <span class="nb">next</span></div>
 
@@ -1402,7 +1377,7 @@ document.write(`
 
 <div class="viewcode-block" id="ThreadedEventQueue">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.ThreadedEventQueue">[docs]</a>
-<span class="k">class</span> <span class="nc">ThreadedEventQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ThreadedEventQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;An event queue designed to work with threads.&#39;&#39;&#39;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span>
@@ -1411,17 +1386,17 @@ document.write(`
         <span class="s1">&#39;wait_descriptor&#39;</span><span class="p">,</span>  <span class="c1"># File handle waited on for new values</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># According to the documentation this is thread safe, so we don&#39;t</span>
         <span class="c1"># need to take any particular precautions when using this!</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__values</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait_descriptor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__signal</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pipe</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Returns the number of objects waiting on the queue.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__values</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Waits for a value to be written to the queue.  This can safely be</span>
 <span class="sd">        called from either a cothread or another thread: the appropriate form</span>
 <span class="sd">        of cooperative or normal blocking will be selected automatically.&#39;&#39;&#39;</span>
@@ -1437,7 +1412,7 @@ document.write(`
         <span class="n">os</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wait_descriptor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__values</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Posts a value to the event queue.  This can safely be called from</span>
 <span class="sd">        a thread or a cothread.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -1456,17 +1431,17 @@ document.write(`
 <span class="c1"># rather delicate.  Care is taken here to reduce the number of os.read/write</span>
 <span class="c1"># actions as these involve costly system calls, but without the hazard of losing</span>
 <span class="c1"># events which would result in deadlock.</span>
-<span class="k">class</span> <span class="nc">_Callback</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Callback</span><span class="p">:</span>
     <span class="n">COTHREAD_CALLBACK_STACK</span> <span class="o">=</span> \
         <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;COTHREAD_CALLBACK_STACK&#39;</span><span class="p">,</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wait</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">signal</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pipe</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">waiting</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">Spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_events</span><span class="p">,</span> <span class="n">stack_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">COTHREAD_CALLBACK_STACK</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">callback_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">callback_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">waiting</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
@@ -1483,7 +1458,7 @@ document.write(`
                     <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
             <span class="n">action</span> <span class="o">=</span> <span class="n">args</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;This can be called from within any Python thread to arrange for</span>
 <span class="sd">        action(*args) to be called in the context of the cothread thread.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">action</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
@@ -1494,7 +1469,7 @@ document.write(`
 
 <div class="viewcode-block" id="CallbackResult">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.CallbackResult">[docs]</a>
-<span class="k">def</span> <span class="nf">CallbackResult</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">CallbackResult</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Perform action in the main cothread and return a result.&#39;&#39;&#39;</span>
     <span class="n">callback</span> <span class="o">=</span> <span class="n">kargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;callback_queue&#39;</span><span class="p">,</span> <span class="n">Callback</span><span class="p">)</span>
     <span class="n">timeout</span>  <span class="o">=</span> <span class="n">kargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;callback_timeout&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -1505,7 +1480,7 @@ document.write(`
     <span class="k">else</span><span class="p">:</span>
         <span class="n">event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
         <span class="n">action_result</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
-        <span class="k">def</span> <span class="nf">do_action</span><span class="p">():</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">do_action</span><span class="p">():</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">action_result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">action_result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">)</span>
@@ -1538,7 +1513,7 @@ document.write(`
 
 <div class="viewcode-block" id="Timer">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Timer">[docs]</a>
-<span class="k">class</span> <span class="nc">Timer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Timer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;A cancellable one-shot or auto-retriggering timer.&#39;&#39;&#39;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span>
@@ -1550,7 +1525,7 @@ document.write(`
         <span class="s1">&#39;__fire&#39;</span><span class="p">,</span>           <span class="c1"># Controls action when event timeout occurs</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span>
             <span class="n">retrigger</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">reuse</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">stack_size</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;The callback will be called (with no arguments) after the specified</span>
 <span class="sd">        timeout.  If retrigger is set then the timer will automatically</span>
@@ -1565,7 +1540,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">__fire</span> <span class="o">=</span> <span class="kc">True</span>                  <span class="c1"># False if control event pending</span>
         <span class="n">Spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="p">,</span> <span class="n">stack_size</span> <span class="o">=</span> <span class="n">stack_size</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__timer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__timer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">running</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">while</span> <span class="n">running</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -1586,7 +1561,7 @@ document.write(`
 
 <div class="viewcode-block" id="Timer.cancel">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Timer.cancel">[docs]</a>
-    <span class="k">def</span> <span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Cancels the timer: the timer is guaranteed not to fire once this</span>
 <span class="sd">        call has been made.  A cancelled timer cannot be reset.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__reuse</span> <span class="o">=</span> <span class="kc">False</span>
@@ -1597,7 +1572,7 @@ document.write(`
 
 <div class="viewcode-block" id="Timer.reset">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Timer.reset">[docs]</a>
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">retrigger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">,</span> <span class="n">retrigger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Resets the timer.  The timeout is reset to the given timeout and the</span>
 <span class="sd">        timer is restarted.  A timeout of None can be used to temporarily</span>
 <span class="sd">        suspend a timer.&#39;&#39;&#39;</span>
@@ -1614,7 +1589,7 @@ document.write(`
 
 <div class="viewcode-block" id="WaitForAll">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.WaitForAll">[docs]</a>
-<span class="k">def</span> <span class="nf">WaitForAll</span><span class="p">(</span><span class="n">event_list</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">WaitForAll</span><span class="p">(</span><span class="n">event_list</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Waits for all events in the event list to become ready or for the</span>
 <span class="sd">    timeout to expire.&#39;&#39;&#39;</span>
     <span class="c1"># Make sure that the timeout is actually a deadline, then it&#39;s easy to do</span>
@@ -1655,21 +1630,21 @@ document.write(`
 
 <div class="viewcode-block" id="Quit">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Quit">[docs]</a>
-<span class="k">def</span> <span class="nf">Quit</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">Quit</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Signals the quit event.  Once signalled it stays signalled.&#39;&#39;&#39;</span>
     <span class="n">_QuitEvent</span><span class="o">.</span><span class="n">Signal</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="WaitForQuit">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.WaitForQuit">[docs]</a>
-<span class="k">def</span> <span class="nf">WaitForQuit</span><span class="p">(</span><span class="n">catch_interrupt</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">WaitForQuit</span><span class="p">(</span><span class="n">catch_interrupt</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Waits for the quit event to be signalled.  If catch_interrupt is True</span>
 <span class="sd">    then control-C will only signal the quit event and will not generate an</span>
 <span class="sd">    exception; this does mean that the only way to interrupt a misbehaving loop</span>
 <span class="sd">    is to use another signal such as SIGQUIT (C-\\)&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">catch_interrupt</span><span class="p">:</span>
-        <span class="kn">import</span> <span class="nn">signal</span>
-        <span class="k">def</span> <span class="nf">quit</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">signal</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">quit</span><span class="p">(</span><span class="n">signum</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
             <span class="n">Callback</span><span class="p">(</span><span class="n">_QuitEvent</span><span class="o">.</span><span class="n">Signal</span><span class="p">)</span>
         <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">quit</span><span class="p">)</span>
 
@@ -1687,7 +1662,7 @@ document.write(`
 
 
 <span class="c1"># Thread validation: ensure cothreads aren&#39;t used across threads!</span>
-<span class="k">def</span> <span class="nf">_validate_thread</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_thread</span><span class="p">():</span>
     <span class="k">assert</span> <span class="n">scheduler_thread_id</span> <span class="o">==</span> <span class="n">_thread</span><span class="o">.</span><span class="n">get_ident</span><span class="p">(),</span> \
         <span class="s1">&#39;Cannot call into cothread from another thread.  Consider using &#39;</span> \
         <span class="s1">&#39;Callback or CallbackResult.&#39;</span>
@@ -1698,7 +1673,7 @@ document.write(`
 
 <div class="viewcode-block" id="SleepUntil">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.SleepUntil">[docs]</a>
-<span class="k">def</span> <span class="nf">SleepUntil</span><span class="p">(</span><span class="n">deadline</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">SleepUntil</span><span class="p">(</span><span class="n">deadline</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Sleep until the specified deadline.  Control will always be yielded,</span>
 <span class="sd">    even if the timeout has already passed.&#39;&#39;&#39;</span>
     <span class="n">_validate_thread</span><span class="p">()</span>
@@ -1707,14 +1682,14 @@ document.write(`
 
 <div class="viewcode-block" id="Sleep">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Sleep">[docs]</a>
-<span class="k">def</span> <span class="nf">Sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">Sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Sleep until the specified timeout has expired.&#39;&#39;&#39;</span>
     <span class="n">SleepUntil</span><span class="p">(</span><span class="n">GetDeadline</span><span class="p">(</span><span class="n">timeout</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="Yield">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.Yield">[docs]</a>
-<span class="k">def</span> <span class="nf">Yield</span><span class="p">(</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">Yield</span><span class="p">(</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Hands control back to the scheduler.  Control is returned either after</span>
 <span class="sd">    the specified timeout has passed, or as soon as there are no active jobs</span>
 <span class="sd">    waiting to be run.&#39;&#39;&#39;</span>
@@ -1725,7 +1700,7 @@ document.write(`
 
 <div class="viewcode-block" id="RLock">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.RLock">[docs]</a>
-<span class="k">class</span> <span class="nc">RLock</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RLock</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A reentrant lock.&quot;&quot;&quot;</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span>
@@ -1734,7 +1709,7 @@ document.write(`
         <span class="s1">&#39;__count&#39;</span><span class="p">,</span>          <span class="c1"># The number of times the owner has locked</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
         <span class="c1"># Start off with the event set so acquire will not block</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__event</span><span class="o">.</span><span class="n">Signal</span><span class="p">()</span>
@@ -1743,7 +1718,7 @@ document.write(`
 
 <div class="viewcode-block" id="RLock.acquire">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.RLock.acquire">[docs]</a>
-    <span class="k">def</span> <span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Acquire the lock if necessary and increment the recursion level.&quot;&quot;&quot;</span>
         <span class="c1"># Inspired by threading.RLock</span>
         <span class="n">me</span> <span class="o">=</span> <span class="n">_coroutine</span><span class="o">.</span><span class="n">get_current</span><span class="p">()</span>
@@ -1759,7 +1734,7 @@ document.write(`
 
 <div class="viewcode-block" id="RLock.release">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.RLock.release">[docs]</a>
-    <span class="k">def</span> <span class="nf">release</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">release</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Release a lock, decrementing the recursion level.&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__owner</span> <span class="ow">and</span> <span class="n">_coroutine</span><span class="o">.</span><span class="n">is_equal</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__owner</span><span class="p">,</span> <span class="n">_coroutine</span><span class="o">.</span><span class="n">get_current</span><span class="p">()),</span> \
@@ -1774,7 +1749,7 @@ document.write(`
     <span class="c1"># Needed to make it a context manager</span>
     <span class="fm">__enter__</span> <span class="o">=</span> <span class="n">acquire</span>
 
-    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">tb</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">tb</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">()</span></div>
 
 </pre></div>
@@ -1806,8 +1781,8 @@ document.write(`
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1818,7 +1793,8 @@ document.write(`
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.3.
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
 </p></div>
       
     </div>

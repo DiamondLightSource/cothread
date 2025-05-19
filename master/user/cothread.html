@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Using the cothread Library &#8212; cothread 2.20.1.dev3+gbb62450 documentation</title>
+    <title>Using the cothread Library &#8212; cothread 2.20.1.dev11+g2bebd66 documentation</title>
   
   
   
@@ -16,40 +16,44 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-<link href="../_static/styles/bootstrap.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-  
-  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
-
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=87e54e7c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341" />
-  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=3ee479438cf8b5e0d341"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=e5546e7e"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/documentation_options.js?v=8eb3582f"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=30646c52"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'user/cothread';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.15.3';
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://DiamondLightSource.github.io/cothread/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'master';
-        DOCUMENTATION_OPTIONS.show_version_warning_banner = false;
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
         </script>
     <link rel="icon" href="../_static/dls-favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -58,6 +62,7 @@
     <link rel="prev" title="Installation" href="installation.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="master" />
   </head>
   
   
@@ -73,19 +78,8 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <input type="checkbox"
-          class="sidebar-toggle"
-          id="pst-primary-sidebar-checkbox"/>
-  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
-  
-  <input type="checkbox"
-          class="sidebar-toggle"
-          id="pst-secondary-sidebar-checkbox"/>
-  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
-  
-  <div class="search-button__wrapper">
-    <div class="search-button__overlay"></div>
-    <div class="search-button__search-container">
+  <dialog id="pst-search-dialog">
+    
 <form class="bd-search d-flex align-items-center"
       action="../search.html"
       method="get">
@@ -93,7 +87,6 @@
   <input type="search"
          class="form-control"
          name="q"
-         id="search-input"
          placeholder="Search the docs ..."
          aria-label="Search the docs ..."
          autocomplete="off"
@@ -101,8 +94,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form></div>
-  </div>
+</form>
+  </dialog>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -111,7 +104,7 @@
   
     <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -120,6 +113,8 @@
     
       <div class="navbar-item">
 
+  
+    
   
 
 <a class="navbar-brand logo" href="../index.html">
@@ -134,7 +129,7 @@
     
     
     <img src="../_static/dls-logo.svg" class="logo__image only-light" alt=""/>
-    <script>document.write(`<img src="../_static/dls-logo.svg" class="logo__image only-dark" alt=""/>`);</script>
+    <img src="../_static/dls-logo.svg" class="logo__image only-dark pst-js-only" alt=""/>
   
   
     <p class="title logo__title">cothread</p>
@@ -148,24 +143,24 @@
     <div class="me-auto navbar-header-items__center">
       
         <div class="navbar-item">
-<nav class="navbar-nav">
+<nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item pst-header-nav-item current active">
+<li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../developer/index.html">
     Developer Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-external" href="https://github.com/DiamondLightSource/cothread/releases">
     Release Notes
   </a>
@@ -182,31 +177,23 @@
         <div class="navbar-item navbar-persistent--container">
           
 
- <script>
- document.write(`
-   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <span class="search-button__default-text">Search</span>
-    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-   </button>
- `);
- </script>
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
         </div>
       
       
         <div class="navbar-item">
 
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
-  </button>
-`);
-</script></div>
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
       
-        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+        <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
         <li class="nav-item">
           
@@ -217,7 +204,7 @@ document.write(`
           
           
           
-          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i></span>
+          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
             <span class="sr-only">GitHub</span></a>
         </li>
         <li class="nav-item">
@@ -229,34 +216,30 @@ document.write(`
           
           
           
-          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fas fa-cube fa-lg" aria-hidden="true"></i></span>
+          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i>
             <span class="sr-only">PyPI</span></a>
         </li>
 </ul></div>
       
         <div class="navbar-item">
-<script>
-document.write(`
-  <div class="version-switcher__container dropdown">
-    <button id="pst-version-switcher-button-2"
-      type="button"
-      class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle"
-      data-bs-toggle="dropdown"
-      aria-haspopup="listbox"
-      aria-controls="pst-version-switcher-list-2"
-      aria-label="Version switcher list"
-    >
-      Choose version  <!-- this text may get changed later by javascript -->
-      <span class="caret"></span>
-    </button>
-    <div id="pst-version-switcher-list-2"
-      class="version-switcher__menu dropdown-menu list-group-flush py-0"
-      role="listbox" aria-labelledby="pst-version-switcher-button-2">
-      <!-- dropdown will be populated by javascript on page load -->
-    </div>
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
   </div>
-`);
-</script></div>
+</div></div>
       
     </div>
     
@@ -265,20 +248,16 @@ document.write(`
   
     <div class="navbar-persistent--mobile">
 
- <script>
- document.write(`
-   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <span class="search-button__default-text">Search</span>
-    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-   </button>
- `);
- </script>
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
     </div>
   
 
   
-    <button class="sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -292,7 +271,8 @@ document.write(`
       
       
       
-      <div class="bd-sidebar-primary bd-sidebar">
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -304,24 +284,24 @@ document.write(`
           
           
             <div class="navbar-item">
-<nav class="navbar-nav">
+<nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item pst-header-nav-item current active">
+<li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../developer/index.html">
     Developer Guide
   </a>
 </li>
 
 
-<li class="nav-item pst-header-nav-item">
+<li class="nav-item ">
   <a class="nav-link nav-external" href="https://github.com/DiamondLightSource/cothread/releases">
     Release Notes
   </a>
@@ -339,17 +319,13 @@ document.write(`
         
           <div class="navbar-item">
 
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
-  </button>
-`);
-</script></div>
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
         
-          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+          <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
         <li class="nav-item">
           
@@ -360,7 +336,7 @@ document.write(`
           
           
           
-          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i></span>
+          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
             <span class="sr-only">GitHub</span></a>
         </li>
         <li class="nav-item">
@@ -372,34 +348,30 @@ document.write(`
           
           
           
-          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fas fa-cube fa-lg" aria-hidden="true"></i></span>
+          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i>
             <span class="sr-only">PyPI</span></a>
         </li>
 </ul></div>
         
           <div class="navbar-item">
-<script>
-document.write(`
-  <div class="version-switcher__container dropdown">
-    <button id="pst-version-switcher-button-3"
-      type="button"
-      class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle"
-      data-bs-toggle="dropdown"
-      aria-haspopup="listbox"
-      aria-controls="pst-version-switcher-list-3"
-      aria-label="Version switcher list"
-    >
-      Choose version  <!-- this text may get changed later by javascript -->
-      <span class="caret"></span>
-    </button>
-    <div id="pst-version-switcher-list-3"
-      class="version-switcher__menu dropdown-menu list-group-flush py-0"
-      role="listbox" aria-labelledby="pst-version-switcher-button-3">
-      <!-- dropdown will be populated by javascript on page load -->
-    </div>
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
   </div>
-`);
-</script></div>
+</div></div>
         
       </div>
     
@@ -422,9 +394,14 @@ document.write(`
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -442,8 +419,6 @@ document.write(`
       
         <div class="header-article-item">
 
-
-
 <nav aria-label="Breadcrumb" class="d-print-none">
   <ul class="bd-breadcrumbs">
     
@@ -455,7 +430,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">User Guide</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">Using the...</li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Using the cothread Library</span></li>
   </ul>
 </nav>
 </div>
@@ -502,7 +477,7 @@ suspension points there is no possibility of unexpected background activity!</p>
 </ul>
 <p>On the other hand, there is one disadvantage which needs to be kept in mind:</p>
 <ul class="simple">
-<li><p>If a cothread blocks (for example, by calling <a class="reference external" href="https://docs.python.org/3/library/time.html#time.sleep" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.sleep()</span></code></a> or reading
+<li><p>If a cothread blocks (for example, by calling <a class="reference external" href="https://docs.python.org/3/library/time.html#time.sleep" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.sleep()</span></code></a> or reading
 from a blocking socket or remote file without first calling a select function)
 then <em>all</em> cothreads will be blocked.  The cothread library provides routines
 to help with this (see <a class="reference internal" href="#cothread.Sleep" title="cothread.Sleep"><code class="xref py py-func docutils literal notranslate"><span class="pre">Sleep()</span></code></a>, <a class="reference internal" href="#cothread.select" title="cothread.select"><code class="xref py py-func docutils literal notranslate"><span class="pre">select()</span></code></a> and <a class="reference internal" href="#cothread.socket" title="cothread.socket"><code class="xref py py-class docutils literal notranslate"><span class="pre">socket</span></code></a>
@@ -511,7 +486,7 @@ below).</p></li>
 <p>To use the <a class="reference internal" href="#"><span class="doc">cothread</span></a> library the following overall structure should be
 followed in the top level application:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import the cothread library in each module that uses it.</span>
-<span class="kn">import</span> <span class="nn">cothread</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cothread</span>
 
 <span class="c1"># Enable Qt processing, hang onto application instance if needed.</span>
 <span class="n">qtapp</span> <span class="o">=</span> <span class="n">cothread</span><span class="o">.</span><span class="n">iqt</span><span class="p">()</span>      <span class="c1"># Not needed if not using Qt</span>
@@ -681,7 +656,7 @@ timeout format.</p>
 module.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.Spawn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Spawn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arguments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_on_wait=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack_size=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#Spawn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Spawn" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Spawn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arguments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_on_wait=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack_size=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#Spawn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Spawn" title="Link to this definition">#</a></dt>
 <dd><p>A new cooperative thread, or <em>cothread</em>, is created as a call to
 <code class="docutils literal notranslate"><span class="pre">function(arguments)</span></code> where <code class="docutils literal notranslate"><span class="pre">arguments</span></code> can be any list of values and
 keyword arguments (except for the <code class="docutils literal notranslate"><span class="pre">raise_on_wait</span></code> and <code class="docutils literal notranslate"><span class="pre">stack_size</span></code>
@@ -724,7 +699,7 @@ re-raised when <a class="reference internal" href="#cothread.Spawn.Wait" title="
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">SleepUntil</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#SleepUntil"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.SleepUntil" title="Link to this definition">#</a></dt>
 <dd><p>The calling task is suspended until the given time.  <a class="reference internal" href="#cothread.Sleep" title="cothread.Sleep"><code class="xref py py-func docutils literal notranslate"><span class="pre">Sleep()</span></code></a> suspends
 the task for at least delay seconds, <a class="reference internal" href="#cothread.SleepUntil" title="cothread.SleepUntil"><code class="xref py py-func docutils literal notranslate"><span class="pre">SleepUntil()</span></code></a> suspends until the
-specified time has passed (<a class="reference external" href="https://docs.python.org/3/library/time.html#module-time" title="(in Python v3.12)"><code class="xref any docutils literal notranslate"><span class="pre">time</span></code></a> is defined as the value returned by
+specified time has passed (<a class="reference external" href="https://docs.python.org/3/library/time.html#module-time" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">time</span></code></a> is defined as the value returned by
 <code class="docutils literal notranslate"><span class="pre">time.time()</span></code>).</p>
 </dd></dl>
 
@@ -742,11 +717,11 @@ and <a class="reference internal" href="#cothread.EventQueue" title="cothread.Ev
 <a class="reference internal" href="#cothread.EventQueue" title="cothread.EventQueue"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventQueue</span></code></a> can hold a list of unbounded length.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.Event">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">auto_reset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#Event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Event" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">auto_reset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#Event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Event" title="Link to this definition">#</a></dt>
 <dd><p>Event objects are initially created unsignalled.  The <code class="docutils literal notranslate"><span class="pre">auto_reset</span></code> flag
 determines whether the signalled state of the event object is persistent,
 and determines how many cothreads are woken when <a class="reference internal" href="#cothread.Event.Signal" title="cothread.Event.Signal"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Signal()</span></code></a> is
-called on an event.  The <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> state of an event object is <code class="docutils literal notranslate"><span class="pre">True</span></code>
+called on an event.  The <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> state of an event object is <code class="docutils literal notranslate"><span class="pre">True</span></code>
 iff it is signalled.</p>
 <p>The following methods define the behaviour of this object.</p>
 <dl class="py method">
@@ -793,7 +768,7 @@ written to the event.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.RLock">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">RLock</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#RLock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.RLock" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">RLock</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#RLock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.RLock" title="Link to this definition">#</a></dt>
 <dd><p>The <a class="reference internal" href="#cothread.RLock" title="cothread.RLock"><code class="xref py py-class docutils literal notranslate"><span class="pre">RLock</span></code></a> is a reentrant lock that can be used to protect access
 or modification of variables by two cothreads at the same time. It is
 reentrant because once it is acquired by a cothread, that same cothread
@@ -846,7 +821,7 @@ unlocked or the cothread doesn’t own the lock.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.Pulse">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Pulse</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#Pulse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Pulse" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Pulse</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#Pulse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Pulse" title="Link to this definition">#</a></dt>
 <dd><p>Pulse objects have no state and all cothreads waiting on a Pulse object will
 block until <a class="reference internal" href="#cothread.Pulse.Signal" title="cothread.Pulse.Signal"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Signal()</span></code></a> is called, at which point waiting cothreads
 will be woken.</p>
@@ -874,9 +849,9 @@ notifier for updating complex conditions.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.EventQueue">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">EventQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#EventQueue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.EventQueue" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">EventQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#EventQueue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.EventQueue" title="Link to this definition">#</a></dt>
 <dd><p>The <a class="reference internal" href="#cothread.EventQueue" title="cothread.EventQueue"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventQueue</span></code></a> is designed to support the communication of a
-stream of values between two cothreads.  Calling <a class="reference external" href="https://docs.python.org/3/library/functions.html#len" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">len()</span></code></a> on an event
+stream of values between two cothreads.  Calling <a class="reference external" href="https://docs.python.org/3/library/functions.html#len" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">len()</span></code></a> on an event
 queue returns the number of entries currently in its queue.  An event
 queue can also be consumed as an iterator, see code example below.</p>
 <p>Optionally a maximum queue length can be specified.  In this case attempts
@@ -887,7 +862,7 @@ to signal a queue with <code class="docutils literal notranslate"><span class="p
 <span class="sig-name descname"><span class="pre">Wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#EventQueue.Wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.EventQueue.Wait" title="Link to this definition">#</a></dt>
 <dd><p>Returns the next object from the queue, blocking if necessary.  If a
 timeout occurs then <a class="reference internal" href="#cothread.Timedout" title="cothread.Timedout"><code class="xref py py-exc docutils literal notranslate"><span class="pre">Timedout</span></code></a> is raised.  If the queue has been
-closed then <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#StopIteration" title="(in Python v3.12)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">StopIteration</span></code></a> is raised.</p>
+closed then <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#StopIteration" title="(in Python v3.13)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">StopIteration</span></code></a> is raised.</p>
 <p>If the queue is non empty when <a class="reference internal" href="#cothread.EventQueue.Wait" title="cothread.EventQueue.Wait"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Wait()</span></code></a> is called control will not
 be suspended.</p>
 </dd></dl>
@@ -914,11 +889,11 @@ and <code class="docutils literal notranslate"><span class="pre">False</span></c
 <span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#EventQueue.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.EventQueue.close" title="Link to this definition">#</a></dt>
 <dd><p>Marks the queue as closed, after which no more signals can be raised.
 Calling <a class="reference internal" href="#cothread.EventQueue.Wait" title="cothread.EventQueue.Wait"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Wait()</span></code></a> on a closed queue will cause
-<a class="reference external" href="https://docs.python.org/3/library/exceptions.html#StopIteration" title="(in Python v3.12)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">StopIteration</span></code></a> to be raised.</p>
+<a class="reference external" href="https://docs.python.org/3/library/exceptions.html#StopIteration" title="(in Python v3.13)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">StopIteration</span></code></a> to be raised.</p>
 </dd></dl>
 
 <p>Example code using iteration over an <a class="reference internal" href="#cothread.EventQueue" title="cothread.EventQueue"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventQueue</span></code></a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">consumer</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">consumer</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;consumed&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 
@@ -934,7 +909,7 @@ Calling <a class="reference internal" href="#cothread.EventQueue.Wait" title="co
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.ThreadedEventQueue">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">ThreadedEventQueue</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#ThreadedEventQueue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.ThreadedEventQueue" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">ThreadedEventQueue</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#ThreadedEventQueue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.ThreadedEventQueue" title="Link to this definition">#</a></dt>
 <dd><p>The <a class="reference internal" href="#cothread.ThreadedEventQueue" title="cothread.ThreadedEventQueue"><code class="xref py py-class docutils literal notranslate"><span class="pre">ThreadedEventQueue</span></code></a> behaves like an <a class="reference internal" href="#cothread.EventQueue" title="cothread.EventQueue"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventQueue</span></code></a>, but
 is designed to be used to communicate between a Python thread outside of
 the cothread library and a cothread.  Communication can occur in either
@@ -951,9 +926,9 @@ for waiting, and must not be read from!</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.Timer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Timer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retrigger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reuse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#Timer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Timer" title="Link to this definition">#</a></dt>
-<dd><p>This triggers a call to <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.12)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a>, with no arguments, when <a class="reference internal" href="catools.html#timeout"><span class="std std-ref">timeout</span></a>
-expires.  If <code class="docutils literal notranslate"><span class="pre">retrigger</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> then after <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.12)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a> completes
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Timer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retrigger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reuse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#Timer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Timer" title="Link to this definition">#</a></dt>
+<dd><p>This triggers a call to <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a>, with no arguments, when <a class="reference internal" href="catools.html#timeout"><span class="std std-ref">timeout</span></a>
+expires.  If <code class="docutils literal notranslate"><span class="pre">retrigger</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> then after <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a> completes
 the timer will be reenabled and the cycle will repeat, in which case
 <a class="reference internal" href="catools.html#timeout"><span class="std std-ref">timeout</span></a> must be a relative timeout, otherwise only one call will occur.
 If <code class="docutils literal notranslate"><span class="pre">retrigger</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code> then once the timer has fired it cannot be
@@ -1001,7 +976,7 @@ still be consumed.</p>
 <dt class="sig sig-object py" id="cothread.WaitForQuit">
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">WaitForQuit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">catch_interrupt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cothread.html#WaitForQuit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.WaitForQuit" title="Link to this definition">#</a></dt>
 <dd><p>The routine <a class="reference internal" href="#cothread.WaitForQuit" title="cothread.WaitForQuit"><code class="xref py py-func docutils literal notranslate"><span class="pre">WaitForQuit()</span></code></a> blocks until one of the following occurrs:
-<a class="reference internal" href="#cothread.Quit" title="cothread.Quit"><code class="xref py py-func docutils literal notranslate"><span class="pre">Quit()</span></code></a> is called, <a class="reference external" href="https://docs.python.org/3/library/signal.html#signal.SIGINT" title="(in Python v3.12)"><code class="xref any docutils literal notranslate"><span class="pre">signal.SIGINT</span></code></a> is received (by pressing control-C),
+<a class="reference internal" href="#cothread.Quit" title="cothread.Quit"><code class="xref py py-func docutils literal notranslate"><span class="pre">Quit()</span></code></a> is called, <a class="reference external" href="https://docs.python.org/3/library/signal.html#signal.SIGINT" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">signal.SIGINT</span></code></a> is received (by pressing control-C),
 or the last Qt window is closed.  By default (if <code class="docutils literal notranslate"><span class="pre">catch_interrupt=True</span></code> is
 set) keyboard interrupts are handled by a signal handler which simply calls
 <a class="reference internal" href="#cothread.Quit" title="cothread.Quit"><code class="xref py py-func docutils literal notranslate"><span class="pre">Quit()</span></code></a>.  This means that the only way to interrupt a loop without a
@@ -1031,19 +1006,19 @@ callbacks – if more work needs to be done, call <code class="docutils literal 
 <dd><p>This is similar to <a class="reference internal" href="#cothread.Callback" title="cothread.Callback"><code class="xref py py-func docutils literal notranslate"><span class="pre">Callback()</span></code></a>: this can be called from any Python
 thread, and <code class="docutils literal notranslate"><span class="pre">action(*args,</span> <span class="pre">**kargs)</span></code> will be called in cothread’s own
 thread.  The difference is that the this function will block until
-<a class="reference external" href="https://docs.python.org/3/library/argparse.html#action" title="(in Python v3.12)"><code class="xref any docutils literal notranslate"><span class="pre">action</span></code></a> returns, and the result will be returned as the result from
+<a class="reference external" href="https://docs.python.org/3/library/argparse.html#action" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">action</span></code></a> returns, and the result will be returned as the result from
 <a class="reference internal" href="#cothread.CallbackResult" title="cothread.CallbackResult"><code class="xref py py-func docutils literal notranslate"><span class="pre">CallbackResult()</span></code></a>.  For example, the following can be used to perform
 channel access from an arbitrary thread:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">value</span> <span class="o">=</span> <span class="n">CallbackResult</span><span class="p">(</span><span class="n">caget</span><span class="p">,</span> <span class="n">pv</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The following arguments are processed by <a class="reference internal" href="#cothread.CallbackResult" title="cothread.CallbackResult"><code class="xref py py-func docutils literal notranslate"><span class="pre">CallbackResult()</span></code></a>, all others
-are passed through to <a class="reference external" href="https://docs.python.org/3/library/argparse.html#action" title="(in Python v3.12)"><code class="xref any docutils literal notranslate"><span class="pre">action</span></code></a>:</p>
+are passed through to <a class="reference external" href="https://docs.python.org/3/library/argparse.html#action" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">action</span></code></a>:</p>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">callback_queue</span></code></dt><dd><p>By default the standard <a class="reference internal" href="#cothread.Callback" title="cothread.Callback"><code class="xref py py-func docutils literal notranslate"><span class="pre">Callback()</span></code></a> queue is used for dispatch to
 the cothread core, but a separate callback method can be specified here.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">callback_timeout</span></code></dt><dd><p>By default the thread will block indefinitely until <a class="reference external" href="https://docs.python.org/3/library/argparse.html#action" title="(in Python v3.12)"><code class="xref any docutils literal notranslate"><span class="pre">action</span></code></a> completes,
+<dt><code class="docutils literal notranslate"><span class="pre">callback_timeout</span></code></dt><dd><p>By default the thread will block indefinitely until <a class="reference external" href="https://docs.python.org/3/library/argparse.html#action" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">action</span></code></a> completes,
 or a specific timeout can be specified here.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">callback_spawn</span></code></dt><dd><p>By default a new cothread will be spawned for each callback; this can
@@ -1069,7 +1044,7 @@ Qt event loop then <code class="docutils literal notranslate"><span class="pre">
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="cothread.Timedout">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Timedout</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#Timedout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Timedout" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">Timedout</span></span><a class="reference internal" href="../_modules/cothread/cothread.html#Timedout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.Timedout" title="Link to this definition">#</a></dt>
 <dd><p>Exception indicating an event has timed out.</p>
 </dd></dl>
 
@@ -1078,13 +1053,13 @@ Qt event loop then <code class="docutils literal notranslate"><span class="pre">
 <p>To enable cothreaded access to sockets and other external event generating
 sources the <code class="docutils literal notranslate"><span class="pre">cothread.coselect</span></code> library provides coperative implementations
 of <a class="reference internal" href="#cothread.select" title="cothread.select"><code class="xref py py-func docutils literal notranslate"><span class="pre">select()</span></code></a>, <a class="reference internal" href="#cothread.poll" title="cothread.poll"><code class="xref py py-func docutils literal notranslate"><span class="pre">poll()</span></code></a> and <a class="reference internal" href="#cothread.socket" title="cothread.socket"><code class="xref py py-class docutils literal notranslate"><span class="pre">socket</span></code></a> from the Python library
-<a class="reference external" href="https://docs.python.org/3/library/select.html#module-select" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">select</span></code></a> and <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> modules.  The following methods and classes are
+<a class="reference external" href="https://docs.python.org/3/library/select.html#module-select" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">select</span></code></a> and <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> modules.  The following methods and classes are
 provided:</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="cothread.select">
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">select</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iwtd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owtd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ewtd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coselect.html#select"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.select" title="Link to this definition">#</a></dt>
 <dd><p>Cooperative <a class="reference internal" href="#cothread.select" title="cothread.select"><code class="xref py py-func docutils literal notranslate"><span class="pre">select()</span></code></a> function, interface compatible with the Python
-library <a class="reference external" href="https://docs.python.org/3/library/select.html#select.select" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.select()</span></code></a> function (though the exceptions raised are
+library <a class="reference external" href="https://docs.python.org/3/library/select.html#select.select" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.select()</span></code></a> function (though the exceptions raised are
 slightly different).</p>
 </dd></dl>
 
@@ -1092,7 +1067,7 @@ slightly different).</p>
 <dt class="sig sig-object py" id="cothread.poll">
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">poll</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coselect.html#poll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.poll" title="Link to this definition">#</a></dt>
 <dd><p>Cooperative <code class="docutils literal notranslate"><span class="pre">poll</span></code> object, interface compatible with the Python
-library <a class="reference external" href="https://docs.python.org/3/library/select.html#select.poll" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.poll()</span></code></a> object.</p>
+library <a class="reference external" href="https://docs.python.org/3/library/select.html#select.poll" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.poll()</span></code></a> object.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1111,42 +1086,42 @@ timeout (in seconds) occurs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.socket">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">socket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.socket" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">socket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.socket" title="Link to this definition">#</a></dt>
 <dd><p>This is a cooperative non-blocking wrapper of the standard <a class="reference internal" href="#cothread.socket" title="cothread.socket"><code class="xref py py-class docutils literal notranslate"><span class="pre">socket</span></code></a>
 class.  This can be imported directly from <a class="reference internal" href="#"><span class="doc">cothread</span></a> and used with
-constants and most methods from the standard <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> module, or
+constants and most methods from the standard <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> module, or
 alternatively <code class="docutils literal notranslate"><span class="pre">socket_hook()</span></code> can be called before importing the
-<a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> module.</p>
+<a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> module.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cothread.socketpair">
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">socketpair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cosocket.html#socketpair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.socketpair" title="Link to this definition">#</a></dt>
-<dd><p>This function wraps <a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.socketpair" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">socket.socketpair()</span></code></a> to return a pair of
+<dd><p>This function wraps <a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.socketpair" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">socket.socketpair()</span></code></a> to return a pair of
 cooperative stream <a class="reference internal" href="#cothread.socket" title="cothread.socket"><code class="xref py py-class docutils literal notranslate"><span class="pre">socket</span></code></a> instances which are already connected.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cothread.create_connection">
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">create_connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cosocket.html#create_connection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.create_connection" title="Link to this definition">#</a></dt>
-<dd><p>This function wraps <a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.create_connection" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">socket.create_connection()</span></code></a> to return a cothread
+<dd><p>This function wraps <a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.create_connection" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">socket.create_connection()</span></code></a> to return a cothread
 compatible socket.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cothread.select_hook">
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">select_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coselect.html#select_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.select_hook" title="Link to this definition">#</a></dt>
-<dd><p>This function will replace the <a class="reference external" href="https://docs.python.org/3/library/select.html#select.select" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.select()</span></code></a> and
-<a class="reference external" href="https://docs.python.org/3/library/select.html#select.poll" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.poll()</span></code></a> methods in the <a class="reference external" href="https://docs.python.org/3/library/select.html#module-select" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">select</span></code></a> module with the
+<dd><p>This function will replace the <a class="reference external" href="https://docs.python.org/3/library/select.html#select.select" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.select()</span></code></a> and
+<a class="reference external" href="https://docs.python.org/3/library/select.html#select.poll" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">select.poll()</span></code></a> methods in the <a class="reference external" href="https://docs.python.org/3/library/select.html#module-select" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">select</span></code></a> module with the
 non-blocking cothread compatible functions defined here.  Do not use this if
-other threads need to use functions from the <a class="reference external" href="https://docs.python.org/3/library/select.html#module-select" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">select</span></code></a> module.</p>
+other threads need to use functions from the <a class="reference external" href="https://docs.python.org/3/library/select.html#module-select" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">select</span></code></a> module.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cothread.socket_hook">
 <span class="sig-prename descclassname"><span class="pre">cothread.</span></span><span class="sig-name descname"><span class="pre">socket_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/cosocket.html#socket_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.socket_hook" title="Link to this definition">#</a></dt>
-<dd><p>This function will replace <a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.socket" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socket.socket</span></code></a> and
-<a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.socketpair" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">socket.socketpair()</span></code></a> in the <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> module with
+<dd><p>This function will replace <a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.socket" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socket.socket</span></code></a> and
+<a class="reference external" href="https://docs.python.org/3/library/socket.html#socket.socketpair" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">socket.socketpair()</span></code></a> in the <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> module with
 <a class="reference internal" href="#cothread.socket" title="cothread.socket"><code class="xref py py-class docutils literal notranslate"><span class="pre">cothread.socket</span></code></a> and <a class="reference internal" href="#cothread.socketpair" title="cothread.socketpair"><code class="xref py py-func docutils literal notranslate"><span class="pre">socketpair()</span></code></a>.  This will convert most
 Python socket library functions into cooperative socket functions and allows
 all of the helper functions in the <a class="reference internal" href="#cothread.socket" title="cothread.socket"><code class="xref py py-class docutils literal notranslate"><span class="pre">socket</span></code></a> module to be used.</p>
@@ -1158,52 +1133,52 @@ contains a non-cothread thread using sockets this function must not be used.</p>
 <section id="module-cothread.coserver">
 <span id="coserver-functions"></span><h3>Coserver Functions<a class="headerlink" href="#module-cothread.coserver" title="Link to this heading">#</a></h3>
 <p><a class="reference internal" href="#module-cothread.coserver" title="cothread.coserver"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cothread.coserver</span></code></a> provides coorperative versions of the server classes
-from <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#module-socketserver" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socketserver</span></code></a> and <a class="reference external" href="https://docs.python.org/3/library/http.server.html#module-http.server" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">http.server</span></code></a> modules.</p>
+from <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#module-socketserver" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socketserver</span></code></a> and <a class="reference external" href="https://docs.python.org/3/library/http.server.html#module-http.server" title="(in Python v3.13)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">http.server</span></code></a> modules.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.TCPServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">TCPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.TCPServer" title="Link to this definition">#</a></dt>
-<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.TCPServer" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.TCPServer</span></code></a>.</p>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">TCPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.TCPServer" title="Link to this definition">#</a></dt>
+<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.TCPServer" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.TCPServer</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.UDPServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">UDPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.UDPServer" title="Link to this definition">#</a></dt>
-<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.UDPServer" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.UDPServer</span></code></a>.</p>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">UDPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.UDPServer" title="Link to this definition">#</a></dt>
+<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.UDPServer" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.UDPServer</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.HTTPPServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">HTTPPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.HTTPPServer" title="Link to this definition">#</a></dt>
-<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/http.server.html#http.server.HTTPServer" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">http.server.HTTPServer</span></code></a>.</p>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">HTTPPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.HTTPPServer" title="Link to this definition">#</a></dt>
+<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/http.server.html#http.server.HTTPServer" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">http.server.HTTPServer</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.CoThreadingMixIn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingMixIn</span></span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingMixIn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingMixIn" title="Link to this definition">#</a></dt>
-<dd><p>A cooperative equivalent to <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.ThreadingMixIn" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.ThreadingMixIn</span></code></a> which
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingMixIn</span></span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingMixIn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingMixIn" title="Link to this definition">#</a></dt>
+<dd><p>A cooperative equivalent to <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.ThreadingMixIn" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.ThreadingMixIn</span></code></a> which
 spawns a new cothread to handle each request.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.CoThreadingTCPServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingTCPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingTCPServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingTCPServer" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingTCPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingTCPServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingTCPServer" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.CoThreadingUDPServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingUDPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingUDPServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingUDPServer" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingUDPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingUDPServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingUDPServer" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.CoThreadingHTTPServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingHTTPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingHTTPServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingHTTPServer" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">CoThreadingHTTPServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cothread/coserver.html#CoThreadingHTTPServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cothread.coserver.CoThreadingHTTPServer" title="Link to this definition">#</a></dt>
 <dd><p>Convenience classes which apply <a class="reference internal" href="#cothread.coserver.CoThreadingMixIn" title="cothread.coserver.CoThreadingMixIn"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoThreadingMixIn</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.coserver.BaseServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">BaseServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.BaseServer" title="Link to this definition">#</a></dt>
-<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.BaseServer" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.BaseServer</span></code></a> provided for
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.coserver.</span></span><span class="sig-name descname"><span class="pre">BaseServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.coserver.BaseServer" title="Link to this definition">#</a></dt>
+<dd><p>Wrapped version of <a class="reference external" href="https://docs.python.org/3/library/socketserver.html#socketserver.BaseServer" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">socketserver.BaseServer</span></code></a> provided for
 completeness.  User code will typically not use this class directly.</p>
 </dd></dl>
 
@@ -1246,7 +1221,8 @@ completeness.  User code will typically not use this class directly.</p>
             
             
               
-                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
   <div class="sidebar-secondary-item">
@@ -1358,13 +1334,13 @@ completeness.  User code will typically not use this class directly.</p>
 </div>
 
   <div class="sidebar-secondary-item">
-
-  <div class="tocsection sourcelink">
-    <a href="../_sources/user/cothread.rst.txt">
-      <i class="fa-solid fa-file-lines"></i> Show Source
-    </a>
-  </div>
-</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/user/cothread.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
 
 </div></div>
               
@@ -1379,8 +1355,8 @@ completeness.  User code will typically not use this class directly.</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341"></script>
-<script src="../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1391,7 +1367,8 @@ completeness.  User code will typically not use this class directly.</p>
       
         <div class="footer-item">
 <p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.3.
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
 </p></div>
       
     </div>
