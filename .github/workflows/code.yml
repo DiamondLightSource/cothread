@@ -104,10 +104,18 @@ jobs:
       HAS_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN != '' }}
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download dist
+        uses: actions/download-artifact@v4
         with:
             pattern: dist*
             path: dist
+            merge-multiple: true
+
+      - name: Download lockfiles
+        uses: actions/download-artifact@v4
+        with:
+            pattern: lockfiles*
+            path: lockfiles
             merge-multiple: true
 
       - name: Fixup blank lockfiles
