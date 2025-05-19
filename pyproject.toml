@@ -16,6 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
 ]
 description = "Build tools using cooperative threading"
@@ -33,7 +34,6 @@ dev = [
     "pre-commit",
     "pydata-sphinx-theme>=0.12",
     "pytest",
-    "pytest-cov",
     "sphinx-autobuild",
     "sphinx-copybutton",
     "sphinx-design",
@@ -106,7 +106,7 @@ allowlist_externals =
     sphinx-build
     sphinx-autobuild
 commands =
-    pytest: pytest --cov=cothread --cov-report term --cov-report xml:cov.xml {posargs}
+    pytest: pytest {posargs}
     pre-commit: pre-commit run --all-files {posargs}
     docs: sphinx-{posargs:build -EW --keep-going} -T docs build/html
 """
