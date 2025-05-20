@@ -107,7 +107,11 @@ static void *coroutine_wrapper(void *action_, void *arg_)
     Py_DECREF(arg);
 
 
-#if PY_VERSION_HEX < 0x30B0000
+#if PY_VERSION_HEX >= 0x30B0000
+    new_threadstate = PyThreadState_Swap(thread_state);
+    PyThreadState_Clear(new_threadstate);
+    PyThreadState_Delete(new_threadstate);
+#else
     /* Some of the stuff we've initialised can leak through, so far I've only
      * seen exc_type still set at this point, but maybe other fields can also
      * leak.  Avoid a memory leak by making sure we're not holding onto these.
