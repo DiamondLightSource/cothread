@@ -81,8 +81,25 @@ static void *coroutine_wrapper(void *action_, void *arg_)
 
     /* New coroutine gets a brand new Python interpreter stack frame. */
 #if PY_VERSION_HEX >= 0x30B0000
+
+    PyGILState_STATE gstate;
+
+
+    printf("wrapper before ThreadState_New GIL state: %d\n", PyGILState_Check());
+
     PyThreadState *new_threadstate = PyThreadState_New(thread_state->interp);
+
+
+    PyThreadState *eval_threadstate = PyEval_SaveThread();
+
     thread_state = PyThreadState_Swap(new_threadstate);
+
+    gstate = PyGILState_Ensure();
+    printf("wrapper after PyGILState_Ensure GIL state: %d\n", PyGILState_Check());
+
+
+
+    printf("wrapper after ThreadState_Swap GIL state: %d\n", PyGILState_Check());
 #else
     thread_state->frame = NULL;
     thread_state->recursion_depth = 0;
@@ -100,17 +117,29 @@ static void *coroutine_wrapper(void *action_, void *arg_)
 #endif
 
     /* Call the given action with the passed argument. */
+
+    printf("wrapper before CallFunction GIL state: %d\n", PyGILState_Check());
+
     PyObject *action = *(PyObject **)action_;
     PyObject *arg = arg_;
     PyObject *result = PyObject_CallFunctionObjArgs(action, arg, NULL);
     Py_DECREF(action);
     Py_DECREF(arg);
 
+    printf("wrapper after CallFunction GIL state: %d\n", PyGILState_Check());
+
+
+
 
 #if PY_VERSION_HEX >= 0x30B0000
     new_threadstate = PyThreadState_Swap(thread_state);
     PyThreadState_Clear(new_threadstate);
     PyThreadState_Delete(new_threadstate);
+
+    PyEval_RestoreThread(eval_threadstate);
+
+    PyGILState_Release(gstate);
+
 #else
     /* Some of the stuff we've initialised can leak through, so far I've only
      * seen exc_type still set at this point, but maybe other fields can also
@@ -184,11 +213,14 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
     #endif
 #endif
 
+        printf("switch before CallFunction GIL state: %d\n", PyGILState_Check());
         /* Switch to new coroutine.  For the duration arg needs an extra
          * reference count, it'll be accounted for either on the next returned
          * result or in the entry to a new coroutine. */
         Py_INCREF(arg);
         PyObject *result = switch_cocore(target, arg);
+
+        printf("switch after CallFunction GIL state: %d\n", PyGILState_Check());
 
 #if PY_VERSION_HEX >= 0x30B0000
         PyThreadState_Swap(thread_state);
