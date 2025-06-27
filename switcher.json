@@ -32,6 +32,10 @@
     "url": "https://DiamondLightSource.github.io/cothread/fix_release/"
   },
   {
+    "version": "gil_manipulation",
+    "url": "https://DiamondLightSource.github.io/cothread/gil_manipulation/"
+  },
+  {
     "version": "modify_versioning",
     "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
   }
