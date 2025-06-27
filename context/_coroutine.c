@@ -81,8 +81,28 @@ static void *coroutine_wrapper(void *action_, void *arg_)
 
     /* New coroutine gets a brand new Python interpreter stack frame. */
 #if PY_VERSION_HEX >= 0x30B0000
-    PyThreadState *new_threadstate = PyThreadState_New(thread_state->interp);
-    thread_state = PyThreadState_Swap(new_threadstate);
+    // TODO: This section should just set up a clean stack frame
+
+    // PyObject *context = thread_state->context;
+    // _PyCFrame *cframe = thread_state->cframe;
+    // struct _PyInterpreterFrame *current_frame = thread_state->cframe->current_frame;
+
+    // thread_state->cframe = thread_state->cframe;
+
+    // int recursion_depth = thread_state->recursion_limit - thread_state->recursion_remaining;
+
+    // // May not be needed?
+
+    // _PyStackChunk *datastack_chunk = thread_state->datastack_chunk;
+    // PyObject **datastack_top = thread_state->datastack_top;
+    // PyObject **datastack_limit = thread_state->datastack_limit;
+
+    // PyFrameObject *frame = PyThreadState_GetFrame(thread_state);
+    // Py_XDECREF(frame); // PyThreadState_GetFrame gives us a new reference.
+
+    // int trash_delete_nesting = thread_state->trash_delete_nesting;
+
+    thread_state->recursion_remaining = thread_state->recursion_limit;
 #else
     thread_state->frame = NULL;
     thread_state->recursion_depth = 0;
@@ -108,9 +128,20 @@ static void *coroutine_wrapper(void *action_, void *arg_)
 
 
 #if PY_VERSION_HEX >= 0x30B0000
-    new_threadstate = PyThreadState_Swap(thread_state);
-    PyThreadState_Clear(new_threadstate);
-    PyThreadState_Delete(new_threadstate);
+    // thread_state->context = context;
+    // /* Incrementing this value invalidates the contextvars cache,
+    //    which would otherwise remain valid across switches */
+    // thread_state->context_ver++;
+
+    // thread_state->cframe = cframe;
+
+    // thread_state->recursion_remaining = thread_state->recursion_limit - recursion_depth;
+
+    // thread_state->cframe->current_frame = interp_frame;
+
+    // thread_state->datastack_chunk = datastack_chunk;
+    // thread_state->datastack_top = datastack_top;
+    // thread_state->datastack_limit = datastack_limit;
 #else
     /* Some of the stuff we've initialised can leak through, so far I've only
      * seen exc_type still set at this point, but maybe other fields can also
@@ -162,7 +193,30 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
     {
         PyThreadState *thread_state = PyThreadState_GET();
 
-#if PY_VERSION_HEX < 0x30B0000
+#if PY_VERSION_HEX >= 0x30B0000
+         PyObject *context = thread_state->context;
+        _PyCFrame *cframe = thread_state->cframe;
+        struct _PyInterpreterFrame *current_frame = thread_state->cframe->current_frame;
+
+        // thread_state->cframe = NULL;
+
+        int recursion_depth = thread_state->recursion_limit - thread_state->recursion_remaining;
+
+        // May not be needed?
+
+        _PyStackChunk *datastack_chunk = thread_state->datastack_chunk;
+        PyObject **datastack_top = thread_state->datastack_top;
+        PyObject **datastack_limit = thread_state->datastack_limit;
+
+        PyFrameObject *frame = PyThreadState_GetFrame(thread_state);
+        // assert(frame);
+        Py_XDECREF(frame); // PyThreadState_GetFrame gives us a new reference.
+
+        int trash_delete_nesting = thread_state->trash_delete_nesting;
+
+        _PyErr_StackItem exc_state = thread_state->exc_state;
+        _PyErr_StackItem *exc_info = thread_state->exc_info;
+#else
         /* Need to switch the Python interpreter's record of recursion depth and
          * top frame around as we switch frames, otherwise the interpreter gets
          * confused and thinks we've recursed too deep.  In truth tracking this
@@ -191,7 +245,25 @@ static PyObject *coroutine_switch(PyObject *Self, PyObject *args)
         PyObject *result = switch_cocore(target, arg);
 
 #if PY_VERSION_HEX >= 0x30B0000
-        PyThreadState_Swap(thread_state);
+        thread_state->context = context;
+        /* Incrementing this value invalidates the contextvars cache,
+        which would otherwise remain valid across switches */
+        thread_state->context_ver++;
+
+        thread_state->cframe = cframe;
+
+        thread_state->recursion_remaining = thread_state->recursion_limit - recursion_depth;
+
+        thread_state->cframe->current_frame = current_frame;
+
+        thread_state->datastack_chunk = datastack_chunk;
+        thread_state->datastack_top = datastack_top;
+        thread_state->datastack_limit = datastack_limit;
+
+        thread_state->trash_delete_nesting = trash_delete_nesting;
+
+        thread_state->exc_state = exc_state;
+        thread_state->exc_info = exc_info;
 #else
         /* Restore previously saved state.  I wonder if PyThreadState_GET()
          * really needs to be called again here... */
