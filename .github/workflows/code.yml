@@ -18,10 +18,10 @@ jobs:
           - os: "ubuntu-latest"
             python: "3.8"
             install: ".[dev]"
-          - os: "ubuntu-latest-arm"
+          - os: "ubuntu-24.04-arm"
             python: "3.12"
             install: ".[dev]"
-          - os: "macos-latest"
+          - os: "macos-13-xlarge"
             python: "3.12"
             install: ".[dev]"
 
