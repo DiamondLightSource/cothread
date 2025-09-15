@@ -31,35 +31,35 @@ jobs:
       volumes:
         - /opt/hostedtoolcache:/opt/hostedtoolcache
 
-    env:
-      # https://github.com/pytest-dev/pytest/issues/2042
-      PY_IGNORE_IMPORTMISMATCH: "1"
+    # env:
+    #   # https://github.com/pytest-dev/pytest/issues/2042
+    #   PY_IGNORE_IMPORTMISMATCH: "1"
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # Need this to get version number from last tag
-          fetch-depth: 0
+      # - name: Checkout
+      #   uses: actions/checkout@v4
+      #   with:
+      #     # Need this to get version number from last tag
+      #     fetch-depth: 0
 
-      - name: Install python packages
-        uses: ./.github/actions/install_requirements
-        with:
-          python_version: ${{ matrix.python }}
-          requirements_file: requirements-test-${{ matrix.os }}-${{ matrix.python }}.txt
-          install_options: ${{ matrix.install }}
+      # - name: Install python packages
+      #   uses: ./.github/actions/install_requirements
+      #   with:
+      #     python_version: ${{ matrix.python }}
+      #     requirements_file: requirements-test-${{ matrix.os }}-${{ matrix.python }}.txt
+      #     install_options: ${{ matrix.install }}
 
-      - name: List dependency tree
-        run: pipdeptree
+      # - name: List dependency tree
+      #   run: pipdeptree
 
       - name: Run tests
         run: tox -e pytest
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          name: ${{ matrix.python }}/${{ matrix.os }}
-          files: cov.xml
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     name: ${{ matrix.python }}/${{ matrix.os }}
+      #     files: cov.xml
 
   # dist:
   #   if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
