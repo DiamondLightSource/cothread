@@ -61,88 +61,88 @@ jobs:
           name: ${{ matrix.python }}/${{ matrix.os }}
           files: cov.xml
 
-  dist:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: "ubuntu-latest"
+  # dist:
+  #   if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+  #   runs-on: "ubuntu-latest"
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # Need this to get version number from last tag
-          fetch-depth: 0
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         # Need this to get version number from last tag
+  #         fetch-depth: 0
 
-      - name: Build sdist
-        run: |
-          export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) && \
-          pipx run build --sdist
+  #     - name: Build sdist
+  #       run: |
+  #         export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) && \
+  #         pipx run build --sdist
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
-        with:
-          output-dir: dist
-        env:
-          # Force using an older manylinux image to support more OSs
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          # Simple test that the wheel is loaded and available
-          CIBW_TEST_COMMAND: python -c "import cothread; print(cothread.__version__)"
-          # Skip all PyPy wheels (GIL deadlock detected in ThreadState_New)
-          # Skip all i686 wheels (cannot build numpy)
-          # This leaves manylinux and musllinux wheels
-          CIBW_SKIP: pp* *i686*
+  #     - name: Build wheels
+  #       uses: pypa/cibuildwheel@v2.16.2
+  #       with:
+  #         output-dir: dist
+  #       env:
+  #         # Force using an older manylinux image to support more OSs
+  #         CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+  #         # Simple test that the wheel is loaded and available
+  #         CIBW_TEST_COMMAND: python -c "import cothread; print(cothread.__version__)"
+  #         # Skip all PyPy wheels (GIL deadlock detected in ThreadState_New)
+  #         # Skip all i686 wheels (cannot build numpy)
+  #         # This leaves manylinux and musllinux wheels
+  #         CIBW_SKIP: pp* *i686*
 
-      - name: Upload sdist and wheels as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ matrix.os }}-${{ matrix.python }}
-          path: dist
+  #     - name: Upload sdist and wheels as artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: dist-${{ matrix.os }}-${{ matrix.python }}
+  #         path: dist
 
-      - name: Check for packaging errors
-        run: pipx run twine check --strict dist/*
+  #     - name: Check for packaging errors
+  #       run: pipx run twine check --strict dist/*
 
 
-  release:
-    # upload to PyPI and make a release on every tag
-    needs: [dist, test]
-    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
-    runs-on: ubuntu-latest
-    env:
-      HAS_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN != '' }}
+  # release:
+  #   # upload to PyPI and make a release on every tag
+  #   needs: [dist, test]
+  #   if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     HAS_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN != '' }}
 
-    steps:
-      - name: Download dist
-        uses: actions/download-artifact@v4
-        with:
-            pattern: dist*
-            path: dist
-            merge-multiple: true
+  #   steps:
+  #     - name: Download dist
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #           pattern: dist*
+  #           path: dist
+  #           merge-multiple: true
 
-      - name: Download lockfiles
-        uses: actions/download-artifact@v4
-        with:
-            pattern: lockfiles*
-            path: lockfiles
-            merge-multiple: true
+  #     - name: Download lockfiles
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #           pattern: lockfiles*
+  #           path: lockfiles
+  #           merge-multiple: true
 
-      - name: Fixup blank lockfiles
-        # Github release artifacts can't be blank
-        run: for f in lockfiles/*; do [ -s $f ] || echo '# No requirements' >> $f; done
+  #     - name: Fixup blank lockfiles
+  #       # Github release artifacts can't be blank
+  #       run: for f in lockfiles/*; do [ -s $f ] || echo '# No requirements' >> $f; done
 
-      - name: Github Release
-        # We pin to the SHA, not the tag, for security reasons.
-        # https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#using-third-party-actions
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
-        with:
-          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
-          files: |
-            dist/*
-            lockfiles/*
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Github Release
+  #       # We pin to the SHA, not the tag, for security reasons.
+  #       # https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#using-third-party-actions
+  #       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
+  #       with:
+  #         prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
+  #         files: |
+  #           dist/*
+  #           lockfiles/*
+  #         generate_release_notes: true
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish to PyPI
-        if: ${{ env.HAS_PYPI_TOKEN }}
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_TOKEN }}
+  #     - name: Publish to PyPI
+  #       if: ${{ env.HAS_PYPI_TOKEN }}
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         password: ${{ secrets.PYPI_TOKEN }}
