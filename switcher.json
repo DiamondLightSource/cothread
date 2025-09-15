@@ -28,6 +28,10 @@
     "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
+    "version": "ci_add_arm",
+    "url": "https://DiamondLightSource.github.io/cothread/ci_add_arm/"
+  },
+  {
     "version": "fix_release",
     "url": "https://DiamondLightSource.github.io/cothread/fix_release/"
   },
