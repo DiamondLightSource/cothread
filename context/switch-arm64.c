@@ -105,7 +105,12 @@ FSIZE(switch_frame)
 FNAME(create_frame)
 "       stp x1, x2, [x0, #-16]!\n"
 "       mov x16, lr\n"               // Save LR so can use same STP slot
-"       ldr lr, =action_entry\n"
+        // This should be simply
+        //  adr lr,action_entry
+        // but it would appear that on Apple the target for adr needs to be both
+        // local AND known at the instant it is seen by the assembler.  The
+        // reference .1f is an alias for action_entry below to work around this
+"       adr lr, .1f\n"
 "       stp x19, x20, [x0, #-16]!\n"
 "       stp x21, x22, [x0, #-16]!\n"
 "       stp x23, x24, [x0, #-16]!\n"
@@ -118,6 +123,7 @@ FNAME(create_frame)
 "       stp d14, d15, [x0, #-16]!\n"
 "       br  x16\n"
 
+"1:\n"
 "action_entry:\n"
         // Receive control after first switch to new frame.  Top of stack has
         // the saved context and routine to call, switch argument is in r0.

@@ -68,7 +68,7 @@ FSIZE(switch_frame)
 FNAME(create_frame)
 "       stmfd   r0!, {r1, r2}\n"       // Save arguments for new coroutine
 "       mov     ip, lr\n"              // Save LR so can use same STM slot
-"       ldr     lr, =action_entry\n"
+"       adr     lr, action_entry\n"
 "       stmfd   r0!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}\n"
 IF_VFP_FP(
 "       fstmfdd r0!, {d8-d15}\n")
