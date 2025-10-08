@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Using the catools Library &#8212; cothread 2.20.1.dev16+gda8b793 documentation</title>
+    <title>Using the catools Library &#8212; cothread 2.20.2.dev2+gaa43929d0 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=50cb9c73"></script>
+    <script src="../_static/documentation_options.js?v=b3393384"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -520,7 +520,7 @@ before the program exits!</p></li>
 <section id="environment-variables">
 <span id="environment"></span><h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Link to this heading">#</a></h2>
 <p>A number of environment variables affect the operation of channel access.  These
-can be set using the <a class="reference external" href="https://docs.python.org/3/library/os.html#os.environ" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">os.environ</span></code></a> dictionary – but note that these need
+can be set using the <a class="reference external" href="https://docs.python.org/3/library/os.html#os.environ" title="(in Python v3.14)"><code class="xref any docutils literal notranslate"><span class="pre">os.environ</span></code></a> dictionary – but note that these need
 to be set <em>before</em> loading the <a class="reference internal" href="#module-cothread.catools" title="cothread.catools"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cothread.catools</span></code></a> module.  The following
 are documented in the <a class="reference external" href="http://www.aps.anl.gov/epics/EpicsDocumentation/AppDevManuals/ChannelAccess/cadoc_4.htm">EPICS channel access developers manual</a>.</p>
 <dl class="simple">
@@ -572,7 +572,7 @@ and <code class="docutils literal notranslate"><span class="pre">count</span></c
 <dt><code class="docutils literal notranslate"><span class="pre">timeout</span></code></dt><dd><p>The <a class="reference internal" href="#timeout"><span class="std std-ref">timeout</span></a> argument specified how long <a class="reference internal" href="#cothread.catools.caput" title="cothread.catools.caput"><code class="xref py py-func docutils literal notranslate"><span class="pre">caput()</span></code></a> or <a class="reference internal" href="#cothread.catools.caget" title="cothread.catools.caget"><code class="xref py py-func docutils literal notranslate"><span class="pre">caget()</span></code></a>
 will wait for the entire operation to complete.  This timeout is in seconds,
 and can be one of several formats: a timeout interval in seconds, an
-absolute deadline (in <a class="reference external" href="https://docs.python.org/3/library/time.html#time.time" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.time()</span></code></a> format) as a single element tuple,
+absolute deadline (in <a class="reference external" href="https://docs.python.org/3/library/time.html#time.time" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.time()</span></code></a> format) as a single element tuple,
 or None to specify that no timeout will occur.  Note that a timeout of 0
 will timeout immediately if any waiting is required.</p>
 <p>If a timeout occurs then a <a class="reference internal" href="cothread.html#cothread.Timedout" title="cothread.Timedout"><code class="xref py py-exc docutils literal notranslate"><span class="pre">Timedout</span></code></a> exception will be raised unless
@@ -618,7 +618,7 @@ response as a <a class="reference internal" href="#cothread.catools.ca_nothing" 
 callback thread.
 Unless <code class="docutils literal notranslate"><span class="pre">wait</span></code> is specified the call to <a class="reference internal" href="#cothread.catools.caput" title="cothread.catools.caput"><code class="xref any py py-func docutils literal notranslate"><span class="pre">caput</span></code></a> will complete as soon
 as the caput has been initiated.  If <code class="docutils literal notranslate"><span class="pre">wait</span></code> is specified, whether
-<a class="reference internal" href="#cothread.catools.caput" title="cothread.catools.caput"><code class="xref any py py-func docutils literal notranslate"><span class="pre">caput</span></code></a> returns before or after <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a> is called is unpredictable.</p></li>
+<a class="reference internal" href="#cothread.catools.caput" title="cothread.catools.caput"><code class="xref any py py-func docutils literal notranslate"><span class="pre">caput</span></code></a> returns before or after <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.14)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a> is called is unpredictable.</p></li>
 <li><p><strong>timeout</strong> – Documented in <a class="reference internal" href="#common"><span class="std std-ref">Common Notes</span></a> above.</p></li>
 <li><p><strong>throw</strong> – Documented in <a class="reference internal" href="#common"><span class="std std-ref">Common Notes</span></a> above.</p></li>
 </ul>
@@ -684,7 +684,7 @@ reported as:</p>
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">index</span></code> is the position in the original array of PVs of the PV
-generating this update.  The values passed to <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a> are
+generating this update.  The values passed to <a class="reference external" href="https://docs.python.org/3/glossary.html#term-callback" title="(in Python v3.14)"><code class="xref any docutils literal notranslate"><span class="pre">callback</span></code></a> are
 <a class="reference internal" href="#augmented"><span class="std std-ref">Augmented Values</span></a>.</p>
 <p>The parameters modify the behaviour as follows:</p>
 <dl class="field-list simple">
@@ -716,10 +716,10 @@ bit-wise or of any the following are possible:</p>
 </table>
 </div>
 <p>If <code class="docutils literal notranslate"><span class="pre">events</span></code> is not specified then the default value depends on the value
-selected for <a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a> as follows:</p>
+selected for <a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.14)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a> as follows:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a></p></th>
+<tr class="row-odd"><th class="head"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.14)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a></p></th>
 <th class="head"><p>Default value for <code class="docutils literal notranslate"><span class="pre">events</span></code></p></th>
 </tr>
 </thead>
@@ -859,7 +859,7 @@ used to convert <a class="reference internal" href="#augmented-datatype"><span c
 
 </dd></dl>
 
-<p>The <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> representation of this structure can be printed to
+<p>The <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> representation of this structure can be printed to
 produce output similar to that produced by the <code class="docutils literal notranslate"><span class="pre">cainfo</span></code> command line
 tool.</p>
 </p></li>
@@ -960,19 +960,19 @@ by the underlying length of the EPICS source, ie by its
 </thead>
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_str" title="cothread.catools.cothread.dbr.ca_str"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_str</span></code></a></p></td>
-<td><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p></td>
 <td><p>String value</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_int" title="cothread.catools.cothread.dbr.ca_int"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_int</span></code></a></p></td>
-<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p></td>
 <td><p>Integral value</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_float" title="cothread.catools.cothread.dbr.ca_float"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_float</span></code></a></p></td>
-<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p></td>
+<td><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p></td>
 <td><p>Floating point value</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_array" title="cothread.catools.cothread.dbr.ca_array"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_array</span></code></a></p></td>
-<td><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p></td>
+<td><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p></td>
 <td><p>Any array value</p></td>
 </tr>
 </tbody>
@@ -1000,14 +1000,14 @@ by the underlying length of the EPICS source, ie by its
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.catools.cothread.dbr.ca_array">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.dbr.</span></span><span class="sig-name descname"><span class="pre">ca_array</span></span><a class="headerlink" href="#cothread.catools.cothread.dbr.ca_array" title="Link to this definition">#</a></dt>
-<dd><p>Array type derived from <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>.  The associated
-<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.dtype.html#numpy.ndarray.dtype" title="(in NumPy v2.2)"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dtype</span></code></a> will be as close a fit to the underlying data as possible.</p>
+<dd><p>Array type derived from <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>.  The associated
+<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.dtype.html#numpy.ndarray.dtype" title="(in NumPy v2.3)"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dtype</span></code></a> will be as close a fit to the underlying data as possible.</p>
 </dd></dl>
 
 </section>
 <section id="augmented-values">
 <span id="augmented"></span><h3>Augmented Values<a class="headerlink" href="#augmented-values" title="Link to this heading">#</a></h3>
-<p>Augmented values are normally Python or <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.2)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> values with extra fields:
+<p>Augmented values are normally Python or <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.3)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> values with extra fields:
 the <code class="xref py py-attr docutils literal notranslate"><span class="pre">.ok</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">.name</span></code> fields are already mentioned above, and
 further extra fields will be present depending on format requested for the data.
 As pointed out above, <code class="xref py py-attr docutils literal notranslate"><span class="pre">.ok</span></code> is always <code class="docutils literal notranslate"><span class="pre">True</span></code> for valid data.</p>
@@ -1076,13 +1076,13 @@ field.</p>
 
 </li>
 <li><p>A python type compatible with any of the above values, such as
-<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>.  These correspond to
+<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>.  These correspond to
 <a class="reference internal" href="#cothread.catools.DBR_LONG" title="cothread.catools.DBR_LONG"><code class="xref py py-const docutils literal notranslate"><span class="pre">DBR_LONG</span></code></a>, <a class="reference internal" href="#cothread.catools.DBR_DOUBLE" title="cothread.catools.DBR_DOUBLE"><code class="xref py py-const docutils literal notranslate"><span class="pre">DBR_DOUBLE</span></code></a> and <a class="reference internal" href="#cothread.catools.DBR_STRING" title="cothread.catools.DBR_STRING"><code class="xref py py-const docutils literal notranslate"><span class="pre">DBR_STRING</span></code></a>
 respectively.</p></li>
-<li><p>Any <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.dtype</span></code></a> compatible with any of the above values.</p></li>
+<li><p>Any <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.dtype</span></code></a> compatible with any of the above values.</p></li>
 <li><p>One of the special values <code class="docutils literal notranslate"><span class="pre">DBR_CHAR_STR</span></code>, or <code class="docutils literal notranslate"><span class="pre">DBR_CHAR_BYTES</span></code>.
 This is used to request a char array which is then converted to a Python
-<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a> string on receipt.  It is not
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a> string on receipt.  It is not
 sensible to specify <a class="reference internal" href="#cothread.catools.ca_info..count" title="cothread.catools.ca_info..count"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">count</span></code></a> with this option.  The option
 <code class="docutils literal notranslate"><span class="pre">DBR_CHAR_BYTES</span></code> is meaningless and not supported for <a class="reference internal" href="#cothread.catools.caput" title="cothread.catools.caput"><code class="xref py py-func docutils literal notranslate"><span class="pre">caput()</span></code></a>.</p>
 <p>Note that if the PV name ends in <code class="docutils literal notranslate"><span class="pre">$</span></code> and <a class="reference internal" href="#augmented-datatype"><span class="std std-ref">datatype</span></a> is not specified
@@ -1093,7 +1093,7 @@ then <code class="docutils literal notranslate"><span class="pre">DBR_CHAR_STR</
 unless the channel is an enumeration, in which case the corresponding
 string is returned.</p></li>
 <li><p>For <a class="reference internal" href="#cothread.catools.caget" title="cothread.catools.caget"><code class="xref py py-func docutils literal notranslate"><span class="pre">caget()</span></code></a> and <a class="reference internal" href="#cothread.catools.camonitor" title="cothread.catools.camonitor"><code class="xref py py-func docutils literal notranslate"><span class="pre">camonitor()</span></code></a> two further special values are
-supported.  In both of these cases <a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a> is ignored:</p>
+supported.  In both of these cases <a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.14)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a> is ignored:</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="cothread.catools.DBR_STSACK_STRING">
 <span class="sig-prename descclassname"><span class="pre">cothread.catools.</span></span><span class="sig-name descname"><span class="pre">DBR_STSACK_STRING</span></span><a class="headerlink" href="#cothread.catools.DBR_STSACK_STRING" title="Link to this definition">#</a></dt>
@@ -1125,7 +1125,7 @@ and <code class="docutils literal notranslate"><span class="pre">_ACKS</span></c
 </dd>
 </dl>
 <dl id="augmented-format">
-<dt><a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.13)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a></dt><dd><p>This controls how much auxilliary information will be returned with
+<dt><a class="reference external" href="https://docs.python.org/3/library/functions.html#format" title="(in Python v3.14)"><code class="xref any docutils literal notranslate"><span class="pre">format</span></code></a></dt><dd><p>This controls how much auxilliary information will be returned with
 the retrieved data, and can be one of the following:</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="cothread.catools.FORMAT_RAW">
@@ -1141,7 +1141,7 @@ the retrieved data, and can be one of the following:</p>
 and <a class="reference internal" href="#cothread.catools..raw_stamp" title="cothread.catools..raw_stamp"><code class="xref py py-attr docutils literal notranslate"><span class="pre">raw_stamp</span></code></a> together with alarm
 <a class="reference internal" href="#cothread.catools..status" title="cothread.catools..status"><code class="xref py py-attr docutils literal notranslate"><span class="pre">status</span></code></a> and <a class="reference internal" href="#cothread.catools..severity" title="cothread.catools..severity"><code class="xref py py-attr docutils literal notranslate"><span class="pre">severity</span></code></a>
 fields.  The value in <a class="reference internal" href="#cothread.catools..timestamp" title="cothread.catools..timestamp"><code class="xref py py-attr docutils literal notranslate"><span class="pre">timestamp</span></code></a> is in
-<a class="reference external" href="https://docs.python.org/3/library/time.html#time.time" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.time()</span></code></a> format (seconds in Unix UTC epoch) rounded to the
+<a class="reference external" href="https://docs.python.org/3/library/time.html#time.time" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.time()</span></code></a> format (seconds in Unix UTC epoch) rounded to the
 nearest microsecond.</p>
 </dd></dl>
 
@@ -1291,7 +1291,7 @@ instead.</p>
 <dt class="sig sig-object py" id="cothread.catools..datetime">
 <span class="sig-prename descclassname"><span class="pre">.</span></span><span class="sig-name descname"><span class="pre">datetime</span></span><a class="headerlink" href="#cothread.catools..datetime" title="Link to this definition">#</a></dt>
 <dd><p>This is a dynamic property which returns <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> as a
-<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> value by computing</p>
+<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> value by computing</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1576,7 +1576,7 @@ value for <code class="code docutils literal notranslate"><span class="pre">pv</
 <dt class="sig sig-object py" id="cothread.pv.PV_array">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.pv.</span></span><span class="sig-name descname"><span class="pre">PV_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caput_wait</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.pv.PV_array" title="Link to this definition">#</a></dt>
 <dd><p>Uses <em>pvs</em> to create an aggregate array containing the value of all
-specified PVs aggregated into a single <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.2)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array.  The type of all
+specified PVs aggregated into a single <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.3)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array.  The type of all
 the elements is specified by <em>dtype</em> and the number of points contributed by
 each PV is given by <em>count</em>.  If <em>count</em> is 1 the generated array is one
 dimensional of shape <code class="docutils literal notranslate"><span class="pre">(len(pvs),)</span></code>, otherwise the shape is
@@ -1597,7 +1597,7 @@ last reference to the created <a class="reference internal" href="#cothread.pv.P
 <dl class="py method">
 <dt class="sig sig-object py" id="cothread.pv.PV_array.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cothread.pv.PV_array.get" title="Link to this definition">#</a></dt>
-<dd><p>Returns copy of current value.  This will be a <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.2)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array with
+<dd><p>Returns copy of current value.  This will be a <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.3)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array with
 shape and dtype determined by the arguments to the constructor.  This is
 the same as the value returned by the <a class="reference internal" href="#cothread.pv.PV_array.value" title="cothread.pv.PV_array.value"><code class="xref py py-attr docutils literal notranslate"><span class="pre">value</span></code></a> attribute.</p>
 </dd></dl>
@@ -1643,7 +1643,7 @@ array have received at least one update by blocking.</p>
 <dt class="sig sig-object py" id="cothread.pv.PV_array.timestamp">
 <span class="sig-name descname"><span class="pre">timestamp</span></span><a class="headerlink" href="#cothread.pv.PV_array.timestamp" title="Link to this definition">#</a></dt>
 <dd><p>Timestamp of the most recent update for each monitored PV in standard
-<a class="reference external" href="https://docs.python.org/3/library/time.html#time.time" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.time()</span></code></a> format.</p>
+<a class="reference external" href="https://docs.python.org/3/library/time.html#time.time" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">time.time()</span></code></a> format.</p>
 </dd></dl>
 
 <dl class="py attribute">
