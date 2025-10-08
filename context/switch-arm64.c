@@ -105,7 +105,12 @@ FSIZE(switch_frame)
 FNAME(create_frame)
 "       stp x1, x2, [x0, #-16]!\n"
 "       mov x16, lr\n"               // Save LR so can use same STP slot
+#if defined(__aarch64__)  &&  defined(__APPLE__) // darwin syntax
+"       adrp lr, action_entry@PAGE\n"
+"       add lr, lr, action_entry@PAGEOFF\n"
+#else
 "       ldr lr, =action_entry\n"
+#endif
 "       stp x19, x20, [x0, #-16]!\n"
 "       stp x21, x22, [x0, #-16]!\n"
 "       stp x23, x24, [x0, #-16]!\n"
