@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Using the catools Library &#8212; cothread 2.20.2.dev2+gaa43929d0 documentation</title>
+    <title>Using the catools Library &#8212; cothread 2.20.2.dev3+g0eaef073a documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=b3393384"></script>
+    <script src="../_static/documentation_options.js?v=07e41cea"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -972,7 +972,7 @@ by the underlying length of the EPICS source, ie by its
 <td><p>Floating point value</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#cothread.catools.cothread.dbr.ca_array" title="cothread.catools.cothread.dbr.ca_array"><code class="xref py py-class docutils literal notranslate"><span class="pre">ca_array</span></code></a></p></td>
-<td><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p></td>
+<td><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p></td>
 <td><p>Any array value</p></td>
 </tr>
 </tbody>
@@ -1000,14 +1000,14 @@ by the underlying length of the EPICS source, ie by its
 <dl class="py class">
 <dt class="sig sig-object py" id="cothread.catools.cothread.dbr.ca_array">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.dbr.</span></span><span class="sig-name descname"><span class="pre">ca_array</span></span><a class="headerlink" href="#cothread.catools.cothread.dbr.ca_array" title="Link to this definition">#</a></dt>
-<dd><p>Array type derived from <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>.  The associated
-<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.dtype.html#numpy.ndarray.dtype" title="(in NumPy v2.3)"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dtype</span></code></a> will be as close a fit to the underlying data as possible.</p>
+<dd><p>Array type derived from <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>.  The associated
+<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.dtype.html#numpy.ndarray.dtype" title="(in NumPy v2.4)"><code class="xref py py-attr docutils literal notranslate"><span class="pre">dtype</span></code></a> will be as close a fit to the underlying data as possible.</p>
 </dd></dl>
 
 </section>
 <section id="augmented-values">
 <span id="augmented"></span><h3>Augmented Values<a class="headerlink" href="#augmented-values" title="Link to this heading">#</a></h3>
-<p>Augmented values are normally Python or <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.3)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> values with extra fields:
+<p>Augmented values are normally Python or <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.4)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> values with extra fields:
 the <code class="xref py py-attr docutils literal notranslate"><span class="pre">.ok</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">.name</span></code> fields are already mentioned above, and
 further extra fields will be present depending on format requested for the data.
 As pointed out above, <code class="xref py py-attr docutils literal notranslate"><span class="pre">.ok</span></code> is always <code class="docutils literal notranslate"><span class="pre">True</span></code> for valid data.</p>
@@ -1079,7 +1079,7 @@ field.</p>
 <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>.  These correspond to
 <a class="reference internal" href="#cothread.catools.DBR_LONG" title="cothread.catools.DBR_LONG"><code class="xref py py-const docutils literal notranslate"><span class="pre">DBR_LONG</span></code></a>, <a class="reference internal" href="#cothread.catools.DBR_DOUBLE" title="cothread.catools.DBR_DOUBLE"><code class="xref py py-const docutils literal notranslate"><span class="pre">DBR_DOUBLE</span></code></a> and <a class="reference internal" href="#cothread.catools.DBR_STRING" title="cothread.catools.DBR_STRING"><code class="xref py py-const docutils literal notranslate"><span class="pre">DBR_STRING</span></code></a>
 respectively.</p></li>
-<li><p>Any <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.dtype</span></code></a> compatible with any of the above values.</p></li>
+<li><p>Any <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.dtype</span></code></a> compatible with any of the above values.</p></li>
 <li><p>One of the special values <code class="docutils literal notranslate"><span class="pre">DBR_CHAR_STR</span></code>, or <code class="docutils literal notranslate"><span class="pre">DBR_CHAR_BYTES</span></code>.
 This is used to request a char array which is then converted to a Python
 <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a> string on receipt.  It is not
@@ -1576,7 +1576,7 @@ value for <code class="code docutils literal notranslate"><span class="pre">pv</
 <dt class="sig sig-object py" id="cothread.pv.PV_array">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cothread.pv.</span></span><span class="sig-name descname"><span class="pre">PV_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caput_wait</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cothread.pv.PV_array" title="Link to this definition">#</a></dt>
 <dd><p>Uses <em>pvs</em> to create an aggregate array containing the value of all
-specified PVs aggregated into a single <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.3)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array.  The type of all
+specified PVs aggregated into a single <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.4)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array.  The type of all
 the elements is specified by <em>dtype</em> and the number of points contributed by
 each PV is given by <em>count</em>.  If <em>count</em> is 1 the generated array is one
 dimensional of shape <code class="docutils literal notranslate"><span class="pre">(len(pvs),)</span></code>, otherwise the shape is
@@ -1597,7 +1597,7 @@ last reference to the created <a class="reference internal" href="#cothread.pv.P
 <dl class="py method">
 <dt class="sig sig-object py" id="cothread.pv.PV_array.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cothread.pv.PV_array.get" title="Link to this definition">#</a></dt>
-<dd><p>Returns copy of current value.  This will be a <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.3)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array with
+<dd><p>Returns copy of current value.  This will be a <a class="reference external" href="https://numpy.org/doc/stable/reference/index.html#module-numpy" title="(in NumPy v2.4)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code></a> array with
 shape and dtype determined by the arguments to the constructor.  This is
 the same as the value returned by the <a class="reference internal" href="#cothread.pv.PV_array.value" title="cothread.pv.PV_array.value"><code class="xref py py-attr docutils literal notranslate"><span class="pre">value</span></code></a> attribute.</p>
 </dd></dl>
