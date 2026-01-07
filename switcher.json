@@ -4,32 +4,28 @@
     "url": "https://DiamondLightSource.github.io/cothread/master/"
   },
   {
-    "version": "2.20.1a",
-    "url": "https://DiamondLightSource.github.io/cothread/2.20.1a/"
-  },
-  {
-    "version": "2.20.1",
-    "url": "https://DiamondLightSource.github.io/cothread/2.20.1/"
-  },
-  {
-    "version": "2.20.0",
-    "url": "https://DiamondLightSource.github.io/cothread/2.20.0/"
-  },
-  {
-    "version": "2.19.1",
-    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
+    "version": "2-19",
+    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
     "version": "2.19",
     "url": "https://DiamondLightSource.github.io/cothread/2.19/"
   },
   {
-    "version": "2-19",
-    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
+    "version": "2.19.1",
+    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
   },
   {
-    "version": "arm-use-adr",
-    "url": "https://DiamondLightSource.github.io/cothread/arm-use-adr/"
+    "version": "2.20.0",
+    "url": "https://DiamondLightSource.github.io/cothread/2.20.0/"
+  },
+  {
+    "version": "2.20.1",
+    "url": "https://DiamondLightSource.github.io/cothread/2.20.1/"
+  },
+  {
+    "version": "2.20.1a",
+    "url": "https://DiamondLightSource.github.io/cothread/2.20.1a/"
   },
   {
     "version": "ci_add_arm",
@@ -46,9 +42,5 @@
   {
     "version": "modify_versioning",
     "url": "https://DiamondLightSource.github.io/cothread/modify_versioning/"
-  },
-  {
-    "version": "remove_linkcheck",
-    "url": "https://DiamondLightSource.github.io/cothread/remove_linkcheck/"
   }
 ]
