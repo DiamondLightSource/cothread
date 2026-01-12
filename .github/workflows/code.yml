@@ -86,7 +86,7 @@ jobs:
           CIBW_SKIP: pp* *i686*
 
       - name: Upload sdist and wheels as artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dist-${{ matrix.os }}-${{ matrix.python }}
           path: dist
