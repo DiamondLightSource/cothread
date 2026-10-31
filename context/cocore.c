@@ -34,7 +34,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #if !defined(__APPLE__)
+#if !defined(__OpenBSD__)
 #include <malloc.h>
+#endif
 #endif
 #include <assert.h>
 #include <unistd.h>

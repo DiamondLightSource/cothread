@@ -62,6 +62,11 @@
 #define MALLOC_ALIGNED(alignment, size) valloc(size)
 #define FREE_ALIGNED(mem)               free(mem)
 
+#elif defined(__OpenBSD__)
+/* See above -- should also apply to at least FreeBSD, right? */
+#define MALLOC_ALIGNED(alignment, size) valloc(size)
+#define FREE_ALIGNED(mem)               free(mem)
+
 #elif defined(WIN32)
 /* This is what we have to use on 32-bit Windows. */
 #define MALLOC_ALIGNED(alignment, size) \
