@@ -72,18 +72,17 @@ jobs:
           pipx run build --sdist
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v4.3.5
         with:
           output-dir: dist
         env:
-          # Force using an older manylinux image to support more OSs
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           # Simple test that the wheel is loaded and available
           CIBW_TEST_COMMAND: python -c "import cothread; print(cothread.__version__)"
-          # Skip all PyPy wheels (GIL deadlock detected in ThreadState_New)
           # Skip all i686 wheels (cannot build numpy)
+          # Skip Python 3.15 due to https://github.com/python/cpython/issues/160719
+          # Skip free-threading builds on all platforms
           # This leaves manylinux and musllinux wheels
-          CIBW_SKIP: pp* *i686*
+          CIBW_SKIP: "*i686* cp315* cp3??t-*"
 
       - name: Upload sdist and wheels as artifacts
         uses: actions/upload-artifact@v7
