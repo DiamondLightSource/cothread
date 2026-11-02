@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 
@@ -7,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cothread.coselect &#8212; cothread 2.20.2.dev3+g0eaef073a documentation</title>
+    <title>cothread.coselect &#8212; cothread 2.20.2.dev11+gc9e44b1a6 documentation</title>
   
   
   
@@ -26,8 +25,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
@@ -35,45 +34,53 @@
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=07e41cea"></script>
-    <script src="../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/documentation_options.js?v=ca8685d1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=30646c52"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/cothread/coselect';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://DiamondLightSource.github.io/cothread/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'master';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="../../_static/dls-favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="master" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -99,9 +106,9 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -174,7 +181,7 @@
         <div class="navbar-item navbar-persistent--container">
           
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -184,11 +191,18 @@
       
         <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
       
         <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -201,8 +215,7 @@
           
           
           
-          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
         <li class="nav-item">
           
@@ -213,8 +226,7 @@
           
           
           
-          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">PyPI</span></a>
+          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i><span class="visually-hidden">PyPI</span></a>
         </li>
 </ul></div>
       
@@ -245,7 +257,7 @@
   
     <div class="navbar-persistent--mobile">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
  <i class="fa-solid fa-magnifying-glass"></i>
  <span class="search-button__default-text">Search</span>
  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
@@ -266,7 +278,7 @@
       
         
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
         
 
@@ -314,11 +326,18 @@
         
           <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
         
           <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -331,8 +350,7 @@
           
           
           
-          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/DiamondLightSource/cothread" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
         <li class="nav-item">
           
@@ -343,8 +361,7 @@
           
           
           
-          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">PyPI</span></a>
+          <a href="https://pypi.org/project/cothread" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fas fa-cube fa-lg" aria-hidden="true"></i><span class="visually-hidden">PyPI</span></a>
         </li>
 </ul></div>
         
@@ -404,7 +421,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -456,41 +473,41 @@
 <span class="c1">#      OX11 0DE</span>
 <span class="c1">#      michael.abbott@diamond.ac.uk</span>
 
-<span class="sd">&#39;&#39;&#39;Support for cooperative select functions.  Replaces the functionality of</span>
-<span class="sd">the standard select module.&#39;&#39;&#39;</span>
+<span class="sd">'''Support for cooperative select functions.  Replaces the functionality of</span>
+<span class="sd">the standard select module.'''</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">select</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_select</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">cothread</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s1">&#39;select&#39;</span><span class="p">,</span>           <span class="c1"># Non-blocking select function</span>
-    <span class="s1">&#39;poll&#39;</span><span class="p">,</span>             <span class="c1"># Non-blocking emulation of poll object</span>
-    <span class="s1">&#39;poll_list&#39;</span><span class="p">,</span>        <span class="c1"># Simpler interface to non-blocking polling</span>
-    <span class="s1">&#39;poll_block&#39;</span><span class="p">,</span>       <span class="c1"># Simpler interface to blocking polling</span>
+    <span class="s1">'select'</span><span class="p">,</span>           <span class="c1"># Non-blocking select function</span>
+    <span class="s1">'poll'</span><span class="p">,</span>             <span class="c1"># Non-blocking emulation of poll object</span>
+    <span class="s1">'poll_list'</span><span class="p">,</span>        <span class="c1"># Simpler interface to non-blocking polling</span>
+    <span class="s1">'poll_block'</span><span class="p">,</span>       <span class="c1"># Simpler interface to blocking polling</span>
 
-    <span class="s1">&#39;SelectError&#39;</span><span class="p">,</span>      <span class="c1"># Exception raised by select()</span>
+    <span class="s1">'SelectError'</span><span class="p">,</span>      <span class="c1"># Exception raised by select()</span>
 
     <span class="c1"># Poll constants</span>
-    <span class="s1">&#39;POLLIN&#39;</span><span class="p">,</span>           <span class="c1"># Data ready to read</span>
-    <span class="s1">&#39;POLLPRI&#39;</span><span class="p">,</span>          <span class="c1"># Urgent data ready to read</span>
-    <span class="s1">&#39;POLLOUT&#39;</span><span class="p">,</span>          <span class="c1"># Ready for writing</span>
-    <span class="s1">&#39;POLLERR&#39;</span><span class="p">,</span>          <span class="c1"># Error condition</span>
-    <span class="s1">&#39;POLLHUP&#39;</span><span class="p">,</span>          <span class="c1"># Hangup: socket has disconnected</span>
-    <span class="s1">&#39;POLLNVAL&#39;</span><span class="p">,</span>         <span class="c1"># Invalid request, not open.</span>
+    <span class="s1">'POLLIN'</span><span class="p">,</span>           <span class="c1"># Data ready to read</span>
+    <span class="s1">'POLLPRI'</span><span class="p">,</span>          <span class="c1"># Urgent data ready to read</span>
+    <span class="s1">'POLLOUT'</span><span class="p">,</span>          <span class="c1"># Ready for writing</span>
+    <span class="s1">'POLLERR'</span><span class="p">,</span>          <span class="c1"># Error condition</span>
+    <span class="s1">'POLLHUP'</span><span class="p">,</span>          <span class="c1"># Hangup: socket has disconnected</span>
+    <span class="s1">'POLLNVAL'</span><span class="p">,</span>         <span class="c1"># Invalid request, not open.</span>
 
-    <span class="s1">&#39;POLLEXTRA&#39;</span><span class="p">,</span>        <span class="c1"># If any of these are set there is a socket problem</span>
+    <span class="s1">'POLLEXTRA'</span><span class="p">,</span>        <span class="c1"># If any of these are set there is a socket problem</span>
 
-    <span class="s1">&#39;select_hook&#39;</span><span class="p">,</span>      <span class="c1"># Replaces select methods</span>
+    <span class="s1">'select_hook'</span><span class="p">,</span>      <span class="c1"># Replaces select methods</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="select_hook">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.select_hook">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_hook</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;Replaces the blocking methods in the select module with the non-blocking</span>
+<span class="w">    </span><span class="sd">'''Replaces the blocking methods in the select module with the non-blocking</span>
 <span class="sd">    methods implemented here.  Not safe to call if other threads need the</span>
-<span class="sd">    original methods.&#39;&#39;&#39;</span>
+<span class="sd">    original methods.'''</span>
     <span class="n">_select</span><span class="o">.</span><span class="n">select</span> <span class="o">=</span> <span class="n">select</span>
     <span class="n">_select</span><span class="o">.</span><span class="n">poll</span> <span class="o">=</span> <span class="n">poll</span></div>
 
@@ -506,20 +523,20 @@
 
 <span class="c1"># We need these names from _select, but unfortunately it has a bad habit of not</span>
 <span class="c1"># always providing them, particularly if poll() is broken.  So we define</span>
-<span class="c1"># defaults to use internally if they can&#39;t be read.</span>
+<span class="c1"># defaults to use internally if they can't be read.</span>
 <span class="n">_poll_values</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">(</span><span class="s1">&#39;POLLIN&#39;</span><span class="p">,</span>   <span class="mi">1</span><span class="p">),</span>    <span class="p">(</span><span class="s1">&#39;POLLPRI&#39;</span><span class="p">,</span>  <span class="mi">2</span><span class="p">),</span>    <span class="p">(</span><span class="s1">&#39;POLLOUT&#39;</span><span class="p">,</span>  <span class="mi">4</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;POLLERR&#39;</span><span class="p">,</span>  <span class="mi">8</span><span class="p">),</span>    <span class="p">(</span><span class="s1">&#39;POLLHUP&#39;</span><span class="p">,</span>  <span class="mi">16</span><span class="p">),</span>   <span class="p">(</span><span class="s1">&#39;POLLNVAL&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)]</span>
+    <span class="p">(</span><span class="s1">'POLLIN'</span><span class="p">,</span>   <span class="mi">1</span><span class="p">),</span>    <span class="p">(</span><span class="s1">'POLLPRI'</span><span class="p">,</span>  <span class="mi">2</span><span class="p">),</span>    <span class="p">(</span><span class="s1">'POLLOUT'</span><span class="p">,</span>  <span class="mi">4</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'POLLERR'</span><span class="p">,</span>  <span class="mi">8</span><span class="p">),</span>    <span class="p">(</span><span class="s1">'POLLHUP'</span><span class="p">,</span>  <span class="mi">16</span><span class="p">),</span>   <span class="p">(</span><span class="s1">'POLLNVAL'</span><span class="p">,</span> <span class="mi">32</span><span class="p">)]</span>
 <span class="k">for</span> <span class="n">_name</span><span class="p">,</span> <span class="n">_default</span> <span class="ow">in</span> <span class="n">_poll_values</span><span class="p">:</span>
     <span class="nb">globals</span><span class="p">()[</span><span class="n">_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">_select</span><span class="p">,</span> <span class="n">_name</span><span class="p">,</span> <span class="n">_default</span><span class="p">)</span>
 
 <span class="c1"># These three flags are always treated as of interest and are never consumed.</span>
 <span class="n">POLLEXTRA</span> <span class="o">=</span> <span class="n">POLLERR</span> <span class="o">|</span> <span class="n">POLLHUP</span> <span class="o">|</span> <span class="n">POLLNVAL</span>
 
-<span class="c1"># The following extra symbols define poll names that aren&#39;t present on all</span>
+<span class="c1"># The following extra symbols define poll names that aren't present on all</span>
 <span class="c1"># platforms, so we only export them if they exist.</span>
 <span class="n">_poll_extra</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s1">&#39;POLLRDNORM&#39;</span><span class="p">,</span> <span class="s1">&#39;POLLRDBAND&#39;</span><span class="p">,</span> <span class="s1">&#39;POLLWRNORM&#39;</span><span class="p">,</span> <span class="s1">&#39;POLLWRBAND&#39;</span><span class="p">,</span> <span class="s1">&#39;POLLMSG&#39;</span><span class="p">]</span>
+    <span class="s1">'POLLRDNORM'</span><span class="p">,</span> <span class="s1">'POLLRDBAND'</span><span class="p">,</span> <span class="s1">'POLLWRNORM'</span><span class="p">,</span> <span class="s1">'POLLWRBAND'</span><span class="p">,</span> <span class="s1">'POLLMSG'</span><span class="p">]</span>
 <span class="k">for</span> <span class="n">_name</span> <span class="ow">in</span> <span class="n">_poll_extra</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">_select</span><span class="p">,</span> <span class="n">_name</span><span class="p">):</span>
         <span class="nb">globals</span><span class="p">()[</span><span class="n">_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">_select</span><span class="p">,</span> <span class="n">_name</span><span class="p">)</span>
@@ -527,10 +544,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">poll_block_poll</span><span class="p">(</span><span class="n">poll_list</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;A simple wrapper for the poll method to provide actually directly</span>
+<span class="w">    </span><span class="sd">'''A simple wrapper for the poll method to provide actually directly</span>
 <span class="sd">    useful functionality.  This will block non-cooperatively, so should only</span>
 <span class="sd">    be used in a scheduler loop.</span>
-<span class="sd">        Note that the timeout is in seconds.&#39;&#39;&#39;</span>
+<span class="sd">        Note that the timeout is in seconds.'''</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">_select_poll</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">events</span> <span class="ow">in</span> <span class="n">poll_list</span><span class="p">:</span>
         <span class="n">p</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">events</span><span class="p">)</span>
@@ -541,18 +558,18 @@
         <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">_select</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
         <span class="c1"># Convert a select error into an empty list of events.  This will</span>
-        <span class="c1"># occur if a signal is caught, for example if we&#39;re suspended and</span>
+        <span class="c1"># occur if a signal is caught, for example if we're suspended and</span>
         <span class="c1"># then resumed!</span>
         <span class="k">return</span> <span class="p">[]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">poll_block_select</span><span class="p">(</span><span class="n">poll_list</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;This reimplements the functionality of poll_block but using select</span>
+<span class="w">    </span><span class="sd">'''This reimplements the functionality of poll_block but using select</span>
 <span class="sd">    instead.  This is intended to be used</span>
 <span class="sd">        1. where poll is not available</span>
 <span class="sd">        2. on OSX where poll is broken, does not work on all file descriptors,</span>
 <span class="sd">           in particular not on stdin.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    '''</span>
     <span class="n">flag_mapping</span> <span class="o">=</span> <span class="p">(</span><span class="n">POLLIN</span><span class="p">,</span> <span class="n">POLLOUT</span><span class="p">,</span> <span class="n">POLLPRI</span><span class="p">)</span>
 
     <span class="c1"># Generate list of arguments for select from poll arguments.</span>
@@ -566,7 +583,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">selected</span> <span class="o">=</span> <span class="n">_select_select</span><span class="p">(</span><span class="o">*</span><span class="n">selects</span> <span class="o">+</span> <span class="p">(</span><span class="n">timeout</span><span class="p">,))</span>
     <span class="k">except</span> <span class="n">_select</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-        <span class="c1"># Oh dear.  *Something* is wrong, but I don&#39;t know which file handle</span>
+        <span class="c1"># Oh dear.  *Something* is wrong, but I don't know which file handle</span>
         <span class="c1"># is broken.  This is not good: going to have to probe each file in</span>
         <span class="c1"># turn to find out.</span>
         <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">events</span> <span class="ow">in</span> <span class="n">poll_list</span><span class="p">:</span>
@@ -577,7 +594,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">selected</span> <span class="o">=</span> <span class="n">_select_select</span><span class="p">(</span><span class="o">*</span><span class="n">selects</span> <span class="o">+</span> <span class="p">(</span><span class="mi">0</span><span class="p">,))</span>
             <span class="k">except</span> <span class="n">_select</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-                <span class="c1"># Still don&#39;t really know what&#39;s wrong, but it&#39;s a safe bet</span>
+                <span class="c1"># Still don't really know what's wrong, but it's a safe bet</span>
                 <span class="c1"># the problem is the file handle.</span>
                 <span class="n">result</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">=</span> <span class="n">POLLNVAL</span>
             <span class="k">else</span><span class="p">:</span>
@@ -596,10 +613,10 @@
 
 <span class="n">_select_select</span> <span class="o">=</span> <span class="n">_select</span><span class="o">.</span><span class="n">select</span>     <span class="c1"># Keep a copy of original select for hooking</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_platform</span>
-<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">_select</span><span class="p">,</span> <span class="s1">&#39;poll&#39;</span><span class="p">):</span>
+<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">_select</span><span class="p">,</span> <span class="s1">'poll'</span><span class="p">):</span>
     <span class="n">_select_poll</span> <span class="o">=</span> <span class="n">_select</span><span class="o">.</span><span class="n">poll</span>     <span class="c1"># Similarly get copy of original poll</span>
-    <span class="k">if</span> <span class="n">_platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Darwin&#39;</span><span class="p">:</span>
-        <span class="c1"># Unfortunately it would appear that Apple&#39;s implementation of the</span>
+    <span class="k">if</span> <span class="n">_platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'Darwin'</span><span class="p">:</span>
+        <span class="c1"># Unfortunately it would appear that Apple's implementation of the</span>
         <span class="c1"># poll() system call is incomplete: it returns POLLNVAL for devices!</span>
         <span class="c1"># Apparently kqueue and poll fail on anything in /dev (I suppose they</span>
         <span class="c1"># work on ordinary files and sockets?)</span>
@@ -609,7 +626,7 @@
         <span class="c1"># This is the preferred case.</span>
         <span class="n">poll_block</span> <span class="o">=</span> <span class="n">poll_block_poll</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">_platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Windows&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">_platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'Windows'</span><span class="p">:</span>
         <span class="c1"># Oops.  Has to be the Windows way, how horrid.</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">poll_win32</span><span class="w"> </span><span class="kn">import</span> <span class="n">poll_block_win32</span> <span class="k">as</span> <span class="n">poll_block</span>
     <span class="k">else</span><span class="p">:</span>
@@ -620,11 +637,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_poll_list</span><span class="p">(</span><span class="n">poll_queue</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;Computes a list of (file, event_mask) pairs of all descriptor events</span>
+<span class="w">    </span><span class="sd">'''Computes a list of (file, event_mask) pairs of all descriptor events</span>
 <span class="sd">    of interest, according to the given poll_queue, which is itself a</span>
 <span class="sd">    dictionary mapping descriptors to lists of pollers.</span>
 <span class="sd">        Returns the list together with a new dictionary with all inactive, ie</span>
-<span class="sd">    woken, pollers removed.&#39;&#39;&#39;</span>
+<span class="sd">    woken, pollers removed.'''</span>
     <span class="n">poll_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">new_poll_queue</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">pollers</span> <span class="ow">in</span> <span class="n">poll_queue</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -641,10 +658,10 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Poller</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;Wrapper for handling poll wakeup.&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">'''Wrapper for handling poll wakeup.'''</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_list</span><span class="p">):</span>
-        <span class="c1"># .events is a dictionary mapping each descriptor we&#39;re interested in</span>
+        <span class="c1"># .events is a dictionary mapping each descriptor we're interested in</span>
         <span class="c1"># to the bit mask of interesting events.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__ready_list</span> <span class="o">=</span> <span class="p">{}</span>
@@ -653,17 +670,17 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="n">events</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">notify_wakeup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">events</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&#39;&#39;&#39;This is called from the scheduler as each file becomes ready.  We</span>
+<span class="w">        </span><span class="sd">'''This is called from the scheduler as each file becomes ready.  We</span>
 <span class="sd">        add the file to our list of ready descriptors and wake ourself up.</span>
-<span class="sd">        We return a mask of the events that we&#39;ve consumed.&#39;&#39;&#39;</span>
-        <span class="c1"># Mask out only the events we&#39;re really interested in.</span>
+<span class="sd">        We return a mask of the events that we've consumed.'''</span>
+        <span class="c1"># Mask out only the events we're really interested in.</span>
         <span class="n">events</span> <span class="o">&amp;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">|</span> <span class="n">POLLEXTRA</span>
         <span class="k">if</span> <span class="n">events</span><span class="p">:</span>
-            <span class="c1"># We&#39;re interested!  Record the event flag and wake our task.</span>
+            <span class="c1"># We're interested!  Record the event flag and wake our task.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__ready_list</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ready_list</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="n">events</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">wakeup</span><span class="o">.</span><span class="n">wakeup</span><span class="p">(</span><span class="n">cothread</span><span class="o">.</span><span class="n">cothread</span><span class="o">.</span><span class="n">_WAKEUP_NORMAL</span><span class="p">)</span>
-        <span class="c1"># Return the events we&#39;ve actually consumed here.  The extra events</span>
-        <span class="c1"># don&#39;t count, as everybody gets those.</span>
+        <span class="c1"># Return the events we've actually consumed here.  The extra events</span>
+        <span class="c1"># don't count, as everybody gets those.</span>
         <span class="k">return</span> <span class="n">events</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">POLLEXTRA</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">event_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -676,11 +693,11 @@
 <div class="viewcode-block" id="poll_list">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.poll_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">poll_list</span><span class="p">(</span><span class="n">event_list</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;event_list is a list of pairs, each consisting of a waitable</span>
+<span class="w">    </span><span class="sd">'''event_list is a list of pairs, each consisting of a waitable</span>
 <span class="sd">    descriptor and an event mask (generated by oring together POLL...</span>
 <span class="sd">    constants).  This routine will cooperatively block until any descriptor</span>
 <span class="sd">    signals a selected event (or any event from HUP, ERR, NVAL) or until</span>
-<span class="sd">    the timeout (in seconds) occurs.&#39;&#39;&#39;</span>
+<span class="sd">    the timeout (in seconds) occurs.'''</span>
     <span class="n">cothread</span><span class="o">.</span><span class="n">cothread</span><span class="o">.</span><span class="n">_validate_thread</span><span class="p">()</span>
     <span class="n">poller</span> <span class="o">=</span> <span class="n">_Poller</span><span class="p">(</span><span class="n">event_list</span><span class="p">)</span>
     <span class="n">cothread</span><span class="o">.</span><span class="n">cothread</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">poll_until</span><span class="p">(</span>
@@ -692,31 +709,31 @@
 <div class="viewcode-block" id="poll">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.poll">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">poll</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;Emulates select.poll(), but implements a cooperative non-blocking</span>
-<span class="sd">    version for use with the cothread library.&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">'''Emulates select.poll(), but implements a cooperative non-blocking</span>
+<span class="sd">    version for use with the cothread library.'''</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__watch_list</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLPRI</span> <span class="o">|</span> <span class="n">POLLOUT</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&#39;&#39;&#39;Adds file to the list of objects to be polled.  The default set</span>
-<span class="sd">        of events is POLLIN|POLLPRI|POLLOUT.&#39;&#39;&#39;</span>
+<span class="w">        </span><span class="sd">'''Adds file to the list of objects to be polled.  The default set</span>
+<span class="sd">        of events is POLLIN|POLLPRI|POLLOUT.'''</span>
         <span class="n">file</span> <span class="o">=</span> <span class="n">_AsFileDescriptor</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__watch_list</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">=</span> <span class="n">events</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">unregister</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&#39;&#39;&#39;Removes file from the polling list.&#39;&#39;&#39;</span>
+<span class="w">        </span><span class="sd">'''Removes file from the polling list.'''</span>
         <span class="n">file</span> <span class="o">=</span> <span class="n">_AsFileDescriptor</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__watch_list</span><span class="p">[</span><span class="n">file</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&#39;&#39;&#39;Blocks until any of the registered file events become ready.</span>
+<span class="w">        </span><span class="sd">'''Blocks until any of the registered file events become ready.</span>
 
 <span class="sd">        Beware: the timeout here is in milliseconds.  This is consistent</span>
 <span class="sd">        with the select.poll().poll() function which this is emulating,</span>
 <span class="sd">        but inconsistent with all the other cothread routines!</span>
 
-<span class="sd">        Consider using poll_list() instead for polling.&#39;&#39;&#39;</span>
+<span class="sd">        Consider using poll_list() instead for polling.'''</span>
         <span class="k">return</span> <span class="n">poll_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__watch_list</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">timeout</span> <span class="o">/</span> <span class="mf">1000.</span><span class="p">)</span></div>
 
 
@@ -726,11 +743,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="n">flags</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">reasons</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="n">POLLERR</span><span class="p">,</span>  <span class="s1">&#39;Error on file descriptor&#39;</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">POLLHUP</span><span class="p">,</span>  <span class="s1">&#39;File descriptor disconnected&#39;</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">POLLNVAL</span><span class="p">,</span> <span class="s1">&#39;Invalid descriptor&#39;</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="s1">&#39;Select error: &#39;</span> <span class="o">+</span> \
-            <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">reason</span>
+            <span class="p">(</span><span class="n">POLLERR</span><span class="p">,</span>  <span class="s1">'Error on file descriptor'</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">POLLHUP</span><span class="p">,</span>  <span class="s1">'File descriptor disconnected'</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">POLLNVAL</span><span class="p">,</span> <span class="s1">'Invalid descriptor'</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="s1">'Select error: '</span> <span class="o">+</span> \
+            <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">reason</span>
                 <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reason</span> <span class="ow">in</span> <span class="n">reasons</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">flag</span><span class="p">])</span>
 
@@ -738,9 +755,9 @@
 <div class="viewcode-block" id="select">
 <a class="viewcode-back" href="../../user/cothread.html#cothread.select">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span><span class="n">iwtd</span><span class="p">,</span> <span class="n">owtd</span><span class="p">,</span> <span class="n">ewtd</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;Non blocking select() function.  The interface should be as for the</span>
+<span class="w">    </span><span class="sd">'''Non blocking select() function.  The interface should be as for the</span>
 <span class="sd">    standard library select.select() function (though it raises different</span>
-<span class="sd">    exceptions).&#39;&#39;&#39;</span>
+<span class="sd">    exceptions).'''</span>
 
     <span class="n">inputs</span> <span class="o">=</span> <span class="p">(</span><span class="n">iwtd</span><span class="p">,</span> <span class="n">owtd</span><span class="p">,</span> <span class="n">ewtd</span><span class="p">)</span>
     <span class="n">flag_mapping</span> <span class="o">=</span> <span class="p">(</span><span class="n">POLLIN</span><span class="p">,</span> <span class="n">POLLOUT</span><span class="p">,</span> <span class="n">POLLPRI</span><span class="p">)</span>
@@ -796,8 +813,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -809,7 +826,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>
