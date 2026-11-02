@@ -818,7 +818,7 @@ def _require_value(value, dtype):
     over channel access.'''
     result = numpy.require(value, requirements = 'C', dtype = dtype)
     if result.shape == ():
-        result.shape = (1,)
+        result = numpy.reshape(result, (1,))
     assert result.ndim == 1, 'Can\'t put multidimensional arrays!'
     return result
 
