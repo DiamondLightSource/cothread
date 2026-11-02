@@ -4,36 +4,32 @@
     "url": "https://DiamondLightSource.github.io/cothread/master/"
   },
   {
-    "version": "2.20.1a",
-    "url": "https://DiamondLightSource.github.io/cothread/2.20.1a/"
-  },
-  {
-    "version": "2.20.1",
-    "url": "https://DiamondLightSource.github.io/cothread/2.20.1/"
-  },
-  {
-    "version": "2.20.0",
-    "url": "https://DiamondLightSource.github.io/cothread/2.20.0/"
-  },
-  {
-    "version": "2.19.1",
-    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
+    "version": "2-19",
+    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
   },
   {
     "version": "2.19",
     "url": "https://DiamondLightSource.github.io/cothread/2.19/"
   },
   {
-    "version": "2-19",
-    "url": "https://DiamondLightSource.github.io/cothread/2-19/"
+    "version": "2.19.1",
+    "url": "https://DiamondLightSource.github.io/cothread/2.19.1/"
+  },
+  {
+    "version": "2.20.0",
+    "url": "https://DiamondLightSource.github.io/cothread/2.20.0/"
+  },
+  {
+    "version": "2.20.1",
+    "url": "https://DiamondLightSource.github.io/cothread/2.20.1/"
+  },
+  {
+    "version": "2.20.1a",
+    "url": "https://DiamondLightSource.github.io/cothread/2.20.1a/"
   },
   {
     "version": "ci_add_arm",
     "url": "https://DiamondLightSource.github.io/cothread/ci_add_arm/"
-  },
-  {
-    "version": "fix_ci",
-    "url": "https://DiamondLightSource.github.io/cothread/fix_ci/"
   },
   {
     "version": "fix_release",
