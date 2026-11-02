@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Need this to get version number from last tag
           fetch-depth: 0
@@ -50,7 +50,7 @@ jobs:
         run: tox -e pytest
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           name: ${{ matrix.python }}/${{ matrix.os }}
           files: cov.xml
@@ -61,7 +61,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Need this to get version number from last tag
           fetch-depth: 0
@@ -86,7 +86,7 @@ jobs:
           CIBW_SKIP: pp* *i686*
 
       - name: Upload sdist and wheels as artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.os }}-${{ matrix.python }}
           path: dist
@@ -105,14 +105,14 @@ jobs:
 
     steps:
       - name: Download dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
             pattern: dist*
             path: dist
             merge-multiple: true
 
       - name: Download lockfiles
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
             pattern: lockfiles*
             path: lockfiles
