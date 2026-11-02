@@ -57,13 +57,9 @@
 
 /* Allocating stack aligned memory.  Again this is very platform dependent. */
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__OpenBSD__)
 /* On OSX there is no memalign, and valloc is mostly what we want anyway. */
-#define MALLOC_ALIGNED(alignment, size) valloc(size)
-#define FREE_ALIGNED(mem)               free(mem)
-
-#elif defined(__OpenBSD__)
-/* See above -- should also apply to at least FreeBSD, right? */
+/* Same for OpenBSD */
 #define MALLOC_ALIGNED(alignment, size) valloc(size)
 #define FREE_ALIGNED(mem)               free(mem)
 
