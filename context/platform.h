@@ -62,6 +62,14 @@
 #define MALLOC_ALIGNED(alignment, size) valloc(size)
 #define FREE_ALIGNED(mem)               free(mem)
 
+#elif defined(__OpenBSD__)
+/* OpenBSD stack memory has to be specially allocated with mmap() */
+#define MALLOC_ALIGNED(alignment, size) \
+    mmap(NULL, size, PROT_READ | PROT_WRITE, \
+        MAP_ANONYMOUS | MAP_PRIVATE | MAP_STACK, -1, 0)
+#define FREE_ALIGNED(mem)               ((void) 0)
+/* XXX will leak memory; maybe won't crash with short-lived processes */
+
 #elif defined(WIN32)
 /* This is what we have to use on 32-bit Windows. */
 #define MALLOC_ALIGNED(alignment, size) \
