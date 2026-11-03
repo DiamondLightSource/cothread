@@ -57,11 +57,18 @@
 
 /* Allocating stack aligned memory.  Again this is very platform dependent. */
 
-#if defined(__APPLE__) || defined(__OpenBSD__)
+#if defined(__APPLE__)
 /* On OSX there is no memalign, and valloc is mostly what we want anyway. */
-/* Same for OpenBSD */
 #define MALLOC_ALIGNED(alignment, size) valloc(size)
 #define FREE_ALIGNED(mem)               free(mem)
+
+#elif defined(__OpenBSD__)
+/* OpenBSD stack memory has to be specially allocated with mmap() */
+#define MALLOC_ALIGNED(alignment, size) \
+    mmap(NULL, size, PROT_READ | PROT_WRITE, \
+        MAP_ANONYMOUS | MAP_PRIVATE | MAP_STACK, -1, 0)
+#define FREE_ALIGNED(mem)               ((void) 0)
+/* XXX will leak memory; maybe won't crash with short-lived processes */
 
 #elif defined(WIN32)
 /* This is what we have to use on 32-bit Windows. */
